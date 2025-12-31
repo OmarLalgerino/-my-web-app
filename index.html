@@ -1,35 +1,35 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV</title>
+    <title>ADATA TV - Professional View</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
         
         :root {
             --primary: #ff9500;
-            --surface: #0a0a0a;
-            --card: #161616;
-            --danger: #ff3b30;
-            --success: #34c759;
-            --border: rgba(255, 255, 255, 0.05);
+            --surface: #050505;
+            --card: #111111;
+            --border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff;
-            --text-dim: #888888;
-            --search-bg: #111111;
+            --text-dim: #a0a0a0;
         }
 
-        /* الوضع الفاتح */
-        .light-theme {
-            --surface: #f2f2f7;
+        body.light-mode {
+            --surface: #f3f4f6;
             --card: #ffffff;
-            --border: rgba(0, 0, 0, 0.08);
-            --text-main: #1c1c1e;
-            --text-dim: #636366;
-            --search-bg: #e5e5ea;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-main: #111111;
+            --text-dim: #4b5563;
         }
 
         body {
@@ -39,9 +39,33 @@
             margin: 0;
             overflow: hidden;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            height: 100vh;
+            overscroll-behavior-y: contain;
+            transition: background-color 0.3s ease;
         }
+
+        #video-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .video-js {
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        /* Zoom Modes */
+        .zoom-normal video { object-fit: contain !important; }
+        .zoom-fill video { object-fit: fill !important; }
+        .zoom-crop video { object-fit: cover !important; }
+        .zoom-15 video { object-fit: cover !important; transform: scale(1.5); }
 
         #splash-screen {
             position: fixed;
@@ -49,501 +73,407 @@
             background: #000;
             z-index: 9999;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.6s ease-out;
-        }
-
-        .app-logo-img {
-            width: 180px;
-            height: auto;
-            object-fit: contain;
-            filter: drop-shadow(0 0 15px rgba(255, 149, 0, 0.3));
         }
 
         #app-wrapper {
             display: flex;
             height: 100vh;
             width: 100vw;
-            position: relative;
             visibility: hidden;
         }
 
         .sidebar {
             width: 100%;
-            max-width: 400px;
             background: var(--surface);
             display: flex;
             flex-direction: column;
-            border-left: 1px solid var(--border);
-            z-index: 500;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            z-index: 50;
+            transition: background-color 0.3s ease;
         }
 
         .main-content {
             position: fixed;
             inset: 0;
             background: #000;
-            z-index: 600;
+            z-index: 100;
             display: none;
-            opacity: 0;
-            transition: opacity 0.4s ease;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        .is-playing .main-content { display: flex; opacity: 1; }
+        .is-playing .main-content { display: flex; }
 
         .channel-card {
             background: var(--card);
             border-radius: 12px;
             padding: 12px;
-            margin: 6px 15px;
+            margin: 4px 12px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--text-main);
+            border: 1px solid var(--border);
+            transition: 0.2s;
         }
 
-        .channel-card:hover { 
-            border-color: var(--primary);
-            transform: scale(1.02);
-            background: rgba(255, 149, 0, 0.08);
+        .overlay-controls {
+            position: absolute;
+            top: env(safe-area-inset-top, 20px);
+            left: 15px;
+            right: 15px;
+            z-index: 200;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
         }
         
-        .channel-card img { width: 50px; height: 50px; border-radius: 8px; object-fit: contain; background: transparent; }
-
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 700;
+        .btn-action {
+            pointer-events: auto;
             background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(15px);
-            padding: 10px 20px;
-            border-radius: 12px;
-            cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.1);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
+            padding: 8px 14px;
+            border-radius: 40px;
             color: white;
-        }
-
-        .show-ui .back-btn { opacity: 1; pointer-events: auto; }
-
-        .overlay-ui {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent 40%);
+            font-size: 12px;
+            font-weight: 600;
             display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 30px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
         }
 
-        .show-ui .overlay-ui { opacity: 1; pointer-events: auto; }
-
-        .tab-btn {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-dim);
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-        #loading-spinner {
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 24px;
-            z-index: 800;
-            border: 1px solid rgba(255,149,0,0.3);
-            min-width: 250px;
-        }
-
-        .log-line {
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            color: #aaa;
-            margin-bottom: 4px;
+        .search-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 0 12px 12px 12px;
+            padding: 8px 12px;
             display: flex;
+            align-items: center;
             gap: 10px;
         }
-        .log-line.active { color: var(--success); }
 
-        #error-modal {
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--primary);
+        }
+
+        /* زر التشغيل/الإيقاف المركزي */
+        #center-play-btn {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #1a1a1a;
-            border: 2px solid var(--danger);
-            border-radius: 16px;
-            padding: 24px;
-            z-index: 900;
-            width: 90%;
-            max-width: 320px;
-            display: none;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            color: white;
-        }
-
-        .control-btn {
-            transition: all 0.2s;
-        }
-        .control-btn:active {
-            transform: scale(0.9);
-        }
-
-        .theme-toggle {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            z-index: 250;
+            width: 80px;
+            height: 80px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--card);
-            border: 1px solid var(--border);
+            color: white;
+            font-size: 30px;
+            border: 2px solid rgba(255,255,255,0.2);
             cursor: pointer;
-            transition: 0.3s;
-            color: var(--text-main);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: auto;
         }
+        
+        #center-play-btn.visible { opacity: 1; }
 
-        @media (max-width: 768px) { .sidebar { max-width: 100%; } }
+        .touch-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 40%;
+            z-index: 150;
+            pointer-events: auto;
+        }
+        .zone-left { left: 0; }
+        .zone-right { right: 0; }
+
+        #loading-view {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            z-index: 180;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
 
-    <!-- شاشة التحميل -->
     <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png?20191124104605" alt="ADATA" class="app-logo-img animate-pulse">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
     </div>
 
     <div id="app-wrapper">
-        <!-- القائمة الجانبية -->
-        <aside class="sidebar" id="sidebar">
-            <div class="p-6 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png?20191124104605" alt="ADATA" class="h-6 w-auto">
-                    <span class="font-black text-xl italic tracking-tighter">TV</span>
+        <aside class="sidebar">
+            <div class="p-5 flex items-center justify-between">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
+                <div class="theme-toggle" id="theme-btn" title="تبديل المظهر">
+                    <i class="fas fa-moon"></i>
                 </div>
-                <!-- زر تغيير السمة -->
-                <button class="theme-toggle" onclick="toggleTheme()" title="تغيير المظهر">
-                    <i id="theme-icon" class="fas fa-moon"></i>
-                </button>
             </div>
 
-            <div class="flex px-4">
-                <div class="tab-btn active" id="tab-channels-btn" onclick="switchTab('channels')">بث حي</div>
-                <div class="tab-btn" id="tab-movies-btn" onclick="switchTab('movies')">أفلام</div>
+            <div class="search-box">
+                <i class="fas fa-search text-gray-500 text-sm"></i>
+                <input type="text" id="search-input" placeholder="ابحث عن قناة أو فيلم...">
             </div>
 
-            <div id="tab-content" class="flex-1 overflow-y-auto pt-2">
-                <div class="px-4 py-2">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="search" placeholder="ابحث في المحتوى..." class="w-full bg-[var(--search-bg)] border border-[var(--border)] rounded-xl py-3 pl-10 pr-4 text-xs outline-none focus:border-orange-500/50 transition-all text-[var(--text-main)]">
-                    </div>
-                </div>
-                <div id="list-container"></div>
+            <div class="flex px-4 border-b border-[var(--border)]">
+                <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm" id="tab-live">مباشر</div>
+                <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm" id="tab-vod">أفلام</div>
             </div>
+
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
         </aside>
 
-        <!-- منطقة المشغل -->
-        <main class="main-content flex-col items-center justify-center" id="player-view" onclick="toggleUI()">
-            <div class="back-btn" onclick="event.stopPropagation(); libvlc_cleanup_and_exit()"><i class="fas fa-chevron-right ml-2"></i> خروج</div>
-            
-            <video id="player" class="w-full h-full" crossorigin="anonymous" playsinline></video>
-            
-            <!-- نافذة الخطأ -->
-            <div id="error-modal" onclick="event.stopPropagation()">
-                <div class="flex items-center gap-3 mb-4 text-red-500">
-                    <i class="fas fa-exclamation-triangle text-2xl"></i>
-                    <h2 class="font-black text-lg">خطأ في البث!</h2>
+        <main class="main-content" id="player-screen">
+            <div id="loading-view">
+                <div class="w-8 h-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+
+            <div class="overlay-controls">
+                <div class="btn-action" onclick="UIManager.close()">
+                    <i class="fas fa-chevron-right"></i>
+                    <span>رجوع</span>
                 </div>
-                <p id="error-message" class="text-xs text-gray-300 leading-relaxed mb-6"></p>
-                <div class="flex gap-2">
-                    <button onclick="hide_error_modal()" class="flex-1 bg-white/10 py-2 rounded-lg text-xs font-bold">إلغاء</button>
-                    <button onclick="handle_retry()" class="flex-1 bg-red-600 py-2 rounded-lg text-xs font-bold shadow-lg shadow-red-600/20">إعادة محاولة</button>
+                <div class="btn-action" id="zoom-btn">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                    <span id="zoom-label">افتراضي</span>
                 </div>
             </div>
 
-            <!-- واجهة التحكم -->
-            <div class="overlay-ui">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-6">
-                        <div class="flex items-center gap-4">
-                            <button onclick="event.stopPropagation(); skipTime(-10);" class="control-btn w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white border border-white/10">
-                                <i class="fas fa-undo-alt text-sm"></i>
-                            </button>
-
-                            <button onclick="event.stopPropagation(); playPause();" class="control-btn w-14 h-14 bg-orange-500 rounded-full flex items-center justify-center text-black shadow-lg shadow-orange-500/20">
-                                <i id="play-icon" class="fas fa-play text-xl"></i>
-                            </button>
-
-                            <button onclick="event.stopPropagation(); skipTime(10);" class="control-btn w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white border border-white/10">
-                                <i class="fas fa-redo-alt text-sm"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="flex flex-col text-white">
-                            <div class="flex items-center gap-3">
-                                <span id="current-item-name" class="font-bold text-xl"></span>
-                                <button id="speed-btn" onclick="event.stopPropagation(); changeSpeed();" class="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-[10px] font-black uppercase transition-all">
-                                    Speed: <span id="speed-label">1x</span>
-                                </button>
-                            </div>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span id="status-badge" class="text-[9px] text-green-400 font-bold uppercase tracking-widest italic">اتصال مستقر</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- زر التشغيل والإيقاف المركزي -->
+            <div id="center-play-btn">
+                <i class="fas fa-pause"></i>
             </div>
 
-            <!-- مؤشر التحميل -->
-            <div id="loading-spinner" class="absolute hidden flex flex-col items-center gap-4">
-                <div class="w-full">
-                    <div class="log-line" id="dl-log-1"><i class="fas fa-network-wired"></i> <span>فحص الشبكة...</span></div>
-                    <div class="log-line" id="dl-log-2"><i class="fas fa-lock"></i> <span>تأمين الاتصال...</span></div>
-                    <div class="log-line" id="dl-log-3"><i class="fas fa-play"></i> <span>تجهيز الذاكرة المؤقتة...</span></div>
-                </div>
-                <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden mt-2">
-                    <div id="dl-progress" class="h-full bg-orange-500 w-0 transition-all duration-300"></div>
-                </div>
-            </div>
+            <div class="touch-zone zone-left" id="zone-back"></div>
+            <div class="touch-zone zone-right" id="zone-fwd"></div>
+
+            <div id="video-container" class="zoom-normal"></div>
         </main>
     </div>
 
     <script>
-        const SOURCE_CHANNELS = `https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv`;
-        const SOURCE_MOVIES = `https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv`;
-        const LOGO_PLACEHOLDER = "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png?20191124104605";
-
-        const video = document.getElementById('player');
-        const wrapper = document.getElementById('app-wrapper');
-        const splash = document.getElementById('splash-screen');
-        
-        let allData = { channels: [], movies: [] };
-        let currentTab = 'channels';
-        let hls = null;
-        let uiTimer;
-        let currentItem = null;
-        let currentSpeedIdx = 0;
-        const speeds = [1, 1.25, 1.5, 2];
-
-        // إدارة السمة (Theme Management)
-        function toggleTheme() {
-            const isLight = document.body.classList.toggle('light-theme');
-            const icon = document.getElementById('theme-icon');
-            icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
-            localStorage.setItem('adata-theme', isLight ? 'light' : 'dark');
-        }
-
-        // استعادة السمة المحفوظة
-        if (localStorage.getItem('adata-theme') === 'light') {
-            document.body.classList.add('light-theme');
-            document.getElementById('theme-icon').className = 'fas fa-sun';
-        }
-
-        const ERROR_DICTIONARY = {
-            "403": "وصول ممنوع. الرابط محمي أو انتهت صلاحيته.",
-            "404": "المحتوى غير موجود حالياً على الخادم.",
-            "500": "خطأ في خادم البث. جرب لاحقاً.",
-            "timeout": "انتهى وقت المهلة قبل الاتصال.",
-            "format": "صيغة الفيديو غير مدعومة."
+        const API_LINKS = {
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
         };
 
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                splash.style.opacity = '0';
-                wrapper.style.visibility = 'visible';
-                setTimeout(() => splash.remove(), 600);
-            }, 1800);
-        });
+        const UIManager = {
+            allData: [],
+            filteredData: [],
+            player: null,
+            zoomIndex: 0,
+            currentTab: 'live',
+            isDarkMode: true,
+            controlsTimeout: null,
+            zoomModes: [
+                { class: 'zoom-normal', label: 'افتراضي' },
+                { class: 'zoom-fill', label: 'ملء الشاشة' },
+                { class: 'zoom-crop', label: 'قص الحواف' },
+                { class: 'zoom-15', label: '1.5x' }
+            ],
 
-        async function fetchData() {
-            try {
-                const [res1, res2] = await Promise.all([fetch(SOURCE_CHANNELS), fetch(SOURCE_MOVIES)]);
-                const [text1, text2] = await Promise.all([res1.text(), res2.text()]);
-                processRows(text1, 'channels');
-                processRows(text2, 'movies');
-                renderList();
-            } catch (e) { console.error("Fetch failed", e); }
-        }
+            async init() {
+                await this.loadCategory('live');
+                this.setupGlobalEvents();
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                    document.getElementById('app-wrapper').style.visibility = 'visible';
+                }, 1500);
+            },
 
-        function processRows(text, cat) {
-            const rows = text.split('\n').slice(1);
-            rows.forEach(row => {
-                const cols = row.split(/,(?=(?:(?:[^["]*"){2})*[^"]*$)/);
-                if (cols.length < 2) return;
-                const item = {
-                    n: cols[0]?.replace(/"/g, '').trim(), 
-                    u: cols[1]?.replace(/"/g, '').trim(), 
-                    l: cols[2]?.replace(/"/g, '').trim() || LOGO_PLACEHOLDER
-                };
-                if (item.u && item.u.startsWith('http')) allData[cat].push(item);
-            });
-        }
+            async loadCategory(type) {
+                try {
+                    const res = await fetch(API_LINKS[type]);
+                    const text = await res.text();
+                    this.allData = this.parseCSV(text);
+                    this.filteredData = this.allData;
+                    this.renderList();
+                } catch(e) { console.error("Error loading data"); }
+            },
 
-        function renderList() {
-            const container = document.getElementById('list-container');
-            container.innerHTML = allData[currentTab].map(c => `
-                <div class="channel-card" onclick="handle_stream_start('${btoa(unescape(encodeURIComponent(JSON.stringify(c))))}')">
-                    <img src="${c.l}" onerror="this.src='${LOGO_PLACEHOLDER}'">
-                    <div class="flex flex-col">
-                        <span class="text-sm font-bold truncate max-w-[200px]">${c.n}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function handle_stream_start(dataStr) {
-            currentItem = JSON.parse(decodeURIComponent(escape(atob(dataStr))));
-            document.getElementById('current-item-name').innerText = currentItem.n;
-            wrapper.classList.add('is-playing');
-            
-            currentSpeedIdx = 0;
-            video.playbackRate = speeds[currentSpeedIdx];
-            document.getElementById('speed-label').innerText = speeds[currentSpeedIdx] + 'x';
-            
-            const spinner = document.getElementById('loading-spinner');
-            spinner.classList.remove('hidden');
-            document.querySelectorAll('.log-line').forEach(l => l.classList.remove('active'));
-            document.getElementById('dl-progress').style.width = '0%';
-
-            await runDLStep('dl-log-1', 33);
-            await runDLStep('dl-log-2', 66);
-            await runDLStep('dl-log-3', 100);
-
-            load_stream(currentItem.u);
-        }
-
-        function load_stream(url) {
-            if (hls) hls.destroy();
-            const isHLS = url.toLowerCase().includes('.m3u8');
-
-            if (isHLS && Hls.isSupported()) {
-                hls = new Hls({ xhrSetup: (xhr) => {
-                    xhr.onreadystatechange = () => {
-                        if (xhr.readyState === 4 && xhr.status >= 400) trigger_stream_error(xhr.status.toString());
+            parseCSV(csv) {
+                return csv.split('\n').slice(1).map(row => {
+                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return {
+                        name: parts[0]?.replace(/"/g, '').trim(),
+                        url: parts[1]?.replace(/"/g, '').trim(),
+                        logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
                     };
-                }});
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().then(() => {
-                        document.getElementById('loading-spinner').classList.add('hidden');
-                    });
+                }).filter(i => i.url);
+            },
+
+            renderList() {
+                const list = document.getElementById('list');
+                if (this.filteredData.length === 0) {
+                    list.innerHTML = `<div class="text-center p-10 text-gray-500 text-sm">لا توجد نتائج للبحث</div>`;
+                    return;
+                }
+                list.innerHTML = this.filteredData.map(item => `
+                    <div class="channel-card" onclick="UIManager.play('${item.url}')">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg bg-black/10">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-xs truncate" style="color: var(--text-main)">${item.name}</h3>
+                        </div>
+                        <i class="fas fa-play text-[10px] text-orange-500"></i>
+                    </div>
+                `).join('');
+            },
+
+            setupGlobalEvents() {
+                document.getElementById('tab-live').onclick = (e) => this.switchTab(e.target, 'live');
+                document.getElementById('tab-vod').onclick = (e) => this.switchTab(e.target, 'vod');
+
+                document.getElementById('search-input').oninput = (e) => {
+                    const term = e.target.value.toLowerCase();
+                    this.filteredData = this.allData.filter(item => 
+                        item.name.toLowerCase().includes(term)
+                    );
+                    this.renderList();
+                };
+
+                document.getElementById('theme-btn').onclick = () => {
+                    this.isDarkMode = !this.isDarkMode;
+                    document.body.classList.toggle('light-mode', !this.isDarkMode);
+                    const icon = document.querySelector('#theme-btn i');
+                    icon.className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+                };
+
+                document.getElementById('zoom-btn').onclick = () => {
+                    this.zoomIndex = (this.zoomIndex + 1) % this.zoomModes.length;
+                    const mode = this.zoomModes[this.zoomIndex];
+                    const container = document.getElementById('video-container');
+                    this.zoomModes.forEach(m => container.classList.remove(m.class));
+                    container.classList.add(mode.class);
+                    document.getElementById('zoom-label').innerText = mode.label;
+                };
+
+                // التحكم في زر الإيقاف المركزي
+                const centerBtn = document.getElementById('center-play-btn');
+                centerBtn.onclick = () => {
+                    if(!this.player) return;
+                    if(this.player.paused()) {
+                        this.player.play();
+                        centerBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    } else {
+                        this.player.pause();
+                        centerBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                };
+
+                // إظهار وإخفاء أزرار التحكم عند اللمس
+                document.getElementById('player-screen').onclick = () => {
+                    this.toggleControls(true);
+                };
+
+                let lastTap = 0;
+                document.getElementById('zone-fwd').onclick = (e) => {
+                    e.stopPropagation();
+                    let now = Date.now();
+                    if(now - lastTap < 300) this.seek(10);
+                    else this.toggleControls(true);
+                    lastTap = now;
+                };
+                document.getElementById('zone-back').onclick = (e) => {
+                    e.stopPropagation();
+                    let now = Date.now();
+                    if(now - lastTap < 300) this.seek(-10);
+                    else this.toggleControls(true);
+                    lastTap = now;
+                };
+            },
+
+            toggleControls(show) {
+                const centerBtn = document.getElementById('center-play-btn');
+                const overlays = document.querySelector('.overlay-controls');
+                if(show) {
+                    centerBtn.classList.add('visible');
+                    overlays.style.opacity = '1';
+                    clearTimeout(this.controlsTimeout);
+                    this.controlsTimeout = setTimeout(() => this.toggleControls(false), 3000);
+                } else {
+                    centerBtn.classList.remove('visible');
+                    overlays.style.opacity = '0';
+                }
+            },
+
+            switchTab(el, type) {
+                if (this.currentTab === type) return;
+                this.currentTab = type;
+                document.getElementById('search-input').value = '';
+                document.getElementById('tab-live').className = document.getElementById('tab-vod').className = "flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm";
+                el.className = "flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm";
+                el.style.color = "var(--text-main)";
+                this.loadCategory(type);
+            },
+
+            play(url) {
+                if(!url) return;
+                document.getElementById('app-wrapper').classList.add('is-playing');
+                document.getElementById('loading-view').style.display = 'flex';
+                
+                const container = document.getElementById('video-container');
+                container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" controls playsinline preload="auto"></video>`;
+
+                this.player = videojs('main-video', {
+                    autoplay: true,
+                    responsive: true,
+                    fluid: false,
+                    controlBar: {
+                        children: ['progressControl']
+                    }
                 });
-            } else {
-                video.src = url;
-                video.onerror = () => trigger_stream_error("format");
-                video.load();
-                video.play().finally(() => {
-                    document.getElementById('loading-spinner').classList.add('hidden');
+
+                let type = url.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4";
+                this.player.src({ src: url, type: type });
+                this.player.on('canplay', () => {
+                    document.getElementById('loading-view').style.display = 'none';
+                    this.toggleControls(true);
                 });
+            },
+
+            seek(sec) {
+                if(this.player) this.player.currentTime(this.player.currentTime() + sec);
+            },
+
+            close() {
+                document.getElementById('app-wrapper').classList.remove('is-playing');
+                if(this.player) {
+                    this.player.dispose();
+                    this.player = null;
+                }
             }
-            toggleUI();
-        }
-
-        function skipTime(seconds) {
-            if (!video.src && !hls) return;
-            video.currentTime += seconds;
-            toggleUI();
-        }
-
-        function changeSpeed() {
-            currentSpeedIdx = (currentSpeedIdx + 1) % speeds.length;
-            const newSpeed = speeds[currentSpeedIdx];
-            video.playbackRate = newSpeed;
-            document.getElementById('speed-label').innerText = newSpeed + 'x';
-            toggleUI();
-        }
-
-        function trigger_stream_error(code) {
-            const msg = ERROR_DICTIONARY[code] || "فشل الاتصال بالبث.";
-            document.getElementById('error-message').innerText = msg;
-            document.getElementById('error-modal').style.display = 'block';
-            wrapper.classList.add('show-ui');
-        }
-
-        function handle_retry() {
-            hide_error_modal();
-            if (currentItem) handle_stream_start(btoa(unescape(encodeURIComponent(JSON.stringify(currentItem)))));
-        }
-
-        function hide_error_modal() {
-            document.getElementById('error-modal').style.display = 'none';
-        }
-
-        async function runDLStep(id, prog) {
-            document.getElementById(id).classList.add('active');
-            document.getElementById('dl-progress').style.width = prog + '%';
-            return new Promise(r => setTimeout(r, 600));
-        }
-
-        function libvlc_cleanup_and_exit() {
-            wrapper.classList.remove('is-playing', 'show-ui');
-            video.pause();
-            video.src = "";
-            hide_error_modal();
-            if(hls) hls.destroy();
-        }
-
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tab-${tab}-btn`).classList.add('active');
-            renderList();
-        }
-
-        function playPause() { 
-            const icon = document.getElementById('play-icon');
-            if (video.paused) { 
-                video.play(); 
-                icon.className = 'fas fa-pause text-xl';
-                toggleUI(); 
-            } else { 
-                video.pause(); 
-                icon.className = 'fas fa-play text-xl';
-                wrapper.classList.add('show-ui');
-                clearTimeout(uiTimer);
-            }
-        }
-
-        video.onplay = () => document.getElementById('play-icon').className = 'fas fa-pause text-xl';
-        video.onpause = () => document.getElementById('play-icon').className = 'fas fa-play text-xl';
-
-        function toggleUI() { 
-            wrapper.classList.add('show-ui'); 
-            clearTimeout(uiTimer); 
-            if (!video.paused) {
-                uiTimer = setTimeout(() => { 
-                    wrapper.classList.remove('show-ui'); 
-                }, 3000); 
-            }
-        }
-
-        document.getElementById('search').oninput = (e) => {
-            const v = e.target.value.toLowerCase();
-            document.querySelectorAll('.channel-card').forEach(c => {
-                c.style.display = c.innerText.toLowerCase().includes(v) ? 'flex' : 'none';
-            });
         };
 
-        fetchData();
+        window.onload = () => UIManager.init();
     </script>
 </body>
 </html>
