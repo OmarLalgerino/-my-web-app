@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -127,6 +126,7 @@
             display: flex;
             justify-content: space-between;
             pointer-events: none;
+            transition: opacity 0.3s ease;
         }
         
         .btn-action {
@@ -176,7 +176,6 @@
             color: var(--primary);
         }
 
-        /* زر التشغيل/الإيقاف المركزي */
         #center-play-btn {
             position: absolute;
             top: 50%;
@@ -257,7 +256,7 @@
                 <div class="w-8 h-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
 
-            <div class="overlay-controls">
+            <div class="overlay-controls" id="controls-ui">
                 <div class="btn-action" onclick="UIManager.close()">
                     <i class="fas fa-chevron-right"></i>
                     <span>رجوع</span>
@@ -268,7 +267,6 @@
                 </div>
             </div>
 
-            <!-- زر التشغيل والإيقاف المركزي -->
             <div id="center-play-btn">
                 <i class="fas fa-pause"></i>
             </div>
@@ -334,7 +332,7 @@
             renderList() {
                 const list = document.getElementById('list');
                 if (this.filteredData.length === 0) {
-                    list.innerHTML = `<div class="text-center p-10 text-gray-500 text-sm">لا توجد نتائج للبحث</div>`;
+                    list.innerHTML = `<div class="text-center p-10 text-gray-500 text-sm">لا توجد نتائج</div>`;
                     return;
                 }
                 list.innerHTML = this.filteredData.map(item => `
@@ -363,8 +361,7 @@
                 document.getElementById('theme-btn').onclick = () => {
                     this.isDarkMode = !this.isDarkMode;
                     document.body.classList.toggle('light-mode', !this.isDarkMode);
-                    const icon = document.querySelector('#theme-btn i');
-                    icon.className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+                    document.querySelector('#theme-btn i').className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
                 };
 
                 document.getElementById('zoom-btn').onclick = () => {
@@ -376,7 +373,6 @@
                     document.getElementById('zoom-label').innerText = mode.label;
                 };
 
-                // التحكم في زر الإيقاف المركزي
                 const centerBtn = document.getElementById('center-play-btn');
                 centerBtn.onclick = () => {
                     if(!this.player) return;
@@ -389,10 +385,7 @@
                     }
                 };
 
-                // إظهار وإخفاء أزرار التحكم عند اللمس
-                document.getElementById('player-screen').onclick = () => {
-                    this.toggleControls(true);
-                };
+                document.getElementById('player-screen').onclick = () => this.toggleControls(true);
 
                 let lastTap = 0;
                 document.getElementById('zone-fwd').onclick = (e) => {
@@ -413,43 +406,59 @@
 
             toggleControls(show) {
                 const centerBtn = document.getElementById('center-play-btn');
-                const overlays = document.querySelector('.overlay-controls');
+                const overlays = document.getElementById('controls-ui');
                 if(show) {
                     centerBtn.classList.add('visible');
                     overlays.style.opacity = '1';
+                    overlays.style.pointerEvents = 'auto';
                     clearTimeout(this.controlsTimeout);
                     this.controlsTimeout = setTimeout(() => this.toggleControls(false), 3000);
                 } else {
                     centerBtn.classList.remove('visible');
                     overlays.style.opacity = '0';
+                    overlays.style.pointerEvents = 'none';
                 }
             },
 
             switchTab(el, type) {
                 if (this.currentTab === type) return;
                 this.currentTab = type;
-                document.getElementById('search-input').value = '';
                 document.getElementById('tab-live').className = document.getElementById('tab-vod').className = "flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm";
                 el.className = "flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm";
-                el.style.color = "var(--text-main)";
                 this.loadCategory(type);
             },
 
-            play(url) {
+            // دالة طلب ملء الشاشة لإخفاء الساعة والبطارية
+            async requestFullscreen() {
+                const el = document.documentElement;
+                if (el.requestFullscreen) await el.requestFullscreen();
+                else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+                else if (el.mozRequestFullScreen) await el.mozRequestFullScreen();
+                else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+            },
+
+            async exitFullscreen() {
+                if (document.exitFullscreen) await document.exitFullscreen().catch(() => {});
+                else if (document.webkitExitFullscreen) await document.webkitExitFullscreen().catch(() => {});
+            },
+
+            async play(url) {
                 if(!url) return;
+                
+                // تفعيل ملء الشاشة عند بدء الفيديو
+                await this.requestFullscreen().catch(() => {});
+
                 document.getElementById('app-wrapper').classList.add('is-playing');
                 document.getElementById('loading-view').style.display = 'flex';
                 
                 const container = document.getElementById('video-container');
-                container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" controls playsinline preload="auto"></video>`;
+                container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" playsinline preload="auto"></video>`;
 
                 this.player = videojs('main-video', {
                     autoplay: true,
                     responsive: true,
                     fluid: false,
-                    controlBar: {
-                        children: ['progressControl']
-                    }
+                    controls: false
                 });
 
                 let type = url.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4";
@@ -464,12 +473,14 @@
                 if(this.player) this.player.currentTime(this.player.currentTime() + sec);
             },
 
-            close() {
+            async close() {
                 document.getElementById('app-wrapper').classList.remove('is-playing');
                 if(this.player) {
                     this.player.dispose();
                     this.player = null;
                 }
+                // العودة للوضع الطبيعي عند إغلاق المشغل
+                await this.exitFullscreen();
             }
         };
 
