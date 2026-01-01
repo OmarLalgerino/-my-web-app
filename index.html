@@ -6,16 +6,15 @@
     <title>ADATA TV</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white text-center flex flex-col items-center justify-center min-h-screen">
+<body class="bg-black text-white text-center min-h-screen flex flex-col items-center justify-center">
     <div id="login-box">
         <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 mb-8 mx-auto">
-        <button onclick="startApp()" class="bg-blue-600 hover:bg-blue-700 px-10 py-4 rounded-xl font-bold text-lg shadow-lg transition-all">
-            دخول إلى القنوات
-        </button>
+        <button onclick="startApp()" class="bg-blue-600 px-10 py-4 rounded-xl font-bold text-lg">دخول إلى القنوات</button>
     </div>
-    <div id="channel-list" class="hidden w-full p-4">
-        <h2 class="text-xl mb-6 text-orange-500 font-bold">قائمة القنوات الحية</h2>
-        <div id="data-container" class="grid gap-3"></div>
+
+    <div id="app-interface" class="hidden w-full p-4">
+        <h2 class="text-orange-500 font-bold mb-6 text-xl">قائمة القنوات المباشرة</h2>
+        <div id="channels" class="grid gap-3"></div>
     </div>
 
     <script>
@@ -24,27 +23,25 @@
                 median.socialLogin.google.login({
                     'redirectUri': 'https://omarlalgerino.github.io/-my-web-app/',
                     'callback': function(r) {
-                        if (r.success || r.accessToken) {
-                            document.getElementById('login-box').style.display = 'none';
-                            document.getElementById('channel-list').style.display = 'block';
-                            loadChannels();
+                        // إذا نجح الدخول، يتم إخفاء الصندوق وإظهار القنوات
+                        if (r.success || r.accessToken || r.profile) {
+                            document.getElementById('login-box').classList.add('hidden');
+                            document.getElementById('app-interface').classList.remove('hidden');
+                            fetchData();
                         }
                     }
                 });
-            } else {
-                alert("يرجى فتح التطبيق المثبت على هاتفك (ADATA)");
             }
         }
-        async function loadChannels() {
-            try {
-                const res = await fetch('https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv');
-                const data = await res.text();
-                const items = data.split('\n').slice(1);
-                document.getElementById('data-container').innerHTML = items.map(row => {
-                    const name = row.split(',')[0].replace(/"/g, '');
-                    return `<div class="bg-zinc-900 p-5 rounded-lg border border-zinc-800 font-bold">${name}</div>`;
-                }).join('');
-            } catch (e) { alert("خطأ في تحميل القنوات"); }
+
+        async function fetchData() {
+            const res = await fetch('https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv');
+            const csv = await res.text();
+            const rows = csv.split('\n').slice(1);
+            document.getElementById('channels').innerHTML = rows.map(row => {
+                const name = row.split(',')[0].replace(/"/g, '');
+                return `<div class="bg-zinc-900 p-5 rounded-lg border border-zinc-800 font-bold text-lg">${name}</div>`;
+            }).join('');
         }
     </script>
 </body>
