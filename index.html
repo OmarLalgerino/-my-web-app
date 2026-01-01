@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل دخول ADATA TV</title>
+    <title>ADATA TV - تسجيل الدخول</title>
 </head>
 <body>
 
@@ -16,17 +16,17 @@
 
     <script>
     function loginWithGoogle() {
-        // التحقق من أننا داخل التطبيق لضمان عمل أوامر Median
+        // التأكد من أننا داخل تطبيق Median ليعمل الكود
         if (navigator.userAgent.indexOf("median") >= 0) {
             
             median.socialLogin.google.login({
-                // استبدل الرابط أدناه برابط صفحة القنوات في موقعك لكسر اللوب فوراً
-                'redirectUri': 'https://your-actual-website.com/home', 
+                // تم وضع رابط موقعك الحقيقي هنا لكسر اللوب
+                'redirectUri': 'https://radiant-blancmange-e93c22.netlify.app/', 
                 'state': 'xyz123'
             });
 
         } else {
-            alert("يرجى فتح التطبيق الرسمي من هاتفك.");
+            alert("يرجى فتح التطبيق الرسمي ADATA TV من هاتفك.");
         }
     }
     </script>
