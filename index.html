@@ -2,34 +2,77 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADATA TV - تسجيل الدخول</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ADATA TV - Professional View</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* جميع أنماط الـ CSS التي أرسلتها سابقاً موجودة هنا */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        :root { --primary: #ff9500; --surface: #050505; --card: #111111; --text-main: #ffffff; }
+        body { background-color: var(--surface); color: var(--text-main); font-family: 'Cairo', sans-serif; margin: 0; height: 100vh; }
+        
+        /* نمط شاشة الدخول الجديدة */
+        #login-screen {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .login-btn {
+            background: #4285F4; color: white; padding: 15px 35px;
+            border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
-    <div style="text-align: center; margin-top: 100px;">
-        <h2>مرحباً بك في ADATA TV</h2>
-        <button onclick="loginWithGoogle()" style="padding: 15px 30px; background: #4285F4; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer;">
-            تسجيل الدخول عبر Google
+    <div id="login-screen">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-32 mb-8">
+        <h1 class="text-white text-xl mb-6">سجل دخولك للمشاهدة</h1>
+        <button onclick="startGoogleLogin()" class="login-btn">
+            <i class="fab fa-google ml-2"></i> الدخول عبر Google
         </button>
     </div>
 
+    <div id="app-content" style="display: none;">
+        <div id="app-wrapper">
+             </div>
+    </div>
+
     <script>
-    function loginWithGoogle() {
-        // التأكد من أننا داخل تطبيق Median ليعمل الكود
-        if (navigator.userAgent.indexOf("median") >= 0) {
-            
-            median.socialLogin.google.login({
-                // تم وضع رابط موقعك الحقيقي هنا لكسر اللوب
-                'redirectUri': 'https://radiant-blancmange-e93c22.netlify.app/', 
-                'state': 'xyz123'
-            });
-
-        } else {
-            alert("يرجى فتح التطبيق الرسمي ADATA TV من هاتفك.");
+        // دالة تسجيل الدخول باستخدام Median
+        function startGoogleLogin() {
+            if (navigator.userAgent.indexOf("median") >= 0) {
+                median.socialLogin.google.login({
+                    'callback': function(result) {
+                        if (result.success || result.accessToken) {
+                            // كسر اللوب: إخفاء شاشة الدخول وإظهار القنوات
+                            document.getElementById('login-screen').style.display = 'none';
+                            document.getElementById('app-content').style.display = 'block';
+                            UIManager.init(); // تشغيل واجهة القنوات
+                        } else {
+                            alert("خطأ في الدخول: " + (result.error || "تم الإلغاء"));
+                        }
+                    }
+                });
+            } else {
+                alert("يرجى فتح التطبيق الرسمي");
+            }
         }
-    }
-    </script>
 
+        // كود الـ UIManager الخاص بك مع تعديل بسيط
+        const UIManager = {
+            // ... جميع الدوال التي أرسلتها (loadCategory, renderList, play) ...
+            init() {
+                this.loadCategory('live');
+                this.setupGlobalEvents();
+                // إلغاء الـ splash screen هنا لأننا في شاشة التطبيق الآن
+            }
+            // ... بقية الكود الخاص بك ...
+        };
+    </script>
 </body>
 </html>
