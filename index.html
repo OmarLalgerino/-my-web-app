@@ -2,157 +2,54 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - Professional View</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADATA TV</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        
-        :root {
-            --primary: #ff9500;
-            --surface: #050505;
-            --card: #111111;
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-        }
-
-        body {
-            background-color: var(--surface);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        /* شاشة تسجيل الدخول */
-        #login-screen {
-            position: fixed; inset: 0; background: #000; z-index: 10000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-
-        /* تنسيقات المشغل والقنوات */
-        #app-content { display: none; height: 100vh; width: 100vw; }
-        .sidebar { width: 100%; height: 100%; display: flex; flex-direction: column; }
-        .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; }
-        .is-playing .main-content { display: flex; }
-        .channel-card { background: var(--card); border-radius: 12px; padding: 12px; margin: 4px 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid var(--border); }
-        #video-container { position: absolute; inset: 0; width: 100%; height: 100%; }
-        .video-js { width: 100vw !important; height: 100vh !important; }
+        body { background: #000; color: white; font-family: sans-serif; text-align: center; }
+        #login-screen { padding-top: 100px; }
+        #app-content { display: none; padding: 20px; }
+        .channel { background: #111; padding: 15px; margin: 10px; border-radius: 8px; border: 1px solid #333; }
     </style>
 </head>
 <body>
-
     <div id="login-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-32 mb-8 animate-pulse">
-        <h1 class="text-white text-xl mb-6 font-bold">تسجيل الدخول ADATA TV</h1>
-        <button onclick="startGoogleLogin()" class="bg-[#4285F4] text-white px-8 py-4 rounded-xl font-bold text-lg flex items-center shadow-lg">
-            <i class="fab fa-google ml-3"></i> الدخول عبر Google
-        </button>
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 mx-auto mb-6">
+        <button onclick="startLogin()" class="bg-blue-600 px-8 py-3 rounded-lg font-bold">تسجيل الدخول عبر Google</button>
     </div>
 
     <div id="app-content">
-        <div class="sidebar">
-            <div class="p-5 flex items-center justify-between border-b border-[var(--border)]">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6">
-                <span class="text-xs text-orange-500 font-bold">مباشر</span>
-            </div>
-            <div id="list" class="flex-1 overflow-y-auto py-4">
-                <div class="text-center text-gray-500 mt-10">جاري تحميل القنوات...</div>
-            </div>
-        </div>
-
-        <main class="main-content" id="player-screen">
-            <div class="absolute top-10 left-5 z-[200]">
-                <button onclick="UIManager.close()" class="bg-black/60 text-white px-4 py-2 rounded-full backdrop-blur-md">
-                    <i class="fas fa-chevron-right ml-2"></i> رجوع
-                </button>
-            </div>
-            <div id="video-container"></div>
-        </main>
+        <h2 class="text-xl mb-4 text-orange-500">ADATA TV - القنوات المباشرة</h2>
+        <div id="channel-list">جاري تحميل البيانات...</div>
     </div>
 
     <script>
-        const API_LINKS = {
-            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv'
-        };
-
-        // دالة الدخول
-        function startGoogleLogin() {
+        function startLogin() {
             if (navigator.userAgent.indexOf("median") >= 0) {
                 median.socialLogin.google.login({
+                    // الرابط الجديد الخاص بك لضمان نجاح التوجيه
+                    'redirectUri': 'https://omarlalgerino.github.io/-my-web-app/',
                     'callback': function(result) {
                         if (result.success || result.accessToken) {
-                            document.getElementById('login-screen').style.opacity = '0';
-                            setTimeout(() => {
-                                document.getElementById('login-screen').style.display = 'none';
-                                document.getElementById('app-content').style.display = 'block';
-                                UIManager.init();
-                            }, 500);
+                            document.getElementById('login-screen').style.display = 'none';
+                            document.getElementById('app-content').style.display = 'block';
+                            fetchChannels();
                         } else {
-                            alert("فشل الدخول. يرجى التحقق من إعدادات جوجل.");
+                            alert("خطأ في الدخول: " + (result.error || "تم الإلغاء"));
                         }
                     }
                 });
             } else {
-                alert("يرجى فتح التطبيق من هاتفك");
+                alert("يرجى فتح التطبيق من الهاتف");
             }
         }
 
-        const UIManager = {
-            allData: [],
-            player: null,
-
-            async init() {
-                try {
-                    const res = await fetch(API_LINKS.live);
-                    const text = await res.text();
-                    this.allData = this.parseCSV(text);
-                    this.renderList();
-                } catch(e) { console.error("Data error"); }
-            },
-
-            parseCSV(csv) {
-                return csv.split('\n').slice(1).map(row => {
-                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    return {
-                        name: parts[0]?.replace(/"/g, '').trim(),
-                        url: parts[1]?.replace(/"/g, '').trim(),
-                        logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
-                    };
-                }).filter(i => i.url);
-            },
-
-            renderList() {
-                const list = document.getElementById('list');
-                list.innerHTML = this.allData.map(item => `
-                    <div class="channel-card" onclick="UIManager.play('${item.url}')">
-                        <img src="${item.logo}" class="w-12 h-12 object-contain rounded-lg">
-                        <h3 class="font-bold text-sm">${item.name}</h3>
-                    </div>
-                `).join('');
-            },
-
-            play(url) {
-                document.getElementById('app-content').classList.add('is-playing');
-                const container = document.getElementById('video-container');
-                container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" controls playsinline></video>`;
-
-                this.player = videojs('main-video', { autoplay: true });
-                let type = url.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4";
-                this.player.src({ src: url, type: type });
-            },
-
-            close() {
-                document.getElementById('app-content').classList.remove('is-playing');
-                if(this.player) { this.player.dispose(); this.player = null; }
-            }
-        };
+        async function fetchChannels() {
+            const res = await fetch('https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv');
+            const data = await res.text();
+            const rows = data.split('\n').slice(1);
+            document.getElementById('channel-list').innerHTML = rows.map(r => `<div class="channel">${r.split(',')[0].replace(/"/g, '')}</div>`).join('');
+        }
     </script>
 </body>
 </html>
