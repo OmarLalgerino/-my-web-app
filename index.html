@@ -1,24 +1,26 @@
-<button onclick="googleLogin()" style="padding: 15px 30px; background: #4285F4; color: white; border: none; border-radius: 8px;">
-    تسجيل الدخول عبر Google
+<button onclick="startLogin()" style="padding: 20px; background: #4285F4; color: white; border-radius: 10px;">
+    دخول عبر جوجل
 </button>
 
 <script>
-function googleLogin() {
+function startLogin() {
+    // التأكد من أن إضافة Median تعمل
     if (typeof median !== 'undefined' && median.socialLogin) {
+        
         median.socialLogin.google.login({
             callback: function(data) {
                 if (data.success) {
-                    // هذا السطر هو الذي يكسر اللوب وينقلك لداخل التطبيق
-                    // استبدل الرابط أدناه برابط صفحة القنوات الخاصة بك
-                    window.location.href = "https://your-website.com/home"; 
+                    // السطر الأهم: التوجيه لكسر اللوب والدخول للموقع
+                    window.location.href = "https://your-website.com/main-page"; 
                 } else {
-                    // سيظهر لك سبب الفشل الحقيقي هنا إذا لم تكتمل العملية
-                    alert("فشل الدخول: " + data.error);
+                    // سيظهر لك هنا السبب الحقيقي إذا فشل الاتصال بجوجل
+                    alert("فشل: " + data.error);
                 }
             }
         });
+
     } else {
-        alert("افتح الصفحة من داخل تطبيق ADATA TV");
+        alert("يرجى فتح الصفحة من داخل التطبيق");
     }
 }
 </script>
