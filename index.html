@@ -1,26 +1,20 @@
-<button onclick="startLogin()" style="padding: 20px; background: #4285F4; color: white; border-radius: 10px;">
-    دخول عبر جوجل
-</button>
-
 <script>
-function startLogin() {
-    // التأكد من أن إضافة Median تعمل
-    if (typeof median !== 'undefined' && median.socialLogin) {
-        
+// هذا الكود وظيفته "استلام" موافقة جوجل وفتح الصفحة التالية
+function startGoogleLogin() {
+    if (typeof median !== 'undefined') {
         median.socialLogin.google.login({
             callback: function(data) {
                 if (data.success) {
-                    // السطر الأهم: التوجيه لكسر اللوب والدخول للموقع
-                    window.location.href = "https://your-website.com/main-page"; 
+                    // هنا يتم كسر اللوب: بمجرد نجاح الدخول، ينقلك للرابط أدناه
+                    window.location.href = "ضع_هنا_رابط_موقعك_الذي_يحتوي_على_القنوات";
                 } else {
-                    // سيظهر لك هنا السبب الحقيقي إذا فشل الاتصال بجوجل
-                    alert("فشل: " + data.error);
+                    // هذا التنبيه سيخبرك بالسبب الحقيقي للفشل (مثلاً SHA-1 خطأ)
+                    alert("خطأ تقني: " + data.error);
                 }
             }
         });
-
-    } else {
-        alert("يرجى فتح الصفحة من داخل التطبيق");
     }
 }
 </script>
+
+<button onclick="startGoogleLogin()" style="width:100%; height:50px;">تسجيل الدخول</button>
