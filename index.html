@@ -5,50 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADATA TV</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #000; color: white; font-family: sans-serif; text-align: center; }
-        #login-screen { padding-top: 100px; }
-        #app-content { display: none; padding: 20px; }
-        .channel { background: #111; padding: 15px; margin: 10px; border-radius: 8px; border: 1px solid #333; }
-    </style>
 </head>
-<body>
-    <div id="login-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 mx-auto mb-6">
-        <button onclick="startLogin()" class="bg-blue-600 px-8 py-3 rounded-lg font-bold">تسجيل الدخول عبر Google</button>
+<body class="bg-black text-white text-center">
+    <div id="content" class="pt-20">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-20 mx-auto mb-5">
+        <button onclick="login()" class="bg-blue-600 px-10 py-3 rounded-lg font-bold">دخول إلى القنوات</button>
     </div>
-
-    <div id="app-content">
-        <h2 class="text-xl mb-4 text-orange-500">ADATA TV - القنوات المباشرة</h2>
-        <div id="channel-list">جاري تحميل البيانات...</div>
-    </div>
+    <div id="list" class="hidden p-5"></div>
 
     <script>
-        function startLogin() {
+        function login() {
             if (navigator.userAgent.indexOf("median") >= 0) {
                 median.socialLogin.google.login({
-                    // الرابط الجديد الخاص بك لضمان نجاح التوجيه
                     'redirectUri': 'https://omarlalgerino.github.io/-my-web-app/',
-                    'callback': function(result) {
-                        if (result.success || result.accessToken) {
-                            document.getElementById('login-screen').style.display = 'none';
-                            document.getElementById('app-content').style.display = 'block';
-                            fetchChannels();
-                        } else {
-                            alert("خطأ في الدخول: " + (result.error || "تم الإلغاء"));
+                    'callback': function(r) {
+                        if (r.success || r.accessToken) {
+                            document.getElementById('content').classList.add('hidden');
+                            document.getElementById('list').classList.remove('hidden');
+                            loadData();
                         }
                     }
                 });
-            } else {
-                alert("يرجى فتح التطبيق من الهاتف");
-            }
+            } else { alert("افتح التطبيق من هاتفك"); }
         }
-
-        async function fetchChannels() {
+        async function loadData() {
             const res = await fetch('https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv');
             const data = await res.text();
-            const rows = data.split('\n').slice(1);
-            document.getElementById('channel-list').innerHTML = rows.map(r => `<div class="channel">${r.split(',')[0].replace(/"/g, '')}</div>`).join('');
+            document.getElementById('list').innerHTML = data.split('\n').slice(1).map(r => `<div class="bg-zinc-900 p-4 m-2 rounded border border-zinc-800">${r.split(',')[0].replace(/"/g, '')}</div>`).join('');
         }
     </script>
 </body>
