@@ -2,80 +2,613 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADATA TV - PRO</title>
+    <meta name="referrer" content="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ADATA - Clean Pulse</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
-        body { background-color: black; color: white; font-family: sans-serif; }
-        .channel-card { background: #111; border: 1px solid #222; transition: 0.3s; }
-        .channel-card:hover { border-color: #f97316; background: #18181b; }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        
+        :root {
+            --primary: #ff4d00;
+            --secondary: #ff9500;
+            --surface: #050505;
+            --card: #111111;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-dim: #a0a0a0;
+            --fire-glow-subtle: rgba(255, 77, 0, 0.3);
+        }
+
+        body.light-mode {
+            --surface: #f3f4f6;
+            --card: #ffffff;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-main: #111111;
+            --text-dim: #4b5563;
+            --fire-glow-subtle: rgba(255, 77, 0, 0.15);
+        }
+
+        body {
+            background-color: var(--surface);
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            height: 100vh;
+            overscroll-behavior-y: contain;
+            transition: background-color 0.3s ease;
+        }
+
+        /* أنيميشن النبض النظيف - تم حذف التوهج (drop-shadow) */
+        @keyframes logo-pulse-clean {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse-logo {
+            animation: logo-pulse-clean 2.5s infinite ease-in-out;
+            /* التأكد من عدم وجود أي ظل أو توهج */
+            filter: none !important;
+        }
+
+        #video-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .video-js {
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        .zoom-normal video { object-fit: contain !important; }
+        .zoom-fill video { object-fit: fill !important; }
+        .zoom-crop video { object-fit: cover !important; }
+        .zoom-15 video { object-fit: cover !important; transform: scale(1.5); }
+
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        #app-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            visibility: hidden;
+        }
+
+        .sidebar {
+            width: 100%;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+            transition: background-color 0.3s ease;
+        }
+
+        .main-content {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 100;
+            display: none;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .is-playing .main-content { display: flex; }
+
+        .channel-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
+
+        .channel-card:active {
+            transform: scale(0.98);
+        }
+
+        /* توهج خفيف جداً لقوائم القنوات فقط */
+        @keyframes soft-glow {
+            0%, 100% { 
+                box-shadow: 0 0 5px var(--fire-glow-subtle);
+                border-color: rgba(255, 77, 0, 0.4);
+            }
+            50% { 
+                box-shadow: 0 0 10px var(--fire-glow-subtle);
+                border-color: rgba(255, 77, 0, 0.7);
+            }
+        }
+
+        .channel-logo-container {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
+        }
+
+        .channel-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px;
+            border: 1.5px solid rgba(255, 77, 0, 0.3);
+            animation: soft-glow 3s infinite ease-in-out;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .channel-card:hover .channel-logo {
+            transform: scale(1.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--fire-glow-subtle);
+        }
+
+        .overlay-controls {
+            position: absolute;
+            top: env(safe-area-inset-top, 20px);
+            left: 15px;
+            right: 15px;
+            z-index: 200;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-action {
+            pointer-events: auto;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 14px;
+            border-radius: 40px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .search-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 0 12px 12px 12px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--primary);
+        }
+
+        #center-play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 250;
+            width: 70px;
+            height: 70px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: auto;
+        }
+        
+        #center-play-btn.visible { opacity: 1; }
+
+        .touch-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 30%;
+            z-index: 150;
+            pointer-events: auto;
+        }
+        .zone-left { left: 0; }
+        .zone-right { right: 0; }
+
+        #loading-view {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            z-index: 180;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 77, 0, 0.2);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center">
+<body>
 
-    <div id="login-box" class="text-center">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 mb-8 mx-auto">
-        <h1 class="text-2xl font-bold mb-6">مرحباً بك في ADATA TV</h1>
-        <button onclick="handleLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 rounded-2xl font-bold text-lg shadow-2xl transition-all">
-            تسجيل الدخول عبر Google
-        </button>
+    <!-- شاشة الدخول - الشعار ينبض فقط بدون توهج -->
+    <div id="splash-screen">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 pulse-logo" alt="ADATA Logo">
     </div>
 
-    <div id="app-interface" class="hidden w-full max-w-md p-4">
-        <div class="flex items-center justify-between mb-8 border-b border-zinc-800 pb-4">
-            <h2 class="text-xl font-bold text-orange-500">القنوات المباشرة</h2>
-            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-10">
-        </div>
-        <div id="channels-container" class="grid gap-4">
-            <p class="text-zinc-500 text-sm">جاري جلب قائمة القنوات...</p>
-        </div>
+    <div id="app-wrapper">
+        <aside class="sidebar">
+            <div class="p-5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <!-- شعار الشريط الجانبي ينبض بنعومة أيضاً -->
+                    <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6 pulse-logo" alt="Icon">
+                    <span class="font-black text-xl tracking-tighter">ADATA</span>
+                </div>
+                <div class="theme-toggle" id="theme-btn" title="تبديل المظهر">
+                    <i class="fas fa-moon"></i>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <i class="fas fa-search text-gray-500 text-sm"></i>
+                <input type="text" id="search-input" placeholder="ابحث عن قناة أو فيلم...">
+            </div>
+
+            <div class="flex px-4 border-b border-[var(--border)]">
+                <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-[#ff4d00] font-bold text-sm transition-all text-[#ff4d00]" id="tab-live">مباشر</div>
+                <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm transition-all" id="tab-vod">أفلام</div>
+            </div>
+
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6">
+                <!-- List content -->
+            </div>
+        </aside>
+
+        <main class="main-content" id="player-screen">
+            <div id="loading-view">
+                <div class="spinner"></div>
+                <p class="text-white mt-4 text-xs">جاري التحميل...</p>
+            </div>
+
+            <div class="overlay-controls" id="player-overlays">
+                <div class="btn-action" onclick="UIManager.close()">
+                    <i class="fas fa-arrow-right"></i>
+                    <span>رجوع</span>
+                </div>
+                <div class="btn-action" id="zoom-btn">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                    <span id="zoom-label">افتراضي</span>
+                </div>
+            </div>
+
+            <div id="center-play-btn">
+                <i class="fas fa-pause"></i>
+            </div>
+
+            <div class="touch-zone zone-left" id="zone-back"></div>
+            <div class="touch-zone zone-right" id="zone-fwd"></div>
+
+            <div id="video-container" class="zoom-normal"></div>
+        </main>
     </div>
 
     <script>
-        function handleLogin() {
-            if (navigator.userAgent.indexOf("median") >= 0) {
-                median.socialLogin.google.login({
-                    'redirectUri': 'https://omarlalgerino.github.io/-my-web-app/',
-                    'callback': function(result) {
-                        // الانتقال الفوري للقنوات بمجرد اختيار الحساب
-                        showApp();
-                    }
-                });
-            } else {
-                alert("يرجى فتح التطبيق من أيقونة ADATA على الهاتف");
-            }
-        }
+        const API_LINKS = {
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
+        };
 
-        function showApp() {
-            document.getElementById('login-box').classList.add('hidden');
-            document.getElementById('app-interface').classList.remove('hidden');
-            fetchChannels();
-        }
+        const UIManager = {
+            allData: [],
+            filteredData: [],
+            player: null,
+            zoomIndex: 0,
+            currentTab: 'live',
+            isDarkMode: true,
+            controlsTimeout: null,
+            zoomModes: [
+                { class: 'zoom-normal', label: 'افتراضي' },
+                { class: 'zoom-fill', label: 'ملء' },
+                { class: 'zoom-crop', label: 'قص' },
+                { class: 'zoom-15', label: '1.5x' }
+            ],
 
-        async function fetchChannels() {
-            try {
-                // جلب البيانات من ملف Google Sheets الخاص بك
-                const response = await fetch('https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv');
-                const data = await response.text();
-                const rows = data.split('\n').slice(1);
+            async init() {
+                await this.loadCategory('live');
+                this.setupGlobalEvents();
+                setTimeout(() => {
+                    const splash = document.getElementById('splash-screen');
+                    splash.style.opacity = '0';
+                    setTimeout(() => splash.style.display = 'none', 500);
+                    document.getElementById('app-wrapper').style.visibility = 'visible';
+                }, 1500);
+            },
+
+            async loadCategory(type) {
+                const list = document.getElementById('list');
+                list.innerHTML = `<div class="flex justify-center p-10"><div class="spinner"></div></div>`;
                 
-                let html = '';
-                rows.forEach(row => {
-                    const columns = row.split(',');
-                    const name = columns[0].replace(/"/g, '');
-                    if(name) {
-                        html += `
-                            <div class="channel-card p-4 rounded-xl flex items-center gap-4">
-                                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                                <span class="font-bold text-lg">${name}</span>
-                            </div>`;
+                try {
+                    const res = await fetch(API_LINKS[type]);
+                    const text = await res.text();
+                    this.allData = this.parseCSV(text);
+                    this.filteredData = this.allData;
+                    this.renderList();
+                } catch(e) { 
+                    list.innerHTML = `<div class="text-center p-10 text-red-500">فشل تحميل البيانات</div>`;
+                }
+            },
+
+            parseCSV(csv) {
+                const lines = csv.split('\n');
+                return lines.slice(1).map(row => {
+                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return {
+                        name: parts[0]?.replace(/"/g, '').trim(),
+                        url: parts[1]?.replace(/"/g, '').trim(),
+                        logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
+                    };
+                }).filter(i => i.url && i.name);
+            },
+
+            renderList() {
+                const list = document.getElementById('list');
+                if (this.filteredData.length === 0) {
+                    list.innerHTML = `<div class="text-center p-10 text-gray-500 text-sm">لا توجد نتائج للبحث</div>`;
+                    return;
+                }
+                list.innerHTML = this.filteredData.map(item => `
+                    <div class="channel-card" onclick="UIManager.play('${item.url}')">
+                        <div class="channel-logo-container">
+                            <img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50?text=TV'">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-sm truncate" style="color: var(--text-main)">${item.name}</h3>
+                            <p class="text-[10px] text-gray-500">مشاهدة الآن</p>
+                        </div>
+                        <div class="w-8 h-8 flex items-center justify-center rounded-full bg-[#ff4d00]/10">
+                            <i class="fas fa-play text-[10px] text-[#ff4d00]"></i>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            setupGlobalEvents() {
+                document.getElementById('tab-live').onclick = (e) => this.switchTab(e.target, 'live');
+                document.getElementById('tab-vod').onclick = (e) => this.switchTab(e.target, 'vod');
+
+                document.getElementById('search-input').oninput = (e) => {
+                    const term = e.target.value.toLowerCase();
+                    this.filteredData = this.allData.filter(item => 
+                        item.name.toLowerCase().includes(term)
+                    );
+                    this.renderList();
+                };
+
+                document.getElementById('theme-btn').onclick = () => {
+                    this.isDarkMode = !this.isDarkMode;
+                    document.body.classList.toggle('light-mode', !this.isDarkMode);
+                    document.querySelector('#theme-btn i').className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+                };
+
+                document.getElementById('zoom-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    this.zoomIndex = (this.zoomIndex + 1) % this.zoomModes.length;
+                    const mode = this.zoomModes[this.zoomIndex];
+                    const container = document.getElementById('video-container');
+                    this.zoomModes.forEach(m => container.classList.remove(m.class));
+                    container.classList.add(mode.class);
+                    document.getElementById('zoom-label').innerText = mode.label;
+                };
+
+                const centerBtn = document.getElementById('center-play-btn');
+                centerBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if(!this.player) return;
+                    if(this.player.paused()) {
+                        this.player.play();
+                    } else {
+                        this.player.pause();
                     }
+                    this.updatePlayIcon();
+                };
+
+                document.getElementById('player-screen').onclick = () => {
+                    this.toggleControls();
+                };
+
+                let lastTap = 0;
+                document.getElementById('zone-fwd').onclick = (e) => {
+                    e.stopPropagation();
+                    let now = Date.now();
+                    if(now - lastTap < 300) {
+                        this.seek(10);
+                    } else {
+                        this.toggleControls();
+                    }
+                    lastTap = now;
+                };
+
+                document.getElementById('zone-back').onclick = (e) => {
+                    e.stopPropagation();
+                    let now = Date.now();
+                    if(now - lastTap < 300) {
+                        this.seek(-10);
+                    } else {
+                        this.toggleControls();
+                    }
+                    lastTap = now;
+                };
+            },
+
+            updatePlayIcon() {
+                const icon = document.querySelector('#center-play-btn i');
+                if (this.player && !this.player.paused()) {
+                    icon.className = 'fas fa-pause';
+                } else {
+                    icon.className = 'fas fa-play';
+                }
+            },
+
+            toggleControls() {
+                const centerBtn = document.getElementById('center-play-btn');
+                const overlays = document.getElementById('player-overlays');
+                
+                const isVisible = centerBtn.classList.contains('visible');
+                
+                if(!isVisible) {
+                    centerBtn.classList.add('visible');
+                    overlays.style.opacity = '1';
+                    overlays.style.pointerEvents = 'auto';
+                    this.updatePlayIcon();
+                    
+                    clearTimeout(this.controlsTimeout);
+                    this.controlsTimeout = setTimeout(() => {
+                        centerBtn.classList.remove('visible');
+                        overlays.style.opacity = '0';
+                        overlays.style.pointerEvents = 'none';
+                    }, 4000);
+                } else {
+                    centerBtn.classList.remove('visible');
+                    overlays.style.opacity = '0';
+                    overlays.style.pointerEvents = 'none';
+                }
+            },
+
+            switchTab(el, type) {
+                if (this.currentTab === type) return;
+                this.currentTab = type;
+                document.getElementById('search-input').value = '';
+                document.getElementById('tab-live').className = document.getElementById('tab-vod').className = "flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm";
+                el.className = "flex-1 py-3 text-center cursor-pointer border-b-2 border-[#ff4d00] font-bold text-sm text-[#ff4d00]";
+                this.loadCategory(type);
+            },
+
+            play(url) {
+                if(!url) return;
+                document.getElementById('app-wrapper').classList.add('is-playing');
+                document.getElementById('loading-view').style.display = 'flex';
+                
+                const container = document.getElementById('video-container');
+                container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" playsinline preload="auto"></video>`;
+
+                this.player = videojs('main-video', {
+                    autoplay: true,
+                    controls: false,
+                    responsive: true,
+                    fluid: false,
+                    userActions: { doubleClick: false }
                 });
-                document.getElementById('channels-container').innerHTML = html;
-            } catch (error) {
-                document.getElementById('channels-container').innerHTML = '<p class="text-red-500">فشل في تحميل القنوات</p>';
+
+                let type = url.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4";
+                this.player.src({ src: url, type: type });
+
+                this.player.on('waiting', () => {
+                    document.getElementById('loading-view').style.display = 'flex';
+                });
+
+                this.player.on('playing', () => {
+                    document.getElementById('loading-view').style.display = 'none';
+                    this.updatePlayIcon();
+                });
+
+                this.player.on('error', () => {
+                    document.getElementById('loading-view').innerHTML = `<p class="text-white text-sm">خطأ في التشغيل</p><button onclick="UIManager.close()" class="mt-4 btn-action">إغلاق</button>`;
+                });
+
+                this.player.one('canplay', () => {
+                    document.getElementById('loading-view').style.display = 'none';
+                    this.toggleControls();
+                });
+            },
+
+            seek(sec) {
+                if(this.player) {
+                    const time = this.player.currentTime();
+                    this.player.currentTime(time + sec);
+                }
+            },
+
+            close() {
+                document.getElementById('app-wrapper').classList.remove('is-playing');
+                if(this.player) {
+                    this.player.dispose();
+                    this.player = null;
+                }
+                const container = document.getElementById('video-container');
+                container.innerHTML = "";
             }
-        }
+        };
+
+        window.onload = () => UIManager.init();
     </script>
 </body>
 </html>
+
