@@ -76,6 +76,39 @@
             justify-content: center;
         }
 
+        /* شاشة تسجيل الدخول */
+        #auth-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--surface);
+            z-index: 9998;
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .login-btn {
+            width: 100%;
+            max-width: 280px;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:active { transform: scale(0.98); }
+        .btn-google { background: #ffffff; color: #000; }
+        .btn-apple { background: #000000; color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+
         #app-wrapper {
             display: flex;
             height: 100vh;
@@ -282,6 +315,25 @@
         <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
     </div>
 
+    <!-- شاشة تسجيل الدخول -->
+    <div id="auth-screen">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-16 mb-10">
+        <h2 class="text-xl font-bold mb-2">مرحباً بك في ADATA TV</h2>
+        <p class="text-xs text-gray-500 mb-8">سجل دخولك للاستمتاع بأفضل تجربة مشاهدة</p>
+        
+        <button class="login-btn btn-google" onclick="UIManager.handleLogin('Google')">
+            <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" class="w-5 h-5">
+            <span>تسجيل الدخول عبر Google</span>
+        </button>
+        
+        <button class="login-btn btn-apple" onclick="UIManager.handleLogin('Apple')">
+            <i class="fab fa-apple text-xl"></i>
+            <span>تسجيل الدخول عبر Apple</span>
+        </button>
+
+        <p class="mt-10 text-[10px] text-gray-600">من خلال تسجيل الدخول أنت توافق على شروط الاستخدام</p>
+    </div>
+
     <!-- مركز التنبيهات والرسائل -->
     <div id="notif-modal" onclick="if(event.target === this) this.style.display='none'">
         <div class="modal-content">
@@ -347,7 +399,6 @@
                 <i class="fas fa-pause"></i>
             </div>
 
-            <!-- مناطق التسريع والتأخير بالنقر المزدوج -->
             <div class="touch-zone zone-left" id="zone-rewind">
                 <div class="flex flex-col items-center">
                     <i class="fas fa-backward"></i>
@@ -395,8 +446,14 @@
                 
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.display = 'none';
-                    document.getElementById('app-wrapper').style.visibility = 'visible';
-                }, 1500);
+                    document.getElementById('auth-screen').style.display = 'flex';
+                }, 2000);
+            },
+
+            handleLogin(provider) {
+                console.log(`Logging in with ${provider}`);
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('app-wrapper').style.visibility = 'visible';
             },
 
             async fetchMessages() {
@@ -511,12 +568,11 @@
                     }
                 };
 
-                // منطق النقر المزدوج للتسريع والتأخير
                 const rewindZone = document.getElementById('zone-rewind');
                 const forwardZone = document.getElementById('zone-forward');
 
                 rewindZone.onclick = (e) => {
-                    if (e.detail === 2) { // Double click check
+                    if (e.detail === 2) { 
                         this.seek(-10);
                         this.triggerFeedback(rewindZone);
                     } else {
@@ -525,7 +581,7 @@
                 };
 
                 forwardZone.onclick = (e) => {
-                    if (e.detail === 2) { // Double click check
+                    if (e.detail === 2) { 
                         this.seek(10);
                         this.triggerFeedback(forwardZone);
                     } else {
