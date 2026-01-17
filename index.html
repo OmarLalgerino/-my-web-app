@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA - Live</title>
+    <title>ADATA - Clean Pulse</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -22,92 +22,278 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Playfair+Display:ital,wght@1,700&display=swap');
-        :root { --primary: #ff4d00; --surface: #050505; --card: #111111; --text: #ffffff; }
-        body { background: var(--surface); color: var(--text); font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
-        .channel-card { background: var(--card); border-radius: 12px; padding: 12px; margin: 8px 12px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-        .channel-logo { width: 50px; height: 50px; border-radius: 50%; object-fit: contain; background: #000; border: 1px solid var(--primary); }
-        #player-screen { position: fixed; inset: 0; background: #000; z-index: 1000; display: none; }
-        .video-js { width: 100vw !important; height: 100vh !important; }
-        .back-btn { position: absolute; top: 20px; right: 20px; z-index: 1100; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 30px; color: white; border: 1px solid rgba(255,255,255,0.2); }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Playfair+Display:ital,wght@1,700&display=swap');
+        
+        :root {
+            --primary: #ff4d00;
+            --secondary: #ff9500;
+            --surface: #050505;
+            --card: #111111;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-dim: #a0a0a0;
+            --fire-glow-subtle: rgba(255, 77, 0, 0.3);
+        }
+
+        body.light-mode {
+            --surface: #f3f4f6;
+            --card: #ffffff;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-main: #111111;
+            --text-dim: #4b5563;
+            --fire-glow-subtle: rgba(255, 77, 0, 0.15);
+        }
+
+        body {
+            background-color: var(--surface);
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            height: 100vh;
+            overscroll-behavior-y: contain;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Logo Pulse Animation */
+        @keyframes logo-pulse-clean {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse-logo {
+            animation: logo-pulse-clean 2.5s infinite ease-in-out;
+            filter: none !important;
+        }
+
+        /* Professional Developer Signature Style */
+        .dev-signature {
+            padding: 12px;
+            margin: 10px 15px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255, 77, 0, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border: 1px solid rgba(255, 77, 0, 0.15);
+            backdrop-filter: blur(5px);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dev-signature::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 77, 0, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .developer-name {
+            font-family: 'Playfair Display', serif;
+            background: linear-gradient(to right, #ffffff, var(--primary), #ffffff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-style: italic;
+            font-weight: 700;
+            font-size: 0.95rem;
+            animation: shine 4s linear infinite;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        #video-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .video-js {
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        .zoom-normal video { object-fit: contain !important; }
+        .zoom-fill video { object-fit: fill !important; }
+        .zoom-crop video { object-fit: cover !important; }
+        .zoom-15 video { object-fit: cover !important; transform: scale(1.5); }
+
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        #app-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            visibility: hidden;
+        }
+
+        .sidebar {
+            width: 100%;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+            transition: background-color 0.3s ease;
+        }
+
+        .main-content {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 100;
+            display: none;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .is-playing .main-content { display: flex; }
+
+        .channel-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
+
+        .channel-card:active {
+            transform: scale(0.98);
+        }
+
+        .channel-logo-container {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
+        }
+
+        .channel-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px;
+            border: 1.5px solid rgba(255, 77, 0, 0.3);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .channel-card:hover .channel-logo {
+            transform: scale(1.1);
+            border-color: var(--primary);
+        }
+
+        .overlay-controls {
+            position: absolute;
+            top: env(safe-area-inset-top, 20px);
+            left: 15px;
+            right: 15px;
+            z-index: 200;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-action {
+            pointer-events: auto;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 14px;
+            border-radius: 40px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .search-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 0 12px 12px 12px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--primary);
+        }
+
+        #loading-view {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            z-index: 180;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 77, 0, 0.2);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-
-    <div id="main-ui" class="flex flex-col h-full">
-        <div class="p-6 flex justify-between items-center border-b border-white/5">
-            <h1 class="text-2xl font-black text-[#ff4d00]">ADATA</h1>
-            <i class="fas fa-bell text-gray-400"></i>
-        </div>
-        
-        <div id="list" class="flex-1 overflow-y-auto py-4">
-            <div class="text-center p-10 text-gray-500">جاري تحميل القنوات...</div>
-        </div>
-
-        <div class="p-4 text-center border-t border-white/5">
-            <span style="font-family: 'Playfair Display'; font-style: italic;" class="text-gray-500 text-sm">Omar L'Algerino</span>
-        </div>
-    </div>
-
-    <div id="player-screen">
-        <button class="back-btn" onclick="closePlayer()"><i class="fas fa-arrow-right"></i> رجوع</button>
-        <div id="video-holder"></div>
-    </div>
-
-    <script>
-        // روابط ملفات القنوات (تأكد أنها "منشورة على الويب" بصيغة CSV)
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
-
-        let player;
-
-        async function loadChannels() {
-            try {
-                const response = await fetch(CSV_URL);
-                const data = await response.text();
-                const rows = data.split('\n').slice(1);
-                
-                const listContainer = document.getElementById('list');
-                listContainer.innerHTML = '';
-
-                rows.forEach(row => {
-                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    const name = columns[0]?.replace(/"/g, '');
-                    const url = columns[1]?.replace(/"/g, '');
-                    const logo = columns[2]?.replace(/"/g, '') || 'https://via.placeholder.com/50';
-
-                    if (name && url) {
-                        const card = document.createElement('div');
-                        card.className = 'channel-card';
-                        card.onclick = () => playVideo(url);
-                        card.innerHTML = `
-                            <img src="${logo}" class="channel-logo">
-                            <span class="font-bold">${name}</span>
-                        `;
-                        listContainer.appendChild(card);
-                    }
-                });
-            } catch (error) {
-                document.getElementById('list').innerHTML = '<div class="text-center text-red-500 p-10">فشل تحميل القنوات. تأكد من إعدادات الملف.</div>';
-            }
-        }
-
-        function playVideo(url) {
-            document.getElementById('player-screen').style.display = 'block';
-            const holder = document.getElementById('video-holder');
-            holder.innerHTML = `<video id="v-player" class="video-js vjs-default-skin" controls autoplay playsinline></video>`;
-            
-            player = videojs('v-player');
-            player.src({ src: url, type: url.includes('m3u8') ? 'application/x-mpegURL' : 'video/mp4' });
-        }
-
-        function closePlayer() {
-            if (player) {
-                player.dispose();
-            }
-            document.getElementById('player-screen').style.display = 'none';
-        }
-
-        window.onload = loadChannels;
-    </script>
-</body>
-</html>
