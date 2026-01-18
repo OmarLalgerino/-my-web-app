@@ -12,15 +12,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Playfair+Display:ital,wght@1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
         
         :root {
             --primary: #ff4d00;
+            --secondary: #ff9500;
             --surface: #050505;
             --card: #111111;
             --border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff;
             --text-dim: #a0a0a0;
+            --fire-glow-subtle: rgba(255, 77, 0, 0.3);
         }
 
         body.light-mode {
@@ -29,6 +31,7 @@
             --border: rgba(0, 0, 0, 0.1);
             --text-main: #111111;
             --text-dim: #4b5563;
+            --fire-glow-subtle: rgba(255, 77, 0, 0.15);
         }
 
         body {
@@ -39,8 +42,44 @@
             overflow: hidden;
             user-select: none;
             height: 100vh;
+            overscroll-behavior-y: contain;
             transition: background-color 0.3s ease;
         }
+
+        /* أنيميشن النبض النظيف - تم حذف التوهج (drop-shadow) */
+        @keyframes logo-pulse-clean {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse-logo {
+            animation: logo-pulse-clean 2.5s infinite ease-in-out;
+            /* التأكد من عدم وجود أي ظل أو توهج */
+            filter: none !important;
+        }
+
+        #video-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .video-js {
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        .zoom-normal video { object-fit: contain !important; }
+        .zoom-fill video { object-fit: fill !important; }
+        .zoom-crop video { object-fit: cover !important; }
+        .zoom-15 video { object-fit: cover !important; transform: scale(1.5); }
 
         #splash-screen {
             position: fixed;
@@ -52,15 +91,6 @@
             align-items: center;
             justify-content: center;
             transition: opacity 0.5s ease;
-        }
-
-        .pulse-logo {
-            animation: logo-pulse-clean 2.5s infinite ease-in-out;
-        }
-
-        @keyframes logo-pulse-clean {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
         }
 
         #app-wrapper {
@@ -76,6 +106,7 @@
             display: flex;
             flex-direction: column;
             z-index: 50;
+            transition: background-color 0.3s ease;
         }
 
         .main-content {
@@ -84,7 +115,8 @@
             background: #000;
             z-index: 100;
             display: none;
-            flex-direction: column;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         .is-playing .main-content { display: flex; }
@@ -102,36 +134,50 @@
             transition: 0.2s;
         }
 
-        .channel-card:active { transform: scale(0.98); }
+        .channel-card:active {
+            transform: scale(0.98);
+        }
 
-        .channel-logo {
+        /* توهج خفيف جداً لقوائم القنوات فقط */
+        @keyframes soft-glow {
+            0%, 100% { 
+                box-shadow: 0 0 5px var(--fire-glow-subtle);
+                border-color: rgba(255, 77, 0, 0.4);
+            }
+            50% { 
+                box-shadow: 0 0 10px var(--fire-glow-subtle);
+                border-color: rgba(255, 77, 0, 0.7);
+            }
+        }
+
+        .channel-logo-container {
+            position: relative;
             width: 50px;
             height: 50px;
+            flex-shrink: 0;
+        }
+
+        .channel-logo {
+            width: 100%;
+            height: 100%;
             object-fit: contain;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.03);
+            padding: 4px;
             border: 1.5px solid rgba(255, 77, 0, 0.3);
+            animation: soft-glow 3s infinite ease-in-out;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        #video-container {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .channel-card:hover .channel-logo {
+            transform: scale(1.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--fire-glow-subtle);
         }
-
-        .zoom-normal video { object-fit: contain !important; }
-        .zoom-fill video { object-fit: fill !important; }
-        .zoom-crop video { object-fit: cover !important; }
-        .zoom-15 video { object-fit: cover !important; transform: scale(1.5); }
 
         .overlay-controls {
             position: absolute;
-            top: 20px;
+            top: env(safe-area-inset-top, 20px);
             left: 15px;
             right: 15px;
             z-index: 200;
@@ -156,20 +202,83 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .dev-signature {
-            padding: 12px;
-            margin: 10px 15px;
+        .search-box {
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            background: linear-gradient(135deg, rgba(255, 77, 0, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-            border: 1px solid rgba(255, 77, 0, 0.15);
-            text-align: center;
+            margin: 0 12px 12px 12px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .developer-name {
-            font-family: 'Playfair Display', serif;
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--border);
             color: var(--primary);
-            font-weight: 700;
-            font-size: 0.95rem;
+        }
+
+        #center-play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 250;
+            width: 70px;
+            height: 70px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: auto;
+        }
+        
+        #center-play-btn.visible { opacity: 1; }
+
+        .touch-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 30%;
+            z-index: 150;
+            pointer-events: auto;
+        }
+        .zone-left { left: 0; }
+        .zone-right { right: 0; }
+
+        #loading-view {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            z-index: 180;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .spinner {
@@ -181,65 +290,70 @@
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
+    <!-- شاشة الدخول - الشعار ينبض فقط بدون توهج -->
     <div id="splash-screen">
         <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 pulse-logo" alt="ADATA Logo">
-        <p class="text-white mt-4 text-xs animate-pulse">جاري التحميل...</p>
     </div>
 
     <div id="app-wrapper">
         <aside class="sidebar">
             <div class="p-5 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6">
+                    <!-- شعار الشريط الجانبي ينبض بنعومة أيضاً -->
+                    <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6 pulse-logo" alt="Icon">
                     <span class="font-black text-xl tracking-tighter">ADATA</span>
                 </div>
-                <div class="text-primary cursor-pointer" id="theme-btn">
+                <div class="theme-toggle" id="theme-btn" title="تبديل المظهر">
                     <i class="fas fa-moon"></i>
                 </div>
             </div>
 
-            <div class="px-4 mb-3">
-                <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 flex items-center gap-2">
-                    <i class="fas fa-search text-gray-500 text-sm"></i>
-                    <input type="text" id="search-input" class="bg-transparent border-none outline-none text-sm w-full" placeholder="ابحث عن قناة...">
-                </div>
+            <div class="search-box">
+                <i class="fas fa-search text-gray-500 text-sm"></i>
+                <input type="text" id="search-input" placeholder="ابحث عن قناة أو فيلم...">
             </div>
 
             <div class="flex px-4 border-b border-[var(--border)]">
-                <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-primary font-bold text-primary" id="tab-live">مباشر</div>
-                <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold" id="tab-vod">أفلام</div>
+                <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-[#ff4d00] font-bold text-sm transition-all text-[#ff4d00]" id="tab-live">مباشر</div>
+                <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm transition-all" id="tab-vod">أفلام</div>
             </div>
 
-            <div id="list" class="flex-1 overflow-y-auto pt-2"></div>
-
-            <div class="dev-signature">
-                <div class="text-[9px] text-gray-500 mb-1 uppercase tracking-widest">المطور الرسمي</div>
-                <div class="developer-name">Omar L'Algerino</div>
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6">
+                <!-- List content -->
             </div>
         </aside>
 
         <main class="main-content" id="player-screen">
-            <div id="loading-view" class="absolute inset-0 z-[180] bg-black flex flex-col items-center justify-center hidden">
+            <div id="loading-view">
                 <div class="spinner"></div>
+                <p class="text-white mt-4 text-xs">جاري التحميل...</p>
             </div>
 
             <div class="overlay-controls" id="player-overlays">
                 <div class="btn-action" onclick="UIManager.close()">
-                    <i class="fas fa-arrow-right"></i> <span>رجوع</span>
+                    <i class="fas fa-arrow-right"></i>
+                    <span>رجوع</span>
                 </div>
                 <div class="btn-action" id="zoom-btn">
-                    <i class="fas fa-expand"></i> <span id="zoom-label">افتراضي</span>
+                    <i class="fas fa-expand-arrows-alt"></i>
+                    <span id="zoom-label">افتراضي</span>
                 </div>
             </div>
 
-            <div id="center-play-btn" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[250] w-16 h-16 bg-black/50 rounded-full flex items-center justify-center text-white text-2xl border border-white/20 cursor-pointer opacity-0 transition-opacity">
+            <div id="center-play-btn">
                 <i class="fas fa-pause"></i>
             </div>
+
+            <div class="touch-zone zone-left" id="zone-back"></div>
+            <div class="touch-zone zone-right" id="zone-fwd"></div>
 
             <div id="video-container" class="zoom-normal"></div>
         </main>
@@ -256,7 +370,9 @@
             filteredData: [],
             player: null,
             zoomIndex: 0,
+            currentTab: 'live',
             isDarkMode: true,
+            controlsTimeout: null,
             zoomModes: [
                 { class: 'zoom-normal', label: 'افتراضي' },
                 { class: 'zoom-fill', label: 'ملء' },
@@ -265,22 +381,20 @@
             ],
 
             async init() {
-                this.setupGlobalEvents();
                 await this.loadCategory('live');
-                
+                this.setupGlobalEvents();
                 setTimeout(() => {
                     const splash = document.getElementById('splash-screen');
                     splash.style.opacity = '0';
-                    setTimeout(() => {
-                        splash.style.display = 'none';
-                        document.getElementById('app-wrapper').style.visibility = 'visible';
-                    }, 500);
+                    setTimeout(() => splash.style.display = 'none', 500);
+                    document.getElementById('app-wrapper').style.visibility = 'visible';
                 }, 1500);
             },
 
             async loadCategory(type) {
                 const list = document.getElementById('list');
                 list.innerHTML = `<div class="flex justify-center p-10"><div class="spinner"></div></div>`;
+                
                 try {
                     const res = await fetch(API_LINKS[type]);
                     const text = await res.text();
@@ -288,12 +402,12 @@
                     this.filteredData = this.allData;
                     this.renderList();
                 } catch(e) { 
-                    list.innerHTML = `<div class="text-center p-10 text-red-500 text-xs">فشل تحميل البيانات</div>`;
+                    list.innerHTML = `<div class="text-center p-10 text-red-500">فشل تحميل البيانات</div>`;
                 }
             },
 
             parseCSV(csv) {
-                const lines = csv.split('\n').filter(l => l.trim() !== '');
+                const lines = csv.split('\n');
                 return lines.slice(1).map(row => {
                     const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     return {
@@ -306,25 +420,35 @@
 
             renderList() {
                 const list = document.getElementById('list');
+                if (this.filteredData.length === 0) {
+                    list.innerHTML = `<div class="text-center p-10 text-gray-500 text-sm">لا توجد نتائج للبحث</div>`;
+                    return;
+                }
                 list.innerHTML = this.filteredData.map(item => `
                     <div class="channel-card" onclick="UIManager.play('${item.url}')">
-                        <img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50'">
+                        <div class="channel-logo-container">
+                            <img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50?text=TV'">
+                        </div>
                         <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-sm truncate">${item.name}</h3>
+                            <h3 class="font-bold text-sm truncate" style="color: var(--text-main)">${item.name}</h3>
                             <p class="text-[10px] text-gray-500">مشاهدة الآن</p>
                         </div>
-                        <i class="fas fa-play text-xs text-primary bg-primary/10 p-2 rounded-full"></i>
+                        <div class="w-8 h-8 flex items-center justify-center rounded-full bg-[#ff4d00]/10">
+                            <i class="fas fa-play text-[10px] text-[#ff4d00]"></i>
+                        </div>
                     </div>
                 `).join('');
             },
 
             setupGlobalEvents() {
-                document.getElementById('tab-live').onclick = () => this.switchTab('live');
-                document.getElementById('tab-vod').onclick = () => this.switchTab('vod');
-                
+                document.getElementById('tab-live').onclick = (e) => this.switchTab(e.target, 'live');
+                document.getElementById('tab-vod').onclick = (e) => this.switchTab(e.target, 'vod');
+
                 document.getElementById('search-input').oninput = (e) => {
                     const term = e.target.value.toLowerCase();
-                    this.filteredData = this.allData.filter(i => i.name.toLowerCase().includes(term));
+                    this.filteredData = this.allData.filter(item => 
+                        item.name.toLowerCase().includes(term)
+                    );
                     this.renderList();
                 };
 
@@ -344,70 +468,82 @@
                     document.getElementById('zoom-label').innerText = mode.label;
                 };
 
-                document.getElementById('center-play-btn').onclick = (e) => {
+                const centerBtn = document.getElementById('center-play-btn');
+                centerBtn.onclick = (e) => {
                     e.stopPropagation();
-                    if (!this.player) return;
-                    if (this.player.paused()) {
+                    if(!this.player) return;
+                    if(this.player.paused()) {
                         this.player.play();
-                        document.querySelector('#center-play-btn i').className = 'fas fa-pause';
                     } else {
                         this.player.pause();
-                        document.querySelector('#center-play-btn i').className = 'fas fa-play';
                     }
+                    this.updatePlayIcon();
                 };
 
                 document.getElementById('player-screen').onclick = () => {
-                    const overlays = document.getElementById('player-overlays');
-                    const playBtn = document.getElementById('center-play-btn');
-                    const isHidden = overlays.style.opacity === '0';
-                    overlays.style.opacity = isHidden ? '1' : '0';
-                    playBtn.style.opacity = isHidden ? '1' : '0';
+                    this.toggleControls();
+                };
+
+                let lastTap = 0;
+                document.getElementById('zone-fwd').onclick = (e) => {
+                    e.stopPropagation();
+                    let now = Date.now();
+                    if(now - lastTap < 300) {
+                        this.seek(10);
+                    } else {
+                        this.toggleControls();
+                    }
+                    lastTap = now;
+                };
+
+                document.getElementById('zone-back').onclick = (e) => {
+                    e.stopPropagation();
+                    let now = Date.now();
+                    if(now - lastTap < 300) {
+                        this.seek(-10);
+                    } else {
+                        this.toggleControls();
+                    }
+                    lastTap = now;
                 };
             },
 
-            switchTab(type) {
-                document.getElementById('tab-live').className = type === 'live' ? 'flex-1 py-3 text-center cursor-pointer border-b-2 border-primary font-bold text-primary' : 'flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold';
-                document.getElementById('tab-vod').className = type === 'vod' ? 'flex-1 py-3 text-center cursor-pointer border-b-2 border-primary font-bold text-primary' : 'flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold';
-                this.loadCategory(type);
-            },
-
-            play(url) {
-                document.body.classList.add('is-playing');
-                const container = document.getElementById('video-container');
-                container.innerHTML = `<video id="main-player" class="video-js vjs-default-skin" playsinline></video>`;
-                
-                const loader = document.getElementById('loading-view');
-                loader.classList.remove('hidden');
-
-                if(this.player) this.player.dispose();
-
-                this.player = videojs('main-player', {
-                    autoplay: true,
-                    controls: false,
-                    responsive: true
-                });
-
-                this.player.src({ src: url, type: url.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' });
-                
-                this.player.on('playing', () => loader.classList.add('hidden'));
-                this.player.on('error', () => {
-                    loader.classList.add('hidden');
-                    alert('خطأ في تشغيل الرابط');
-                    this.close();
-                });
-            },
-
-            close() {
-                document.body.classList.remove('is-playing');
-                if (this.player) {
-                    this.player.dispose();
-                    this.player = null;
+            updatePlayIcon() {
+                const icon = document.querySelector('#center-play-btn i');
+                if (this.player && !this.player.paused()) {
+                    icon.className = 'fas fa-pause';
+                } else {
+                    icon.className = 'fas fa-play';
                 }
-            }
-        };
+            },
 
-        UIManager.init();
-    </script>
-</body>
-</html>
+            toggleControls() {
+                const centerBtn = document.getElementById('center-play-btn');
+                const overlays = document.getElementById('player-overlays');
+                
+                const isVisible = centerBtn.classList.contains('visible');
+                
+                if(!isVisible) {
+                    centerBtn.classList.add('visible');
+                    overlays.style.opacity = '1';
+                    overlays.style.pointerEvents = 'auto';
+                    this.updatePlayIcon();
+                    
+                    clearTimeout(this.controlsTimeout);
+                    this.controlsTimeout = setTimeout(() => {
+                        centerBtn.classList.remove('visible');
+                        overlays.style.opacity = '0';
+                        overlays.style.pointerEvents = 'none';
+                    }, 4000);
+                } else {
+                    centerBtn.classList.remove('visible');
+                    overlays.style.opacity = '0';
+                    overlays.style.pointerEvents = 'none';
+                }
+            },
 
+            switchTab(el, type) {
+                if (this.currentTab === type) return;
+                this.currentTab = type;
+                document.getElementById('search-input').value = '';
+                document.getElementById('tab-live').className = document.getElementById('tab-vod').className = "flex-
