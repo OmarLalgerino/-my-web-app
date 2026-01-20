@@ -2,43 +2,43 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ADATA TV - Direct TS Player</title>
+    <title>ADATA TV PRO - Ultimate Player</title>
     
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-        body { background: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
-        .main-container { display: flex; flex-direction: column; height: 100vh; }
-        #video-overlay { position: fixed; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; }
-        video { width: 100%; height: 100%; background: #000; }
-        .is-playing #video-overlay { display: flex; }
-        .channel-item { background: #111; padding: 15px; margin: 8px 15px; border-radius: 10px; border: 1px solid #222; cursor: pointer; transition: 0.3s; }
-        .channel-item:hover { border-color: #ff9500; }
-        .back-btn { position: absolute; top: 20px; right: 20px; z-index: 1100; background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        body { background: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; }
+        .channel-item { background: #111; padding: 18px; margin: 10px 15px; border-radius: 12px; border: 1px solid #222; cursor: pointer; display: flex; align-items: center; transition: 0.3s; }
+        .channel-item:hover { border-color: #ff9500; background: #1a1a1a; }
+        #video-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: none; }
+        .video-js { width: 100% !important; height: 100% !important; }
+        .back-btn { position: absolute; top: 20px; left: 20px; z-index: 11000; background: rgba(255,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <div class="p-4 bg-zinc-900 shadow-xl text-center font-bold text-orange-500">ADATA TV PRO</div>
-        <div id="list" class="flex-1 overflow-y-auto py-4">
-            <div class="text-center p-10 text-gray-500 animate-pulse">جاري تحميل القنوات...</div>
+    <div id="ui-content">
+        <div class="p-4 bg-zinc-900 shadow-2xl text-center font-bold text-orange-500 text-xl border-b border-orange-500/20">ADATA TV PRO</div>
+        <div id="list" class="py-4 pb-20">
+            <div class="text-center p-10 text-gray-500 animate-pulse">جاري جلب القنوات من Google Sheets...</div>
         </div>
     </div>
 
     <div id="video-overlay">
-        <div class="back-btn" onclick="stopStream()"><i class="fas fa-arrow-right"></i> رجوع</div>
-        <video id="videoElement" controls autoplay playsinline muted></video>
+        <div class="back-btn" onclick="closePlayer()">إغلاق X</div>
+        <video id="my-video" class="video-js vjs-big-play-centered vjs-theme-city" controls preload="auto" width="auto" height="auto"></video>
     </div>
 
     <script>
-        let player = null;
+        // رابط الشيت الخاص بك (تأكد أنه متاح للجميع)
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
+        
+        // إعداد المشغل
+        let player = videojs('my-video');
 
         async function fetchChannels() {
             try {
@@ -46,56 +46,43 @@
                 const csvText = await response.text();
                 const rows = csvText.split('\n').slice(1);
                 
-                const html = rows.map(row => {
+                let html = '';
+                rows.forEach(row => {
                     const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if(columns.length < 2) return '';
-                    const name = columns[0].replace(/"/g, '');
-                    const url = columns[1].replace(/"/g, '');
-                    return `<div class="channel-item" onclick="startStream('${url}')">
-                                <i class="fas fa-tv ml-2 text-orange-500"></i> ${name}
+                    if(columns.length >= 2) {
+                        const name = columns[0].replace(/"/g, '');
+                        const url = columns[1].replace(/"/g, '');
+                        html += `
+                            <div class="channel-item" onclick="openPlayer('${url.trim()}')">
+                                <div class="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center ml-4">
+                                    <span class="text-orange-500">▶</span>
+                                </div>
+                                <span class="text-lg font-medium">${name}</span>
                             </div>`;
-                }).join('');
+                    }
+                });
                 document.getElementById('list').innerHTML = html;
             } catch (err) {
-                document.getElementById('list').innerHTML = '<div class="text-center text-red-500">فشل تحميل البيانات</div>';
+                document.getElementById('list').innerHTML = '<div class="text-center text-red-500">فشل تحميل القنوات</div>';
             }
         }
 
-        function startStream(url) {
-            document.body.classList.add('is-playing');
-            const videoElement = document.getElementById('videoElement');
+        function openPlayer(url) {
+            document.getElementById('video-overlay').style.display = 'block';
+            
+            // تحديد نوع الملف تلقائياً
+            let type = 'application/x-mpegURL'; // لروابط m3u8 و hls
+            if (url.toLowerCase().includes('.mp4')) type = 'video/mp4';
+            if (url.toLowerCase().includes('.ts')) type = 'video/mp2t';
+            if (url.toLowerCase().includes('.mkv')) type = 'video/webm';
 
-            // تدمير أي مشغل سابق لتفريغ الذاكرة
-            if (player) { stopStream(); }
-
-            // ميزة mpegts.js: تشغيل روابط TS المباشرة (مثل VLC)
-            if (mpegts.getFeatureList().mseLivePlayback) {
-                player = mpegts.createPlayer({
-                    type: 'mse', // تعني Media Source Extensions لتشغيل TS
-                    isLive: true,
-                    url: url
-                }, {
-                    enableWorker: true,
-                    stashInitialSize: 128 // لتقليل التأخير (Latency)
-                });
-                player.attachMediaElement(videoElement);
-                player.load();
-                player.play();
-                
-                // إلغاء الكتم تلقائياً بعد ثانية
-                setTimeout(() => { videoElement.muted = false; }, 1000);
-            }
+            player.src({ src: url, type: type });
+            player.play();
         }
 
-        function stopStream() {
-            document.body.classList.remove('is-playing');
-            if (player) {
-                player.pause();
-                player.unload();
-                player.detachMediaElement();
-                player.destroy();
-                player = null;
-            }
+        function closePlayer() {
+            player.pause();
+            document.getElementById('video-overlay').style.display = 'none';
         }
 
         window.onload = fetchChannels;
