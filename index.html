@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - Professional View</title>
+    <title>ADATA TV - Pro Player</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
@@ -126,6 +126,7 @@
             display: flex;
             justify-content: space-between;
             pointer-events: none;
+            opacity: 1;
             transition: opacity 0.3s ease;
         }
         
@@ -174,24 +175,6 @@
             background: var(--card);
             border: 1px solid var(--border);
             color: var(--primary);
-        }
-
-        /* Tabs Styling */
-        .tab-item {
-            flex: 1;
-            padding: 12px 0;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: #6b7280;
-            border-bottom: 2px solid transparent;
-            transition: 0.3s;
-        }
-
-        .tab-item.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
         }
 
         #center-play-btn {
@@ -244,7 +227,10 @@
 <body>
 
     <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
+        <div class="flex flex-col items-center gap-4">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
+            <p class="text-orange-500 font-bold animate-bounce text-sm">جاري تشغيل المحرك...</p>
+        </div>
     </div>
 
     <div id="app-wrapper">
@@ -258,14 +244,12 @@
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500 text-sm"></i>
-                <input type="text" id="search-input" placeholder="ابحث عن اسم العرض...">
+                <input type="text" id="search-input" placeholder="ابحث عن قناة أو فيلم...">
             </div>
 
-            <div class="flex px-2 border-b border-[var(--border)] overflow-x-auto no-scrollbar">
-                <div class="tab-item active" data-type="live">مباشر</div>
-                <div class="tab-item" data-type="vod">أفلام</div>
-                <div class="tab-item" data-type="series">مسلسلات</div>
-                <div class="tab-item" data-type="anime">أنمي</div>
+            <div class="flex px-4 border-b border-[var(--border)]">
+                <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm" id="tab-live">مباشر</div>
+                <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm" id="tab-vod">أفلام</div>
             </div>
 
             <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
@@ -274,6 +258,7 @@
         <main class="main-content" id="player-screen">
             <div id="loading-view">
                 <div class="w-8 h-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-white text-xs mt-4">جاري التحميل...</span>
             </div>
 
             <div class="overlay-controls" id="player-overlays">
@@ -301,9 +286,7 @@
     <script>
         const API_LINKS = {
             live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
-            anime: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv'
+            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
@@ -325,48 +308,45 @@
                 await this.loadCategory('live');
                 this.setupGlobalEvents();
                 setTimeout(() => {
-                    document.getElementById('splash-screen').style.display = 'none';
-                    document.getElementById('app-wrapper').style.visibility = 'visible';
+                    document.getElementById('splash-screen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('splash-screen').style.display = 'none';
+                        document.getElementById('app-wrapper').style.visibility = 'visible';
+                    }, 500);
                 }, 1500);
             },
 
             async loadCategory(type) {
-                const list = document.getElementById('list');
-                list.innerHTML = `<div class="flex justify-center p-10"><div class="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div></div>`;
-                
                 try {
                     const res = await fetch(API_LINKS[type]);
                     const text = await res.text();
                     this.allData = this.parseCSV(text);
                     this.filteredData = this.allData;
                     this.renderList();
-                } catch(e) { 
-                    list.innerHTML = `<div class="text-center p-10 text-red-500 text-sm">خطأ في تحميل البيانات</div>`;
-                }
+                } catch(e) { console.error("Error loading data"); }
             },
 
             parseCSV(csv) {
                 return csv.split('\n').slice(1).map(row => {
-                    // Handle quoted commas in CSV
                     const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     return {
                         name: parts[0]?.replace(/"/g, '').trim(),
                         url: parts[1]?.replace(/"/g, '').trim(),
                         logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
                     };
-                }).filter(i => i.url && i.name);
+                }).filter(i => i.url);
             },
 
             renderList() {
                 const list = document.getElementById('list');
                 if (this.filteredData.length === 0) {
-                    list.innerHTML = `<div class="text-center p-10 text-gray-500 text-sm">لا توجد نتائج</div>`;
+                    list.innerHTML = `<div class="text-center p-10 text-gray-500 text-sm">لا توجد نتائج للبحث</div>`;
                     return;
                 }
                 list.innerHTML = this.filteredData.map(item => `
                     <div class="channel-card" onclick="UIManager.play('${item.url}')">
-                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg bg-black/10" onerror="this.src='https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png'">
-                        <div class="flex-1 min-w-0 text-right">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg bg-black/10">
+                        <div class="flex-1 min-w-0">
                             <h3 class="font-bold text-xs truncate" style="color: var(--text-main)">${item.name}</h3>
                         </div>
                         <i class="fas fa-play text-[10px] text-orange-500"></i>
@@ -375,22 +355,9 @@
             },
 
             setupGlobalEvents() {
-                // Tab switching
-                document.querySelectorAll('.tab-item').forEach(tab => {
-                    tab.onclick = (e) => {
-                        const type = e.target.dataset.type;
-                        if (this.currentTab === type) return;
-                        
-                        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-                        e.target.classList.add('active');
-                        
-                        this.currentTab = type;
-                        document.getElementById('search-input').value = '';
-                        this.loadCategory(type);
-                    };
-                });
+                document.getElementById('tab-live').onclick = (e) => this.switchTab(e.target, 'live');
+                document.getElementById('tab-vod').onclick = (e) => this.switchTab(e.target, 'vod');
 
-                // Search logic
                 document.getElementById('search-input').oninput = (e) => {
                     const term = e.target.value.toLowerCase();
                     this.filteredData = this.allData.filter(item => 
@@ -399,7 +366,6 @@
                     this.renderList();
                 };
 
-                // Theme toggle
                 document.getElementById('theme-btn').onclick = () => {
                     this.isDarkMode = !this.isDarkMode;
                     document.body.classList.toggle('light-mode', !this.isDarkMode);
@@ -407,9 +373,7 @@
                     icon.className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
                 };
 
-                // Zoom control
-                document.getElementById('zoom-btn').onclick = (e) => {
-                    e.stopPropagation();
+                document.getElementById('zoom-btn').onclick = () => {
                     this.zoomIndex = (this.zoomIndex + 1) % this.zoomModes.length;
                     const mode = this.zoomModes[this.zoomIndex];
                     const container = document.getElementById('video-container');
@@ -418,20 +382,20 @@
                     document.getElementById('zoom-label').innerText = mode.label;
                 };
 
-                // Play/Pause central button
                 const centerBtn = document.getElementById('center-play-btn');
                 centerBtn.onclick = (e) => {
                     e.stopPropagation();
                     if(!this.player) return;
                     if(this.player.paused()) {
                         this.player.play();
+                        centerBtn.innerHTML = '<i class="fas fa-pause"></i>';
                     } else {
                         this.player.pause();
+                        centerBtn.innerHTML = '<i class="fas fa-play"></i>';
                     }
-                    this.updatePlayIcon();
+                    this.toggleControls(true);
                 };
 
-                // Player interaction
                 document.getElementById('player-screen').onclick = () => {
                     this.toggleControls(true);
                 };
@@ -451,15 +415,6 @@
                     else this.toggleControls(true);
                     lastTap = now;
                 };
-            },
-
-            updatePlayIcon() {
-                const centerBtn = document.getElementById('center-play-btn');
-                if(this.player.paused()) {
-                    centerBtn.innerHTML = '<i class="fas fa-play"></i>';
-                } else {
-                    centerBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                }
             },
 
             toggleControls(show) {
@@ -486,28 +441,31 @@
                 const container = document.getElementById('video-container');
                 container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" playsinline preload="auto"></video>`;
 
+                // تعديل نوع المحتوى ليدعم روابط الأرقام مثل VLC
+                let type = "application/x-mpegURL"; 
+                if (url.includes(".mp4")) type = "video/mp4";
+
                 this.player = videojs('main-video', {
                     autoplay: true,
                     responsive: true,
                     fluid: false,
-                    controls: false,
-                    userActions: { doubleClick: false }
+                    html5: {
+                        vhs: { overrideNative: true }
+                    }
                 });
 
-                let type = (url.includes(".m3u8") || url.includes("google")) ? "application/x-mpegURL" : "video/mp4";
                 this.player.src({ src: url, type: type });
-                
-                this.player.on('play', () => this.updatePlayIcon());
-                this.player.on('pause', () => this.updatePlayIcon());
-                
+
                 this.player.on('canplay', () => {
                     document.getElementById('loading-view').style.display = 'none';
                     this.toggleControls(true);
                 });
 
                 this.player.on('error', () => {
-                   document.getElementById('loading-view').innerHTML = `<div class="text-white text-xs">عذراً، الرابط لا يعمل حالياً</div>`;
-                   setTimeout(() => this.close(), 2000);
+                    // محاولة أخيرة إذا فشل البث
+                    if(type === "application/x-mpegURL") {
+                        this.player.src({ src: url, type: "video/mp4" });
+                    }
                 });
             },
 
@@ -528,4 +486,3 @@
     </script>
 </body>
 </html>
-
