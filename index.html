@@ -21,6 +21,7 @@
             --card: #111111;
             --border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff;
+            --text-dim: #a0a0a0;
         }
 
         body {
@@ -40,6 +41,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: opacity 0.5s ease;
         }
 
         #app-wrapper {
@@ -79,16 +81,22 @@
             gap: 12px;
             cursor: pointer;
             border: 1px solid var(--border);
+            transition: transform 0.2s;
         }
+        .channel-card:active { transform: scale(0.98); }
 
         .btn-external {
-            background: var(--primary);
+            background: #e15b00;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 24px;
+            border-radius: 50px;
             font-weight: bold;
             margin-top: 15px;
-            display: inline-block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(225, 91, 0, 0.3);
         }
 
         .spinner {
@@ -99,6 +107,12 @@
             animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .tab-active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -116,9 +130,24 @@
                 </div>
             </div>
 
+            <!-- Search -->
+            <div class="px-4 mb-4">
+                <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 flex items-center gap-3">
+                    <i class="fas fa-search text-gray-500"></i>
+                    <input type="text" id="search-input" class="bg-transparent border-none outline-none text-sm w-full text-white" placeholder="ابحث عن قناة أو فيلم...">
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex px-4 border-b border-[var(--border)] mb-2">
+                <div id="tab-live" class="flex-1 py-3 text-center cursor-pointer tab-active">بث مباشر</div>
+                <div id="tab-vod" class="flex-1 py-3 text-center cursor-pointer text-gray-500">أفلام</div>
+            </div>
+
+            <!-- List Container -->
             <div id="list" class="flex-1 overflow-y-auto pt-2"></div>
 
-            <div class="p-4 text-center">
+            <div class="p-4 text-center border-t border-[var(--border)]">
                 <p class="text-[10px] text-gray-500 italic">المطور الرسمي: Omar L'Algerino</p>
             </div>
         </aside>
@@ -127,9 +156,16 @@
             <div id="loading-view" class="absolute inset-0 z-[180] bg-black flex flex-col items-center justify-center">
                 <div class="spinner"></div>
                 <div id="error-options" class="hidden text-center mt-6 px-6">
-                    <p class="text-red-500 text-sm mb-4">هذا الرابط محمي بواسطة السيرفر ويمنع التشغيل المباشر في المتصفح.</p>
-                    <a id="vlc-link" href="#" class="btn-external">فتح في مشغل VLC / خارجي</a>
-                    <button onclick="UIManager.close()" class="block w-full mt-4 text-gray-400 text-xs">إغلاق</button>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" class="w-16 h-16 mx-auto mb-4">
+                    <p class="text-white text-sm mb-2 font-bold">عذراً، الرابط محمي</p>
+                    <p class="text-gray-400 text-xs mb-4">يتطلب هذا البث تطبيق VLC لتجاوز الحماية بنجاح.</p>
+                    
+                    <a id="vlc-link" href="#" class="btn-external">
+                        <i class="fas fa-play"></i>
+                        <span>تشغيل في VLC</span>
+                    </a>
+                    
+                    <button onclick="UIManager.close()" class="block w-full mt-6 text-gray-500 text-xs underline">رجوع للقائمة</button>
                 </div>
             </div>
 
@@ -145,32 +181,101 @@
 
     <script>
         const MY_URL = 'https://tv.it-zone.tech/proxy/964617?voucher=GSXRLVY0';
-        
+        const API_LINKS = {
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
+        };
+
         const UIManager = {
-            player: null,
+            allData: [],
             hls: null,
+            currentType: 'live',
 
             async init() {
-                await this.loadChannels();
+                this.setupEvents();
+                await this.loadCategory('live');
                 setTimeout(() => {
-                    document.getElementById('splash-screen').style.display = 'none';
-                    document.getElementById('app-wrapper').style.visibility = 'visible';
+                    document.getElementById('splash-screen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('splash-screen').style.display = 'none';
+                        document.getElementById('app-wrapper').style.visibility = 'visible';
+                    }, 500);
                 }, 1000);
             },
 
-            async loadChannels() {
+            setupEvents() {
+                document.getElementById('tab-live').onclick = () => this.switchTab('live');
+                document.getElementById('tab-vod').onclick = () => this.switchTab('vod');
+                document.getElementById('search-input').oninput = (e) => this.filterData(e.target.value);
+            },
+
+            async loadCategory(type) {
+                this.currentType = type;
                 const list = document.getElementById('list');
-                const channels = [
-                    { name: "رابطك الخاص (VLC Optimized)", url: MY_URL, isVip: true },
-                    { name: "قناة تجريبية 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
-                ];
+                list.innerHTML = `<div class="flex justify-center p-10"><div class="spinner"></div></div>`;
                 
-                list.innerHTML = channels.map(item => `
-                    <div class="channel-card ${item.isVip ? 'border-primary/50' : ''}" onclick="UIManager.play('${item.url}')">
-                        <div class="flex-1 font-bold text-sm">${item.name}</div>
-                        <i class="fas fa-play text-primary"></i>
+                try {
+                    const res = await fetch(API_LINKS[type]);
+                    const text = await res.text();
+                    let data = this.parseCSV(text);
+
+                    // إضافة رابطك الخاص في البداية عند فتح قسم المباشر
+                    if(type === 'live') {
+                        data.unshift({
+                            name: "رابطك الخاص (VLC Only)",
+                            url: MY_URL,
+                            logo: "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png",
+                            isVip: true
+                        });
+                    }
+
+                    this.allData = data;
+                    this.render(data);
+                } catch(e) {
+                    list.innerHTML = `<p class="text-center p-5 text-red-500 text-xs">فشل تحميل البيانات، تأكد من الاتصال.</p>`;
+                }
+            },
+
+            parseCSV(csv) {
+                const lines = csv.split('\n').filter(l => l.trim() !== '');
+                return lines.slice(1).map(row => {
+                    const parts = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+                    const clean = (s) => s ? s.replace(/^"|"$/g, '').trim() : '';
+                    return {
+                        name: clean(parts[0]),
+                        url: clean(parts[1]),
+                        logo: clean(parts[2]) || ""
+                    };
+                }).filter(i => i.url && i.name);
+            },
+
+            render(data) {
+                const list = document.getElementById('list');
+                if(data.length === 0) {
+                    list.innerHTML = `<p class="text-center p-5 text-gray-500 text-xs">لا توجد نتائج</p>`;
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="channel-card ${item.isVip ? 'border-primary/50 bg-primary/5' : ''}" onclick="UIManager.play('${item.url}')">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg bg-white/5" onerror="this.src='https://via.placeholder.com/40?text=TV'">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-sm truncate">${item.name}</h3>
+                            <p class="text-[9px] text-gray-500">${item.isVip ? 'يتطلب VLC' : 'HD Quality'}</p>
+                        </div>
+                        <i class="fas fa-play-circle text-primary text-xl opacity-80"></i>
                     </div>
                 `).join('');
+            },
+
+            filterData(term) {
+                const filtered = this.allData.filter(i => i.name.toLowerCase().includes(term.toLowerCase()));
+                this.render(filtered);
+            },
+
+            switchTab(type) {
+                document.getElementById('tab-live').className = `flex-1 py-3 text-center cursor-pointer ${type==='live'?'tab-active':'text-gray-500'}`;
+                document.getElementById('tab-vod').className = `flex-1 py-3 text-center cursor-pointer ${type==='vod'?'tab-active':'text-gray-500'}`;
+                this.loadCategory(type);
             },
 
             play(url) {
@@ -182,45 +287,50 @@
                 
                 loader.classList.remove('hidden');
                 errOptions.classList.add('hidden');
+                document.querySelector('.spinner').classList.remove('hidden');
                 container.innerHTML = `<video id="v-player" class="video-js" playsinline autoplay></video>`;
 
-                // تحديث رابط المشغل الخارجي
-                vlcBtn.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=http;type=video/*;package=org.videolan.vlc;end`;
-                // إذا لم يكن أندرويد، استخدم الرابط المباشر
-                if (!/Android/i.test(navigator.userAgent)) {
-                    vlcBtn.href = url;
-                    vlcBtn.target = "_blank";
-                }
+                // إعداد رابط VLC
+                const vlcIntent = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=http;type=video/*;package=org.videolan.vlc;S.title=ADATA%20Stream;end`;
+                vlcBtn.onclick = (e) => {
+                    e.preventDefault();
+                    if (/Android/i.test(navigator.userAgent)) {
+                        window.location.href = vlcIntent;
+                    } else {
+                        window.open(url, '_blank');
+                    }
+                };
 
                 if(this.hls) { this.hls.destroy(); }
                 const video = document.getElementById('v-player');
 
+                // إذا كان الرابط هو رابطك الخاص المحمي، اظهر خيار VLC مباشرة لتوفير الوقت
+                if(url === MY_URL) {
+                    setTimeout(() => this.showVlcPrompt(), 500);
+                    return;
+                }
+
                 if (Hls.isSupported()) {
-                    this.hls = new Hls({
-                        xhrSetup: function(xhr) {
-                            xhr.withCredentials = false;
-                        }
-                    });
+                    this.hls = new Hls();
                     this.hls.loadSource(url);
                     this.hls.attachMedia(video);
                     this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                        video.play().then(() => {
-                            loader.classList.add('hidden');
-                        }).catch(e => {
-                            console.error("Autoplay failed");
-                        });
+                        video.play().then(() => loader.classList.add('hidden')).catch(() => this.showVlcPrompt());
                     });
-                    this.hls.on(Hls.Events.ERROR, (event, data) => {
-                        if (data.fatal) {
-                            loader.classList.remove('hidden');
-                            errOptions.classList.remove('hidden');
-                        }
+                    this.hls.on(Hls.Events.ERROR, (e, data) => {
+                        if (data.fatal) this.showVlcPrompt();
                     });
                 } else {
                     video.src = url;
-                    video.oncanplay = () => { loader.classList.add('hidden'); video.play(); };
-                    video.onerror = () => { loader.classList.remove('hidden'); errOptions.classList.remove('hidden'); };
+                    video.onerror = () => this.showVlcPrompt();
+                    video.onloadedmetadata = () => { loader.classList.add('hidden'); video.play(); };
                 }
+            },
+
+            showVlcPrompt() {
+                document.getElementById('loading-view').classList.remove('hidden');
+                document.getElementById('error-options').classList.remove('hidden');
+                document.querySelector('.spinner').classList.add('hidden');
             },
 
             close() {
