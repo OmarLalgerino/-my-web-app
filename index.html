@@ -3,32 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="no-referrer">
     <title>ADATA TV PRO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        
+        /* شاشة التحميل (Splash) */
         #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
         .sidebar { width: 100%; display: flex; flex-direction: column; background: #050505; }
+        
+        /* شاشة المشغل */
         .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; flex-direction: column; }
         .is-playing .main-content { display: flex; }
-        .channel-card { background: #111; border-radius: 12px; padding: 12px; margin: 5px 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #222; cursor: pointer; }
+        
+        /* الأقسام (Tabs) */
         .tabs { display: flex; background: #0a0a0a; border-bottom: 1px solid #222; overflow-x: auto; scrollbar-width: none; }
-        .tab { flex: none; padding: 12px 20px; cursor: pointer; color: #666; font-size: 14px; white-space: nowrap; }
-        .tab.active { color: #ff9500; border-bottom: 2px solid #ff9500; font-weight: bold; }
-        #loading-view { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 180; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .tab { flex: none; padding: 15px 25px; cursor: pointer; color: #666; font-size: 14px; white-space: nowrap; transition: 0.3s; }
+        .tab.active { color: #ff9500; border-bottom: 3px solid #ff9500; font-weight: bold; }
+        
+        .channel-card { background: #111; border-radius: 12px; padding: 12px; margin: 6px 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #1a1a1a; }
+        
+        #loading-view { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 180; display: none; align-items: center; justify-content: center; flex-direction: column; }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-20 animate-pulse">
+        <div class="text-center">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse mx-auto">
+            <p class="text-xs text-gray-500 mt-4">جاري تجهيز المحركات...</p>
+        </div>
     </div>
 
     <div id="app-wrapper">
@@ -37,8 +50,8 @@
                 <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6 mx-auto">
             </div>
 
-            <div class="tabs">
-                <div class="tab active" onclick="UIManager.loadCategory('live', this)">مباشرة</div>
+            <div class="tabs" id="tabs-container">
+                <div class="tab active" onclick="UIManager.loadCategory('live', this)">بث مباشر</div>
                 <div class="tab" onclick="UIManager.loadCategory('anime', this)">أنمي</div>
                 <div class="tab" onclick="UIManager.loadCategory('series', this)">مسلسلات</div>
                 <div class="tab" onclick="UIManager.loadCategory('movies', this)">أفلام</div>
@@ -49,12 +62,16 @@
 
         <main class="main-content">
             <div id="loading-view">
-                <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-orange-500 mt-4 text-[10px]">جاري تحميل البث...</p>
+                <div class="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-orange-500 mt-4 text-sm font-bold">جاري فتح الرابط...</p>
             </div>
-            <div class="absolute top-5 left-5 z-[200]">
-                <button onclick="UIManager.close()" class="bg-black/80 p-3 rounded-full border border-white/10"><i class="fas fa-times"></i></button>
+            
+            <div class="absolute top-6 left-6 z-[200]">
+                <button onclick="UIManager.close()" class="bg-black/80 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
             </div>
+
             <div id="video-container" class="flex-1 flex items-center justify-center bg-black">
                 <video id="main-video" controls autoplay playsinline class="w-full h-full"></video>
             </div>
@@ -62,6 +79,7 @@
     </div>
 
     <script>
+        // روابط الجداول الخاصة بك (تم تصحيحها للعمل برمجياً)
         const API_LINKS = {
             live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             anime: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
@@ -74,35 +92,41 @@
             ts: null,
 
             async init() {
-                await this.loadCategory('live');
-                document.getElementById('splash-screen').style.display = 'none';
-                document.getElementById('app-wrapper').style.visibility = 'visible';
+                try {
+                    await this.loadCategory('live');
+                } finally {
+                    document.getElementById('splash-screen').style.display = 'none';
+                    document.getElementById('app-wrapper').style.visibility = 'visible';
+                }
             },
 
-            async loadCategory(type, element) {
-                if(element) {
+            async loadCategory(type, el) {
+                if(el) {
                     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    element.classList.add('active');
+                    el.classList.add('active');
                 }
+                const list = document.getElementById('list');
+                list.innerHTML = '<div class="text-center p-10 text-gray-600">جاري جلب البيانات...</div>';
+                
                 try {
                     const res = await fetch(API_LINKS[type]);
                     const text = await res.text();
                     this.render(this.parseCSV(text));
-                } catch(e) { alert("خطأ في تحميل قائمة القنوات"); }
+                } catch(e) { list.innerHTML = '<div class="text-center p-10 text-red-500">فشل في الاتصال بالقائمة</div>'; }
             },
 
             parseCSV(csv) {
                 return csv.split('\n').slice(1).map(row => {
                     const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     return { name: p[0]?.replace(/"/g, ''), url: p[1]?.replace(/"/g, ''), logo: p[2]?.replace(/"/g, '') };
-                }).filter(i => i.url && i.url.includes('http'));
+                }).filter(i => i.url && i.url.trim().startsWith('http'));
             },
 
             render(data) {
                 document.getElementById('list').innerHTML = data.map(i => `
-                    <div class="channel-card" onclick="UIManager.play('${i.url.trim()}')">
-                        <img src="${i.logo}" class="w-12 h-12 object-contain rounded-lg bg-black/50" onerror="this.src='https://via.placeholder.com/150'">
-                        <div class="flex-1 font-bold text-[13px] line-clamp-1">${i.name}</div>
+                    <div class="channel-card active:scale-95 transition-transform" onclick="UIManager.play('${i.url.trim()}')">
+                        <img src="${i.logo}" class="w-12 h-12 object-contain rounded-lg bg-black/40" onerror="this.src='https://via.placeholder.com/150'">
+                        <div class="flex-1 font-bold text-[13px] truncate">${i.name}</div>
                         <i class="fas fa-play-circle text-orange-500 text-xl"></i>
                     </div>`).join('');
             },
@@ -122,32 +146,32 @@
                     return;
                 }
 
-                // 2. تشغيل HLS (m3u8)
-                if (url.includes(".m3u8") || url.includes("hls")) {
+                // 2. محاولة التشغيل الذكي (HLS / MPEG-TS / MP4)
+                if (url.includes(".m3u8")) {
                     if (Hls.isSupported()) {
                         this.hls = new Hls();
                         this.hls.loadSource(url);
                         this.hls.attachMedia(video);
                         this.hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    } else { video.src = url; video.play(); }
+                } 
+                else {
+                    // تشغيل الروابط التي تعمل في VLC (مثل روابطك التي تنتهي برقم)
+                    if (mpegts.getFeatureList().mseLivePlayback) {
+                        this.ts = mpegts.createPlayer({ type: 'mse', isLive: true, url: url });
+                        this.ts.attachMediaElement(video);
+                        this.ts.load();
+                        this.ts.play().catch(() => { video.src = url; video.play(); });
+                    } else {
                         video.src = url; video.play();
                     }
-                } 
-                // 3. تشغيل MPEG-TS (الروابط التي تنتهي بأرقام - VLC Style)
-                else if (mpegts.getFeatureList().mseLivePlayback) {
-                    this.ts = mpegts.createPlayer({ type: 'mse', isLive: true, url: url });
-                    this.ts.attachMediaElement(video);
-                    this.ts.load();
-                    this.ts.play().catch(() => {
-                        // 4. تشغيل MP4 / MKV العادي كخيار أخير
-                        video.src = url; video.play();
-                    });
-                } else {
-                    video.src = url; video.play();
                 }
 
                 video.onplaying = () => loader.style.display = 'none';
-                video.onerror = () => { loader.style.display = 'none'; alert("عذراً، هذا الرابط لا يعمل حالياً"); };
+                video.onerror = () => { 
+                    loader.style.display = 'none';
+                    alert("خطأ: تعذر تشغيل هذا الرابط. تأكد من تفعيل HTTP في إعدادات التطبيق.");
+                };
             },
 
             cleanup() {
