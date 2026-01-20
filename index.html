@@ -2,28 +2,119 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="referrer" content="no-referrer">
-    <title>ADATA TV PRO</title>
+    <meta name="referrer" content="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ADATA TV - Professional View</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-        body { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
-        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
-        #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; opacity: 0; transition: 0.5s; }
-        .sidebar { width: 100%; display: flex; flex-direction: column; background: #050505; }
-        .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; flex-direction: column; }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        
+        :root {
+            --primary: #ff9500;
+            --surface: #050505;
+            --card: #111111;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-dim: #a0a0a0;
+        }
+
+        body {
+            background-color: var(--surface);
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            height: 100vh;
+            overscroll-behavior-y: contain;
+        }
+
+        #video-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .video-js {
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #app-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            visibility: hidden;
+        }
+
+        .sidebar {
+            width: 100%;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+        }
+
+        .main-content {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 100;
+            display: none;
+        }
+
         .is-playing .main-content { display: flex; }
-        .tabs { display: flex; background: #0a0a0a; border-bottom: 1px solid #222; overflow-x: auto; scrollbar-width: none; }
-        .tab { flex: none; padding: 15px 22px; cursor: pointer; color: #666; font-size: 14px; white-space: nowrap; }
-        .tab.active { color: #ff9500; border-bottom: 3px solid #ff9500; font-weight: bold; }
-        .channel-card { background: #111; border-radius: 12px; padding: 12px; margin: 6px 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #1a1a1a; cursor: pointer; }
-        #loading-view { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 180; display: none; align-items: center; justify-content: center; flex-direction: column; }
+
+        .channel-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .overlay-controls {
+            position: absolute;
+            top: 20px;
+            left: 15px;
+            right: 15px;
+            z-index: 200;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .btn-action {
+            background: rgba(0,0,0,0.6);
+            padding: 8px 14px;
+            border-radius: 40px;
+            color: white;
+            font-size: 12px;
+            backdrop-filter: blur(8px);
+        }
     </style>
 </head>
 <body>
@@ -34,161 +125,90 @@
 
     <div id="app-wrapper">
         <aside class="sidebar">
-            <div class="p-4 text-center border-b border-white/5">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6 mx-auto">
+            <div class="p-5 flex items-center justify-between">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
             </div>
-            <div class="tabs">
-                <div class="tab active" onclick="UIManager.loadCategory('live', this)">بث مباشر</div>
-                <div class="tab" onclick="UIManager.loadCategory('anime', this)">أنمي</div>
-                <div class="tab" onclick="UIManager.loadCategory('series', this)">مسلسلات</div>
-                <div class="tab" onclick="UIManager.loadCategory('movies', this)">أفلام</div>
-            </div>
-            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-10"></div>
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
         </aside>
 
-        <main class="main-content">
-            <div id="loading-view">
-                <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-orange-500 mt-4 text-xs">جاري تشغيل الرابط...</p>
+        <main class="main-content" id="player-screen">
+            <div class="overlay-controls">
+                <div class="btn-action" onclick="UIManager.close()">
+                    <i class="fas fa-chevron-right"></i> <span>رجوع</span>
+                </div>
             </div>
-            <div class="absolute top-5 left-5 z-[200]">
-                <button onclick="UIManager.close()" class="bg-black/80 px-4 py-2 rounded-full text-xs border border-white/10">
-                    <i class="fas fa-arrow-right ml-2"></i> رجوع
-                </button>
-            </div>
-            <div id="video-container" class="flex-1 flex items-center justify-center">
-                <video id="main-video" controls autoplay playsinline class="w-full h-full"></video>
-            </div>
+            <div id="video-container"></div>
         </main>
     </div>
 
     <script>
         const API_LINKS = {
-            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/export?format=csv',
-            anime: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/export?format=csv',
-            series: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/export?format=csv',
-            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/export?format=csv'
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
-            tsPlayer: null,
-            hlsPlayer: null,
+            player: null,
 
             async init() {
-                try {
-                    await this.loadCategory('live');
-                } finally {
-                    setTimeout(() => {
-                        document.getElementById('splash-screen').style.opacity = '0';
-                        document.getElementById('app-wrapper').style.visibility = 'visible';
-                        document.getElementById('app-wrapper').style.opacity = '1';
-                        setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 500);
-                    }, 1000);
-                }
+                await this.loadCategory('live');
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                    document.getElementById('app-wrapper').style.visibility = 'visible';
+                }, 1500);
             },
 
-            async loadCategory(type, el) {
-                if(el) {
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    el.classList.add('active');
-                }
-                document.getElementById('list').innerHTML = '<p class="text-center p-10 text-orange-500 text-sm">جاري جلب القنوات...</p>';
-                try {
-                    const res = await fetch(API_LINKS[type] + '&cache=' + Date.now());
-                    const text = await res.text();
-                    this.render(this.parseCSV(text));
-                } catch(e) { 
-                    document.getElementById('list').innerHTML = '<p class="text-center p-10 text-red-500">فشل في الاتصال، تحقق من الإنترنت</p>';
-                }
+            async loadCategory(type) {
+                const res = await fetch(API_LINKS[type]);
+                const text = await res.text();
+                const data = this.parseCSV(text);
+                this.renderList(data);
             },
 
             parseCSV(csv) {
                 return csv.split('\n').slice(1).map(row => {
-                    const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if(!p || p.length < 2) return null;
-                    return { 
-                        name: p[0]?.replace(/"/g, '').trim(), 
-                        url: p[1]?.replace(/"/g, '').trim(), 
-                        logo: p[2]?.replace(/"/g, '').trim() || 'https://via.placeholder.com/100'
+                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return {
+                        name: parts[0]?.replace(/"/g, '').trim(),
+                        url: parts[1]?.replace(/"/g, '').trim(),
+                        logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
                     };
-                }).filter(i => i && i.url && i.url.startsWith('http'));
+                }).filter(i => i.url);
             },
 
-            render(data) {
-                if(data.length === 0) {
-                    document.getElementById('list').innerHTML = '<p class="text-center p-10 text-gray-500">القائمة فارغة حالياً</p>';
-                    return;
-                }
-                document.getElementById('list').innerHTML = data.map(i => `
-                    <div class="channel-card" onclick="UIManager.play('${i.url}')">
-                        <img src="${i.logo}" onerror="this.src='https://via.placeholder.com/100'" class="w-10 h-10 object-contain rounded-lg bg-white/5">
-                        <div class="flex-1 font-bold text-xs truncate">${i.name}</div>
-                        <i class="fas fa-play-circle text-orange-500"></i>
-                    </div>`).join('');
+            renderList(data) {
+                document.getElementById('list').innerHTML = data.map(item => `
+                    <div class="channel-card" onclick="UIManager.play('${item.url}')">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain">
+                        <h3 class="font-bold text-xs">${item.name}</h3>
+                    </div>
+                `).join('');
             },
 
             play(url) {
-                const video = document.getElementById('main-video');
-                const loader = document.getElementById('loading-view');
-                const cleanUrl = url.trim().replace(/"/g, ''); 
-                
                 document.getElementById('app-wrapper').classList.add('is-playing');
-                loader.style.display = 'flex';
-                this.cleanup();
-
-                // 1. YouTube Handling
-                if (cleanUrl.includes("youtube") || cleanUrl.includes("youtu.be")) {
-                    const id = cleanUrl.includes("v=") ? cleanUrl.split("v=")[1].split("&")[0] : cleanUrl.split("/").pop();
-                    document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-                    loader.style.display = 'none';
-                    return;
-                }
-
-                // 2. M3U8 (HLS) Handling - الجزيرة وغيرها
-                if (cleanUrl.toLowerCase().includes("m3u8")) {
-                    if (Hls.isSupported()) {
-                        this.hlsPlayer = new Hls();
-                        this.hlsPlayer.loadSource(cleanUrl);
-                        this.hlsPlayer.attachMedia(video);
-                        this.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                        video.src = cleanUrl;
-                        video.play();
-                    }
-                } 
-                // 3. MPEG-TS Handling
-                else {
-                    if (mpegts.isSupported()) {
-                        this.tsPlayer = mpegts.createPlayer({ type: 'mse', isLive: true, url: cleanUrl });
-                        this.tsPlayer.attachMediaElement(video);
-                        this.tsPlayer.load();
-                        this.tsPlayer.play().catch(() => {
-                            video.src = cleanUrl;
-                            video.play();
-                        });
-                    } else {
-                        video.src = cleanUrl;
-                        video.play();
-                    }
-                }
-
-                video.onplaying = () => loader.style.display = 'none';
-                video.onerror = () => { 
-                    loader.style.display = 'none';
-                    alert("تعذر تشغيل هذا الرابط، قد يكون المصدر متوقفاً");
-                };
-            },
-
-            cleanup() {
-                if (this.tsPlayer) { this.tsPlayer.destroy(); this.tsPlayer = null; }
-                if (this.hlsPlayer) { this.hlsPlayer.destroy(); this.hlsPlayer = null; }
                 const container = document.getElementById('video-container');
-                container.innerHTML = '<video id="main-video" controls autoplay playsinline class="w-full h-full"></video>';
+                
+                // إضافة muted و playsinline لإجبار الأندرويد على التشغيل
+                container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" controls playsinline muted preload="auto"></video>`;
+
+                this.player = videojs('main-video', {
+                    autoplay: true,
+                    fluid: false,
+                    html5: { vhs: { overrideNative: true } } 
+                });
+
+                let type = url.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4";
+                this.player.src({ src: url, type: type });
+                
+                // محاولة تشغيل الصوت بعد البدء لكسر حظر المتصفح
+                this.player.on('play', () => {
+                    setTimeout(() => { this.player.muted(false); }, 1000);
+                });
             },
 
             close() {
                 document.getElementById('app-wrapper').classList.remove('is-playing');
-                this.cleanup();
+                if(this.player) { this.player.dispose(); this.player = null; }
             }
         };
 
