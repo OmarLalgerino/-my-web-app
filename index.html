@@ -6,82 +6,103 @@
     <title>ADATA TV PRO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
-        
         #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
-        
         .sidebar { width: 100%; display: flex; flex-direction: column; background: #050505; }
-        .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; }
-        .is-playing .main-content { display: flex; flex-direction: column; }
-        
+        .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; flex-direction: column; }
+        .is-playing .main-content { display: flex; }
         .channel-card { background: #111; border-radius: 12px; padding: 12px; margin: 5px 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #222; cursor: pointer; }
+        .tabs { display: flex; background: #0a0a0a; border-bottom: 1px solid #222; overflow-x: auto; scrollbar-width: none; }
+        .tab { flex: none; padding: 12px 20px; cursor: pointer; color: #666; font-size: 14px; white-space: nowrap; }
+        .tab.active { color: #ff9500; border-bottom: 2px solid #ff9500; font-weight: bold; }
         #loading-view { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 180; display: none; align-items: center; justify-content: center; flex-direction: column; }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-20 animate-pulse">
     </div>
 
     <div id="app-wrapper">
         <aside class="sidebar">
-            <div class="p-6 text-center"><img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-8 mx-auto"></div>
-            <div id="list" class="flex-1 overflow-y-auto"></div>
+            <div class="p-4 text-center border-b border-white/5">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6 mx-auto">
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="UIManager.loadCategory('live', this)">مباشرة</div>
+                <div class="tab" onclick="UIManager.loadCategory('anime', this)">أنمي</div>
+                <div class="tab" onclick="UIManager.loadCategory('series', this)">مسلسلات</div>
+                <div class="tab" onclick="UIManager.loadCategory('movies', this)">أفلام</div>
+            </div>
+
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-10"></div>
         </aside>
 
         <main class="main-content">
             <div id="loading-view">
                 <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-orange-500 mt-4 text-xs">جاري تشغيل البث...</p>
+                <p class="text-orange-500 mt-4 text-[10px]">جاري تحميل البث...</p>
             </div>
             <div class="absolute top-5 left-5 z-[200]">
-                <button onclick="UIManager.close()" class="bg-black/80 p-3 rounded-full border border-white/10">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button onclick="UIManager.close()" class="bg-black/80 p-3 rounded-full border border-white/10"><i class="fas fa-times"></i></button>
             </div>
-            <div id="video-container" class="flex-1 flex items-center justify-center">
+            <div id="video-container" class="flex-1 flex items-center justify-center bg-black">
                 <video id="main-video" controls autoplay playsinline class="w-full h-full"></video>
             </div>
         </main>
     </div>
 
     <script>
-        const API_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
+        const API_LINKS = {
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            anime: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            series: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
+            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
+        };
 
         const UIManager = {
-            tsPlayer: null,
+            hls: null,
+            ts: null,
 
             async init() {
-                try {
-                    const res = await fetch(API_URL);
-                    const text = await res.text();
-                    const data = this.parseCSV(text);
-                    this.render(data);
-                } catch(e) { console.error("Data Load Error"); }
-                
+                await this.loadCategory('live');
                 document.getElementById('splash-screen').style.display = 'none';
                 document.getElementById('app-wrapper').style.visibility = 'visible';
+            },
+
+            async loadCategory(type, element) {
+                if(element) {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    element.classList.add('active');
+                }
+                try {
+                    const res = await fetch(API_LINKS[type]);
+                    const text = await res.text();
+                    this.render(this.parseCSV(text));
+                } catch(e) { alert("خطأ في تحميل قائمة القنوات"); }
             },
 
             parseCSV(csv) {
                 return csv.split('\n').slice(1).map(row => {
                     const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     return { name: p[0]?.replace(/"/g, ''), url: p[1]?.replace(/"/g, ''), logo: p[2]?.replace(/"/g, '') };
-                }).filter(i => i.url);
+                }).filter(i => i.url && i.url.includes('http'));
             },
 
             render(data) {
                 document.getElementById('list').innerHTML = data.map(i => `
                     <div class="channel-card" onclick="UIManager.play('${i.url.trim()}')">
-                        <img src="${i.logo}" class="w-12 h-12 object-contain rounded-lg bg-black">
-                        <div class="flex-1 font-bold text-sm">${i.name}</div>
+                        <img src="${i.logo}" class="w-12 h-12 object-contain rounded-lg bg-black/50" onerror="this.src='https://via.placeholder.com/150'">
+                        <div class="flex-1 font-bold text-[13px] line-clamp-1">${i.name}</div>
                         <i class="fas fa-play-circle text-orange-500 text-xl"></i>
                     </div>`).join('');
             },
@@ -91,10 +112,9 @@
                 const loader = document.getElementById('loading-view');
                 document.getElementById('app-wrapper').classList.add('is-playing');
                 loader.style.display = 'flex';
-                
                 this.cleanup();
 
-                // إذا كان الرابط يوتيوب
+                // 1. يوتيوب
                 if (url.includes("youtube") || url.includes("youtu.be")) {
                     const id = url.includes("v=") ? url.split("v=")[1].split("&")[0] : url.split("/").pop();
                     document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
@@ -102,28 +122,39 @@
                     return;
                 }
 
-                // محاولة تشغيل الرابط بشكل طبيعي أولاً (أسرع للروابط العادية)
-                video.src = url;
-                video.play().then(() => {
-                    loader.style.display = 'none';
-                }).catch(() => {
-                    // إذا فشل التشغيل الطبيعي، نستخدم محرك mpegts (لروابطك الصعبة)
-                    if (mpegts.getFeatureList().mseLivePlayback) {
-                        this.tsPlayer = mpegts.createPlayer({ type: 'mse', isLive: true, url: url });
-                        this.tsPlayer.attachMediaElement(video);
-                        this.tsPlayer.load();
-                        this.tsPlayer.play();
+                // 2. تشغيل HLS (m3u8)
+                if (url.includes(".m3u8") || url.includes("hls")) {
+                    if (Hls.isSupported()) {
+                        this.hls = new Hls();
+                        this.hls.loadSource(url);
+                        this.hls.attachMedia(video);
+                        this.hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        video.src = url; video.play();
                     }
-                });
+                } 
+                // 3. تشغيل MPEG-TS (الروابط التي تنتهي بأرقام - VLC Style)
+                else if (mpegts.getFeatureList().mseLivePlayback) {
+                    this.ts = mpegts.createPlayer({ type: 'mse', isLive: true, url: url });
+                    this.ts.attachMediaElement(video);
+                    this.ts.load();
+                    this.ts.play().catch(() => {
+                        // 4. تشغيل MP4 / MKV العادي كخيار أخير
+                        video.src = url; video.play();
+                    });
+                } else {
+                    video.src = url; video.play();
+                }
 
                 video.onplaying = () => loader.style.display = 'none';
-                video.onerror = () => { if(!this.tsPlayer) alert("السيرفر لا يستجيب حالياً"); };
+                video.onerror = () => { loader.style.display = 'none'; alert("عذراً، هذا الرابط لا يعمل حالياً"); };
             },
 
             cleanup() {
+                if (this.hls) { this.hls.destroy(); this.hls = null; }
+                if (this.ts) { this.ts.destroy(); this.ts = null; }
                 const video = document.getElementById('main-video');
-                if (this.tsPlayer) { this.tsPlayer.destroy(); this.tsPlayer = null; }
-                if (video) { video.pause(); video.src = ""; }
+                if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
                 document.getElementById('video-container').innerHTML = '<video id="main-video" controls autoplay playsinline class="w-full h-full"></video>';
             },
 
