@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.10.0/dist/videojs-http-streaming.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
@@ -31,7 +32,6 @@
             overflow: hidden;
             user-select: none;
             height: 100vh;
-            overscroll-behavior-y: contain;
         }
 
         #video-container {
@@ -43,7 +43,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
         }
 
         .video-js {
@@ -95,6 +94,7 @@
             align-items: center;
             gap: 12px;
             border: 1px solid var(--border);
+            cursor: pointer;
         }
 
         .overlay-controls {
@@ -112,8 +112,9 @@
             padding: 8px 14px;
             border-radius: 40px;
             color: white;
-            font-size: 12px;
+            font-size: 14px;
             backdrop-filter: blur(8px);
+            cursor: pointer;
         }
     </style>
 </head>
@@ -158,10 +159,12 @@
             },
 
             async loadCategory(type) {
-                const res = await fetch(API_LINKS[type]);
-                const text = await res.text();
-                const data = this.parseCSV(text);
-                this.renderList(data);
+                try {
+                    const res = await fetch(API_LINKS[type]);
+                    const text = await res.text();
+                    const data = this.parseCSV(text);
+                    this.renderList(data);
+                } catch (e) { console.error("خطأ في تحميل البيانات"); }
             },
 
             parseCSV(csv) {
@@ -188,21 +191,37 @@
                 document.getElementById('app-wrapper').classList.add('is-playing');
                 const container = document.getElementById('video-container');
                 
-                // إضافة muted و playsinline لإجبار الأندرويد على التشغيل
+                // 1. معالجة الرابط إذا كان ينتهي برقم (مثل القناة 44)
+                let finalUrl = url;
+                if (!url.includes('.') || !isNaN(url.split('/').pop())) {
+                    finalUrl = url.includes('?') ? url.replace('?', '.ts?') : url + ".ts";
+                }
+
                 container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" controls playsinline muted preload="auto"></video>`;
 
+                // 2. إعداد المشغل مع خاصية overrideNative لحل مشكلة فك الترميز
                 this.player = videojs('main-video', {
                     autoplay: true,
                     fluid: false,
-                    html5: { vhs: { overrideNative: true } } 
+                    html5: {
+                        vhs: { overrideNative: true },
+                        nativeAudioTracks: false,
+                        nativeVideoTracks: false
+                    }
                 });
 
-                let type = url.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4";
-                this.player.src({ src: url, type: type });
+                // 3. محاولة التشغيل كـ MPEG-TS أولاً ثم كـ HLS
+                this.player.src({ src: finalUrl, type: 'video/mp2t' });
+
+                this.player.ready(() => {
+                    this.player.play().catch(() => {
+                        // إذا فشل كـ TS، جرب كـ m3u8
+                        this.player.src({ src: finalUrl, type: 'application/x-mpegURL' });
+                    });
+                });
                 
-                // محاولة تشغيل الصوت بعد البدء لكسر حظر المتصفح
                 this.player.on('play', () => {
-                    setTimeout(() => { this.player.muted(false); }, 1000);
+                    setTimeout(() => { if(this.player) this.player.muted(false); }, 1000);
                 });
             },
 
