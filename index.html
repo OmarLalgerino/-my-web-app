@@ -3,235 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - Professional View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ADATA TV - Direct TS Player</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.10.0/dist/videojs-http-streaming.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        
-        :root {
-            --primary: #ff9500;
-            --surface: #050505;
-            --card: #111111;
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-            --text-dim: #a0a0a0;
-        }
-
-        body {
-            background-color: var(--surface);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            user-select: none;
-            height: 100vh;
-        }
-
-        #video-container {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .video-js {
-            width: 100vw !important;
-            height: 100vh !important;
-        }
-
-        #splash-screen {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #app-wrapper {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            visibility: hidden;
-        }
-
-        .sidebar {
-            width: 100%;
-            background: var(--surface);
-            display: flex;
-            flex-direction: column;
-            z-index: 50;
-        }
-
-        .main-content {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 100;
-            display: none;
-        }
-
-        .is-playing .main-content { display: flex; }
-
-        .channel-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 12px;
-            margin: 4px 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border: 1px solid var(--border);
-            cursor: pointer;
-        }
-
-        .overlay-controls {
-            position: absolute;
-            top: 20px;
-            left: 15px;
-            right: 15px;
-            z-index: 200;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .btn-action {
-            background: rgba(0,0,0,0.6);
-            padding: 8px 14px;
-            border-radius: 40px;
-            color: white;
-            font-size: 14px;
-            backdrop-filter: blur(8px);
-            cursor: pointer;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { background: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        .main-container { display: flex; flex-direction: column; height: 100vh; }
+        #video-overlay { position: fixed; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; }
+        video { width: 100%; height: 100%; background: #000; }
+        .is-playing #video-overlay { display: flex; }
+        .channel-item { background: #111; padding: 15px; margin: 8px 15px; border-radius: 10px; border: 1px solid #222; cursor: pointer; transition: 0.3s; }
+        .channel-item:hover { border-color: #ff9500; }
+        .back-btn { position: absolute; top: 20px; right: 20px; z-index: 1100; background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
+    <div class="main-container">
+        <div class="p-4 bg-zinc-900 shadow-xl text-center font-bold text-orange-500">ADATA TV PRO</div>
+        <div id="list" class="flex-1 overflow-y-auto py-4">
+            <div class="text-center p-10 text-gray-500 animate-pulse">جاري تحميل القنوات...</div>
+        </div>
     </div>
 
-    <div id="app-wrapper">
-        <aside class="sidebar">
-            <div class="p-5 flex items-center justify-between">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
-            </div>
-            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
-        </aside>
-
-        <main class="main-content" id="player-screen">
-            <div class="overlay-controls">
-                <div class="btn-action" onclick="UIManager.close()">
-                    <i class="fas fa-chevron-right"></i> <span>رجوع</span>
-                </div>
-            </div>
-            <div id="video-container"></div>
-        </main>
+    <div id="video-overlay">
+        <div class="back-btn" onclick="stopStream()"><i class="fas fa-arrow-right"></i> رجوع</div>
+        <video id="videoElement" controls autoplay playsinline muted></video>
     </div>
 
     <script>
-        const API_LINKS = {
-            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv'
-        };
+        let player = null;
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
 
-        const UIManager = {
-            player: null,
-
-            async init() {
-                await this.loadCategory('live');
-                setTimeout(() => {
-                    document.getElementById('splash-screen').style.display = 'none';
-                    document.getElementById('app-wrapper').style.visibility = 'visible';
-                }, 1500);
-            },
-
-            async loadCategory(type) {
-                try {
-                    const res = await fetch(API_LINKS[type]);
-                    const text = await res.text();
-                    const data = this.parseCSV(text);
-                    this.renderList(data);
-                } catch (e) { console.error("خطأ في تحميل البيانات"); }
-            },
-
-            parseCSV(csv) {
-                return csv.split('\n').slice(1).map(row => {
-                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    return {
-                        name: parts[0]?.replace(/"/g, '').trim(),
-                        url: parts[1]?.replace(/"/g, '').trim(),
-                        logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
-                    };
-                }).filter(i => i.url);
-            },
-
-            renderList(data) {
-                document.getElementById('list').innerHTML = data.map(item => `
-                    <div class="channel-card" onclick="UIManager.play('${item.url}')">
-                        <img src="${item.logo}" class="w-10 h-10 object-contain">
-                        <h3 class="font-bold text-xs">${item.name}</h3>
-                    </div>
-                `).join('');
-            },
-
-            play(url) {
-                document.getElementById('app-wrapper').classList.add('is-playing');
-                const container = document.getElementById('video-container');
+        async function fetchChannels() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const csvText = await response.text();
+                const rows = csvText.split('\n').slice(1);
                 
-                // 1. معالجة الرابط إذا كان ينتهي برقم (مثل القناة 44)
-                let finalUrl = url;
-                if (!url.includes('.') || !isNaN(url.split('/').pop())) {
-                    finalUrl = url.includes('?') ? url.replace('?', '.ts?') : url + ".ts";
-                }
-
-                container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" controls playsinline muted preload="auto"></video>`;
-
-                // 2. إعداد المشغل مع خاصية overrideNative لحل مشكلة فك الترميز
-                this.player = videojs('main-video', {
-                    autoplay: true,
-                    fluid: false,
-                    html5: {
-                        vhs: { overrideNative: true },
-                        nativeAudioTracks: false,
-                        nativeVideoTracks: false
-                    }
-                });
-
-                // 3. محاولة التشغيل كـ MPEG-TS أولاً ثم كـ HLS
-                this.player.src({ src: finalUrl, type: 'video/mp2t' });
-
-                this.player.ready(() => {
-                    this.player.play().catch(() => {
-                        // إذا فشل كـ TS، جرب كـ m3u8
-                        this.player.src({ src: finalUrl, type: 'application/x-mpegURL' });
-                    });
-                });
-                
-                this.player.on('play', () => {
-                    setTimeout(() => { if(this.player) this.player.muted(false); }, 1000);
-                });
-            },
-
-            close() {
-                document.getElementById('app-wrapper').classList.remove('is-playing');
-                if(this.player) { this.player.dispose(); this.player = null; }
+                const html = rows.map(row => {
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if(columns.length < 2) return '';
+                    const name = columns[0].replace(/"/g, '');
+                    const url = columns[1].replace(/"/g, '');
+                    return `<div class="channel-item" onclick="startStream('${url}')">
+                                <i class="fas fa-tv ml-2 text-orange-500"></i> ${name}
+                            </div>`;
+                }).join('');
+                document.getElementById('list').innerHTML = html;
+            } catch (err) {
+                document.getElementById('list').innerHTML = '<div class="text-center text-red-500">فشل تحميل البيانات</div>';
             }
-        };
+        }
 
-        window.onload = () => UIManager.init();
+        function startStream(url) {
+            document.body.classList.add('is-playing');
+            const videoElement = document.getElementById('videoElement');
+
+            // تدمير أي مشغل سابق لتفريغ الذاكرة
+            if (player) { stopStream(); }
+
+            // ميزة mpegts.js: تشغيل روابط TS المباشرة (مثل VLC)
+            if (mpegts.getFeatureList().mseLivePlayback) {
+                player = mpegts.createPlayer({
+                    type: 'mse', // تعني Media Source Extensions لتشغيل TS
+                    isLive: true,
+                    url: url
+                }, {
+                    enableWorker: true,
+                    stashInitialSize: 128 // لتقليل التأخير (Latency)
+                });
+                player.attachMediaElement(videoElement);
+                player.load();
+                player.play();
+                
+                // إلغاء الكتم تلقائياً بعد ثانية
+                setTimeout(() => { videoElement.muted = false; }, 1000);
+            }
+        }
+
+        function stopStream() {
+            document.body.classList.remove('is-playing');
+            if (player) {
+                player.pause();
+                player.unload();
+                player.detachMediaElement();
+                player.destroy();
+                player = null;
+            }
+        }
+
+        window.onload = fetchChannels;
     </script>
 </body>
 </html>
