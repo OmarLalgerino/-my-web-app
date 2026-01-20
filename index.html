@@ -3,94 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ADATA TV PRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ADATA TV - Professional View</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/shaka-player.compiled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-        body { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
-        .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        
+        :root {
+            --primary: #ff9500;
+            --surface: #050505;
+            --card: #111111;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+        }
+
+        body {
+            background-color: var(--surface);
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
+
+        .sidebar { width: 100%; background: var(--surface); display: flex; flex-direction: column; z-index: 50; }
+
+        .main-content {
+            position: fixed; inset: 0; background: #000; z-index: 100;
+            display: none; flex-direction: column;
+        }
+
         .is-playing .main-content { display: flex; }
-        #video-container { width: 100%; height: 100%; }
+
+        #video-container { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+
         video { width: 100%; height: 100%; object-fit: contain; }
-        .channel-card { background: #111; border-radius: 12px; padding: 15px; margin: 8px; display: flex; align-items: center; gap: 15px; border: 1px solid #222; cursor: pointer; }
+
+        .channel-card {
+            background: var(--card); border-radius: 12px; padding: 12px;
+            margin: 4px 12px; display: flex; align-items: center; gap: 12px;
+            border: 1px solid var(--border); cursor: pointer;
+        }
+
+        #loading-view {
+            position: absolute; inset: 0; background: #000; z-index: 180;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        #splash-screen {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
 
+    <div id="splash-screen">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
+    </div>
+
     <div id="app-wrapper">
-        <header class="p-5 flex justify-between items-center border-b border-white/5">
-            <h1 class="text-orange-500 font-black text-xl">ADATA TV</h1>
-        </header>
-
-        <div id="list" class="overflow-y-auto h-[calc(100vh-80px)] p-2">
-            <div class="channel-card" onclick="playNative('http://4kgood.org/8344281117826792/7mv6wkb8m8gwimx4frkr/44')">
-                <div class="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center">
-                    <i class="fas fa-tv text-orange-500"></i>
-                </div>
-                <div class="flex-1">
-                    <div class="font-bold">قناتك الخاصة</div>
-                    <div class="text-xs text-gray-500">رابط مباشر (محرك Shaka)</div>
-                </div>
+        <aside class="sidebar">
+            <div class="p-5 flex items-center justify-between">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
             </div>
-        </div>
 
-        <main class="main-content" id="player-screen">
-            <div class="absolute top-5 right-5 z-[200]">
-                <button onclick="closePlayer()" class="bg-white/10 p-3 rounded-full backdrop-blur-md">
-                    <i class="fas fa-times text-white"></i>
+            <div class="search-box px-4 mb-4">
+                <input type="text" id="search-input" class="w-full bg-[#111] border border-white/10 rounded-lg p-2 text-sm outline-none" placeholder="ابحث عن قناة...">
+            </div>
+
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
+        </aside>
+
+        <main class="main-content">
+            <div id="loading-view">
+                <div class="w-8 h-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+
+            <div class="absolute top-5 left-5 z-[200]">
+                <button onclick="UIManager.close()" class="bg-black/60 px-4 py-2 rounded-full text-xs">
+                    <i class="fas fa-arrow-right"></i> رجوع
                 </button>
             </div>
+
             <div id="video-container">
-                <video id="video" autoplay></video>
+                <video id="main-video" controls playsinline></video>
             </div>
         </main>
     </div>
 
     <script>
-        // تفعيل المحرك
-        async function initPlayer(url) {
-            const video = document.getElementById('video');
-            const player = new shaka.Player(video);
+        const API_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
 
-            // إضافة إعدادات "محاكاة VLC" لتجاوز قيود السيرفر
-            player.configure({
-                streaming: {
-                    bufferingGoal: 30,
-                    jumpLargeGaps: true,
+        const UIManager = {
+            allData: [],
+            shakaPlayer: null,
+
+            async init() {
+                shaka.polyfill.installAll();
+                try {
+                    const res = await fetch(API_URL);
+                    const text = await res.text();
+                    this.allData = this.parseCSV(text);
+                    this.render(this.allData);
+                    
+                    setTimeout(() => {
+                        document.getElementById('splash-screen').style.display = 'none';
+                        document.getElementById('app-wrapper').style.visibility = 'visible';
+                    }, 1500);
+                } catch(e) { console.error("Data Error"); }
+            },
+
+            parseCSV(csv) {
+                return csv.split('\n').slice(1).map(row => {
+                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return {
+                        name: parts[0]?.replace(/"/g, '').trim(),
+                        url: parts[1]?.replace(/"/g, '').trim(),
+                        logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
+                    };
+                }).filter(i => i.url);
+            },
+
+            render(data) {
+                const list = document.getElementById('list');
+                list.innerHTML = data.map(item => `
+                    <div class="channel-card" onclick="UIManager.play('${item.url}')">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg">
+                        <div class="flex-1 font-bold text-xs">${item.name}</div>
+                        <i class="fas fa-play text-orange-500 text-[10px]"></i>
+                    </div>
+                `).join('');
+            },
+
+            async play(url) {
+                const loader = document.getElementById('loading-view');
+                const video = document.getElementById('main-video');
+                document.getElementById('app-wrapper').classList.add('is-playing');
+                loader.style.display = 'flex';
+
+                // تنظيف المحرك السابق
+                if (this.shakaPlayer) { await this.shakaPlayer.destroy(); this.shakaPlayer = null; }
+                video.src = '';
+
+                // 1. يوتيوب
+                if (url.includes("youtube.com") || url.includes("youtu.be")) {
+                    const id = url.includes("v=") ? url.split("v=")[1].split("&")[0] : url.split("/").pop();
+                    document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+                    loader.style.display = 'none';
+                    return;
                 }
-            });
 
-            try {
-                await player.load(url);
-                console.log('The video has now been loaded!');
-            } catch (e) {
-                console.error('Error code', e.code, 'object', e);
-                // محاولة تشغيل اضطرارية إذا فشل المحرك الذكي
-                video.src = url;
+                // 2. محرك Shaka للروابط الصعبة (VLC Mode)
+                this.shakaPlayer = new shaka.Player(video);
+                this.shakaPlayer.configure({ streaming: { jumpLargeGaps: true } });
+
+                try {
+                    await this.shakaPlayer.load(url);
+                    loader.style.display = 'none';
+                } catch (e) {
+                    // إذا فشل Shaka، جرب HLS.js كخطة بديلة
+                    if (Hls.isSupported()) {
+                        const hls = new Hls();
+                        hls.loadSource(url);
+                        hls.attachMedia(video);
+                        hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play(); loader.style.display = 'none'; });
+                    } else {
+                        video.src = url;
+                        video.play();
+                        loader.style.display = 'none';
+                    }
+                }
+            },
+
+            close() {
+                document.getElementById('app-wrapper').classList.remove('is-playing');
+                if (this.shakaPlayer) this.shakaPlayer.destroy();
+                document.getElementById('video-container').innerHTML = '<video id="main-video" controls playsinline></video>';
             }
-        }
+        };
 
-        function playNative(url) {
-            document.getElementById('app-wrapper').classList.add('is-playing');
-            shaka.polyfill.installAll();
-            if (shaka.Player.isBrowserSupported()) {
-                initPlayer(url);
-            } else {
-                document.getElementById('video').src = url;
-            }
-        }
-
-        function closePlayer() {
-            const video = document.getElementById('video');
-            video.pause();
-            video.src = "";
-            document.getElementById('app-wrapper').classList.remove('is-playing');
-        }
+        window.onload = () => UIManager.init();
     </script>
 </body>
 </html>
