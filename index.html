@@ -14,21 +14,14 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
-        
-        /* شاشة الشعار */
         #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
-        
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; opacity: 0; transition: 0.5s; }
         .sidebar { width: 100%; display: flex; flex-direction: column; background: #050505; }
-        
-        /* شاشة المشغل (مثل VLC) */
         .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; flex-direction: column; }
         .is-playing .main-content { display: flex; }
-        
         .tabs { display: flex; background: #0a0a0a; border-bottom: 1px solid #222; overflow-x: auto; scrollbar-width: none; }
         .tab { flex: none; padding: 15px 22px; cursor: pointer; color: #666; font-size: 14px; white-space: nowrap; }
         .tab.active { color: #ff9500; border-bottom: 3px solid #ff9500; font-weight: bold; }
-        
         .channel-card { background: #111; border-radius: 12px; padding: 12px; margin: 6px 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #1a1a1a; cursor: pointer; }
         #loading-view { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 180; display: none; align-items: center; justify-content: center; flex-direction: column; }
     </style>
@@ -44,14 +37,12 @@
             <div class="p-4 text-center border-b border-white/5">
                 <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6 mx-auto">
             </div>
-
             <div class="tabs">
                 <div class="tab active" onclick="UIManager.loadCategory('live', this)">بث مباشر</div>
                 <div class="tab" onclick="UIManager.loadCategory('anime', this)">أنمي</div>
                 <div class="tab" onclick="UIManager.loadCategory('series', this)">مسلسلات</div>
                 <div class="tab" onclick="UIManager.loadCategory('movies', this)">أفلام</div>
             </div>
-
             <div id="list" class="flex-1 overflow-y-auto pt-2 pb-10"></div>
         </aside>
 
@@ -60,13 +51,11 @@
                 <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
                 <p class="text-orange-500 mt-4 text-xs">جاري تشغيل الرابط...</p>
             </div>
-            
             <div class="absolute top-5 left-5 z-[200]">
                 <button onclick="UIManager.close()" class="bg-black/80 px-4 py-2 rounded-full text-xs border border-white/10">
                     <i class="fas fa-arrow-right ml-2"></i> رجوع
                 </button>
             </div>
-
             <div id="video-container" class="flex-1 flex items-center justify-center">
                 <video id="main-video" controls autoplay playsinline class="w-full h-full"></video>
             </div>
@@ -74,12 +63,12 @@
     </div>
 
     <script>
-        // الروابط الخاصة بك
+        // تم تحديث الروابط هنا لتكون روابط تصدير مباشرة لضمان العمل داخل التطبيق
         const API_LINKS = {
-            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            anime: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
-            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/export?format=csv',
+            anime: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/export?format=csv',
+            series: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/export?format=csv',
+            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/export?format=csv'
         };
 
         const UIManager = {
@@ -104,24 +93,36 @@
                     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                     el.classList.add('active');
                 }
+                document.getElementById('list').innerHTML = '<p class="text-center p-10 text-orange-500">جاري تحميل القائمة...</p>';
                 try {
                     const res = await fetch(API_LINKS[type]);
                     const text = await res.text();
                     this.render(this.parseCSV(text));
-                } catch(e) { console.error("Data Load Error"); }
+                } catch(e) { 
+                    document.getElementById('list').innerHTML = '<p class="text-center p-10 text-red-500">خطأ في الاتصال بالسيرفر</p>';
+                }
             },
 
             parseCSV(csv) {
                 return csv.split('\n').slice(1).map(row => {
                     const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    return { name: p[0]?.replace(/"/g, ''), url: p[1]?.replace(/"/g, ''), logo: p[2]?.replace(/"/g, '') };
-                }).filter(i => i.url && i.url.startsWith('http'));
+                    if(!p[1]) return null;
+                    return { 
+                        name: p[0]?.replace(/"/g, '').trim(), 
+                        url: p[1]?.replace(/"/g, '').trim(), 
+                        logo: p[2]?.replace(/"/g, '').trim() || 'https://via.placeholder.com/100'
+                    };
+                }).filter(i => i && i.url && i.url.startsWith('http'));
             },
 
             render(data) {
+                if(data.length === 0) {
+                    document.getElementById('list').innerHTML = '<p class="text-center p-10 text-gray-500">لا توجد قنوات متاحة حالياً</p>';
+                    return;
+                }
                 document.getElementById('list').innerHTML = data.map(i => `
-                    <div class="channel-card" onclick="UIManager.play('${i.url.trim()}')">
-                        <img src="${i.logo}" class="w-10 h-10 object-contain rounded-lg bg-white/5">
+                    <div class="channel-card" onclick="UIManager.play('${i.url}')">
+                        <img src="${i.logo}" onerror="this.src='https://via.placeholder.com/100'" class="w-10 h-10 object-contain rounded-lg bg-white/5">
                         <div class="flex-1 font-bold text-xs truncate">${i.name}</div>
                         <i class="fas fa-play-circle text-orange-500"></i>
                     </div>`).join('');
@@ -134,7 +135,6 @@
                 loader.style.display = 'flex';
                 this.cleanup();
 
-                // 1. يوتيوب
                 if (url.includes("youtube") || url.includes("youtu.be")) {
                     const id = url.includes("v=") ? url.split("v=")[1].split("&")[0] : url.split("/").pop();
                     document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
@@ -142,15 +142,11 @@
                     return;
                 }
 
-                // 2. محرك MPEG-TS (الرابط الذي أرسلته أنت ويحتاج VLC)
                 if (mpegts.getFeatureList().mseLivePlayback) {
                     this.tsPlayer = mpegts.createPlayer({ type: 'mse', isLive: true, url: url });
                     this.tsPlayer.attachMediaElement(video);
                     this.tsPlayer.load();
-                    this.tsPlayer.play().catch(() => {
-                        // 3. محرك HLS (m3u8) إذا فشل الأول
-                        this.fallbackHLS(url, video);
-                    });
+                    this.tsPlayer.play().catch(() => this.fallbackHLS(url, video));
                 } else {
                     this.fallbackHLS(url, video);
                 }
@@ -173,8 +169,6 @@
             cleanup() {
                 if (this.tsPlayer) { this.tsPlayer.destroy(); this.tsPlayer = null; }
                 if (this.hlsPlayer) { this.hlsPlayer.destroy(); this.hlsPlayer = null; }
-                const v = document.getElementById('main-video');
-                if(v) { v.pause(); v.src = ""; }
                 document.getElementById('video-container').innerHTML = '<video id="main-video" controls autoplay playsinline class="w-full h-full"></video>';
             },
 
