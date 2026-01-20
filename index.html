@@ -3,261 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - Ultimate Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ADATA TV PRO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/shaka-player.compiled.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        
-        :root {
-            --primary: #ff9500;
-            --surface: #050505;
-            --card: #111111;
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-            --text-dim: #a0a0a0;
-        }
-
-        body.light-mode {
-            --surface: #f3f4f6;
-            --card: #ffffff;
-            --border: rgba(0, 0, 0, 0.1);
-            --text-main: #111111;
-            --text-dim: #4b5563;
-        }
-
-        body {
-            background-color: var(--surface);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            user-select: none;
-            height: 100vh;
-        }
-
-        #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
-
-        .sidebar { width: 100%; background: var(--surface); display: flex; flex-direction: column; z-index: 50; }
-
-        .main-content {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 100;
-            display: none;
-            flex-direction: column;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; }
         .is-playing .main-content { display: flex; }
-
-        #video-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            position: relative;
-        }
-
-        video { width: 100%; height: 100%; background: #000; }
-
-        .channel-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 12px;
-            margin: 4px 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .overlay-controls {
-            position: absolute;
-            top: 20px;
-            left: 15px;
-            right: 15px;
-            z-index: 200;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .btn-action {
-            background: rgba(0,0,0,0.6);
-            padding: 8px 14px;
-            border-radius: 40px;
-            color: white;
-            font-size: 12px;
-            backdrop-filter: blur(8px);
-            cursor: pointer;
-            pointer-events: auto;
-        }
-
-        #loading-view {
-            position: absolute;
-            inset: 0;
-            background: #000;
-            z-index: 180;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Splash Screen */
-        #splash-screen {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-        }
+        #video-container { width: 100%; height: 100%; }
+        video { width: 100%; height: 100%; object-fit: contain; }
+        .channel-card { background: #111; border-radius: 12px; padding: 15px; margin: 8px; display: flex; align-items: center; gap: 15px; border: 1px solid #222; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
-    </div>
-
     <div id="app-wrapper">
-        <aside class="sidebar">
-            <div class="p-5 flex items-center justify-between">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
-                <div class="cursor-pointer text-orange-500" id="theme-btn"><i class="fas fa-moon"></i></div>
-            </div>
+        <header class="p-5 flex justify-between items-center border-b border-white/5">
+            <h1 class="text-orange-500 font-black text-xl">ADATA TV</h1>
+        </header>
 
-            <div class="px-4 mb-4">
-                <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-2 flex items-center gap-2">
-                    <i class="fas fa-search text-gray-500"></i>
-                    <input type="text" id="search-input" class="bg-transparent border-none outline-none text-sm w-full" placeholder="ابحث هنا...">
+        <div id="list" class="overflow-y-auto h-[calc(100vh-80px)] p-2">
+            <div class="channel-card" onclick="playNative('http://4kgood.org/8344281117826792/7mv6wkb8m8gwimx4frkr/44')">
+                <div class="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-tv text-orange-500"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="font-bold">قناتك الخاصة</div>
+                    <div class="text-xs text-gray-500">رابط مباشر (محرك Shaka)</div>
                 </div>
             </div>
+        </div>
 
-            <div id="list" class="flex-1 overflow-y-auto"></div>
-        </aside>
-
-        <main class="main-content">
-            <div id="loading-view">
-                <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <main class="main-content" id="player-screen">
+            <div class="absolute top-5 right-5 z-[200]">
+                <button onclick="closePlayer()" class="bg-white/10 p-3 rounded-full backdrop-blur-md">
+                    <i class="fas fa-times text-white"></i>
+                </button>
             </div>
-
-            <div class="overlay-controls">
-                <div class="btn-action" onclick="UIManager.close()">
-                    <i class="fas fa-arrow-right"></i> رجوع
-                </div>
-            </div>
-
             <div id="video-container">
-                </div>
+                <video id="video" autoplay></video>
+            </div>
         </main>
     </div>
 
     <script>
-        const API_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
+        // تفعيل المحرك
+        async function initPlayer(url) {
+            const video = document.getElementById('video');
+            const player = new shaka.Player(video);
 
-        const UIManager = {
-            allData: [],
-            hls: null,
-
-            async init() {
-                try {
-                    const res = await fetch(API_URL);
-                    const text = await res.text();
-                    this.allData = this.parseCSV(text);
-                    this.render(this.allData);
-                    
-                    setTimeout(() => {
-                        document.getElementById('splash-screen').style.display = 'none';
-                        document.getElementById('app-wrapper').style.visibility = 'visible';
-                    }, 1000);
-                } catch(e) { alert("خطأ في جلب البيانات"); }
-            },
-
-            parseCSV(csv) {
-                return csv.split('\n').slice(1).map(row => {
-                    const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    return { name: p[0]?.replace(/"/g, ''), url: p[1]?.replace(/"/g, ''), logo: p[2]?.replace(/"/g, '') };
-                }).filter(i => i.url);
-            },
-
-            render(data) {
-                const list = document.getElementById('list');
-                list.innerHTML = data.map(item => `
-                    <div class="channel-card" onclick="UIManager.play('${item.url.trim()}')">
-                        <img src="${item.logo}" class="w-12 h-12 object-contain bg-white/5 rounded-lg">
-                        <div class="flex-1 font-bold text-sm">${item.name}</div>
-                        <i class="fas fa-play-circle text-orange-500 text-xl"></i>
-                    </div>
-                `).join('');
-            },
-
-            play(url) {
-                const container = document.getElementById('video-container');
-                const loader = document.getElementById('loading-view');
-                document.getElementById('app-wrapper').classList.add('is-playing');
-                loader.style.display = 'flex';
-                container.innerHTML = '';
-
-                // 1. محرك اليوتيوب
-                if (url.includes("youtube.com") || url.includes("youtu.be")) {
-                    const id = url.includes("v=") ? url.split("v=")[1].split("&")[0] : url.split("/").pop();
-                    container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-                    loader.style.display = 'none';
-                    return;
+            // إضافة إعدادات "محاكاة VLC" لتجاوز قيود السيرفر
+            player.configure({
+                streaming: {
+                    bufferingGoal: 30,
+                    jumpLargeGaps: true,
                 }
+            });
 
-                // 2. محرك البث المباشر الصعب (VLC Engine Alternative)
-                const video = document.createElement('video');
-                video.controls = true;
-                video.autoplay = true;
-                video.setAttribute('playsinline', '');
-                container.appendChild(video);
-
-                if (Hls.isSupported()) {
-                    if (this.hls) this.hls.destroy();
-                    this.hls = new Hls({
-                        enableWorker: true,
-                        lowLatencyMode: true,
-                        backBufferLength: 90
-                    });
-                    this.hls.loadSource(url);
-                    this.hls.attachMedia(video);
-                    this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                        video.play();
-                        loader.style.display = 'none';
-                    });
-                    this.hls.on(Hls.Events.ERROR, (event, data) => {
-                        if (data.fatal) {
-                            // محاولة أخيرة كفيديو عادي إذا فشل HLS
-                            video.src = url;
-                            loader.style.display = 'none';
-                        }
-                    });
-                } else {
-                    // لدعم هواتف iPhone وأندرويد القديمة
-                    video.src = url;
-                    video.addEventListener('loadedmetadata', () => {
-                        video.play();
-                        loader.style.display = 'none';
-                    });
-                }
-            },
-
-            close() {
-                document.getElementById('app-wrapper').classList.remove('is-playing');
-                const container = document.getElementById('video-container');
-                container.innerHTML = '';
-                if (this.hls) {
-                    this.hls.destroy();
-                    this.hls = null;
-                }
+            try {
+                await player.load(url);
+                console.log('The video has now been loaded!');
+            } catch (e) {
+                console.error('Error code', e.code, 'object', e);
+                // محاولة تشغيل اضطرارية إذا فشل المحرك الذكي
+                video.src = url;
             }
-        };
+        }
 
-        window.onload = () => UIManager.init();
+        function playNative(url) {
+            document.getElementById('app-wrapper').classList.add('is-playing');
+            shaka.polyfill.installAll();
+            if (shaka.Player.isBrowserSupported()) {
+                initPlayer(url);
+            } else {
+                document.getElementById('video').src = url;
+            }
+        }
+
+        function closePlayer() {
+            const video = document.getElementById('video');
+            video.pause();
+            video.src = "";
+            document.getElementById('app-wrapper').classList.remove('is-playing');
+        }
     </script>
 </body>
 </html>
