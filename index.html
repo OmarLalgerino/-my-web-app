@@ -4,63 +4,29 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - Professional View</title>
+    <title>ADATA TV PRO - Ultimate Engine</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/shaka-player.compiled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        
-        :root {
-            --primary: #ff9500;
-            --surface: #050505;
-            --card: #111111;
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-        }
-
-        body {
-            background-color: var(--surface);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        :root { --primary: #ff9500; --surface: #050505; --card: #111111; --text: #ffffff; }
+        body { background-color: var(--surface); color: var(--text); font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
-
         .sidebar { width: 100%; background: var(--surface); display: flex; flex-direction: column; z-index: 50; }
-
-        .main-content {
-            position: fixed; inset: 0; background: #000; z-index: 100;
-            display: none; flex-direction: column;
-        }
-
+        .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; flex-direction: column; }
         .is-playing .main-content { display: flex; }
-
-        #video-container { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
-
+        #video-container { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; background: #000; }
         video { width: 100%; height: 100%; object-fit: contain; }
-
-        .channel-card {
-            background: var(--card); border-radius: 12px; padding: 12px;
-            margin: 4px 12px; display: flex; align-items: center; gap: 12px;
-            border: 1px solid var(--border); cursor: pointer;
-        }
-
-        #loading-view {
-            position: absolute; inset: 0; background: #000; z-index: 180;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-        }
-
-        #splash-screen {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .channel-card { background: var(--card); border-radius: 12px; padding: 12px; margin: 4px 12px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        #loading-view { position: absolute; inset: 0; background: #000; z-index: 180; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .tabs { display: flex; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #777; font-weight: bold; border-bottom: 2px solid transparent; }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
     </style>
 </head>
 <body>
@@ -72,11 +38,16 @@
     <div id="app-wrapper">
         <aside class="sidebar">
             <div class="p-5 flex items-center justify-between">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-6">
             </div>
 
-            <div class="search-box px-4 mb-4">
-                <input type="text" id="search-input" class="w-full bg-[#111] border border-white/10 rounded-lg p-2 text-sm outline-none" placeholder="ابحث عن قناة...">
+            <div class="px-4 mb-2">
+                <input type="text" id="search-input" class="w-full bg-[#111] border border-white/10 rounded-lg p-2 text-sm outline-none" placeholder="ابحث عن قناة أو فيلم...">
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" id="tab-live">بث مباشر</div>
+                <div class="tab" id="tab-vod">أفلام</div>
             </div>
 
             <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
@@ -84,41 +55,51 @@
 
         <main class="main-content">
             <div id="loading-view">
-                <div class="w-8 h-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-xs mt-3 text-orange-500">جاري الاتصال بالسيرفر...</p>
             </div>
-
+            
             <div class="absolute top-5 left-5 z-[200]">
-                <button onclick="UIManager.close()" class="bg-black/60 px-4 py-2 rounded-full text-xs">
-                    <i class="fas fa-arrow-right"></i> رجوع
+                <button onclick="UIManager.close()" class="bg-black/60 px-5 py-2 rounded-full text-xs text-white border border-white/10">
+                    <i class="fas fa-arrow-right ml-2"></i> رجوع للرئيسية
                 </button>
             </div>
 
             <div id="video-container">
-                <video id="main-video" controls playsinline></video>
-            </div>
+                </div>
         </main>
     </div>
 
     <script>
-        const API_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
+        const API_LINKS = {
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
+        };
 
         const UIManager = {
             allData: [],
-            shakaPlayer: null,
+            tsPlayer: null,
+            hlsPlayer: null,
 
             async init() {
-                shaka.polyfill.installAll();
-                try {
-                    const res = await fetch(API_URL);
-                    const text = await res.text();
-                    this.allData = this.parseCSV(text);
-                    this.render(this.allData);
-                    
+                await this.loadCategory('live');
+                this.setupEvents();
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.opacity = '0';
                     setTimeout(() => {
                         document.getElementById('splash-screen').style.display = 'none';
                         document.getElementById('app-wrapper').style.visibility = 'visible';
-                    }, 1500);
-                } catch(e) { console.error("Data Error"); }
+                    }, 500);
+                }, 1500);
+            },
+
+            async loadCategory(type) {
+                try {
+                    const res = await fetch(API_LINKS[type]);
+                    const text = await res.text();
+                    this.allData = this.parseCSV(text);
+                    this.render(this.allData);
+                } catch(e) { console.error("Error loading data"); }
             },
 
             parseCSV(csv) {
@@ -136,61 +117,93 @@
                 const list = document.getElementById('list');
                 list.innerHTML = data.map(item => `
                     <div class="channel-card" onclick="UIManager.play('${item.url}')">
-                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg">
-                        <div class="flex-1 font-bold text-xs">${item.name}</div>
-                        <i class="fas fa-play text-orange-500 text-[10px]"></i>
+                        <img src="${item.logo}" class="w-12 h-12 object-contain bg-white/5 rounded-lg" onerror="this.src='https://via.placeholder.com/150'">
+                        <div class="flex-1 font-bold text-sm">${item.name}</div>
+                        <i class="fas fa-play-circle text-orange-500 text-xl"></i>
                     </div>
                 `).join('');
             },
 
+            setupEvents() {
+                const tabLive = document.getElementById('tab-live');
+                const tabVod = document.getElementById('tab-vod');
+
+                tabLive.onclick = () => {
+                    tabLive.classList.add('active'); tabVod.classList.remove('active');
+                    this.loadCategory('live');
+                };
+                tabVod.onclick = () => {
+                    tabVod.classList.add('active'); tabLive.classList.remove('active');
+                    this.loadCategory('vod');
+                };
+
+                document.getElementById('search-input').oninput = (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const filtered = this.allData.filter(i => i.name.toLowerCase().includes(term));
+                    this.render(filtered);
+                };
+            },
+
             async play(url) {
+                const container = document.getElementById('video-container');
                 const loader = document.getElementById('loading-view');
-                const video = document.getElementById('main-video');
                 document.getElementById('app-wrapper').classList.add('is-playing');
                 loader.style.display = 'flex';
+                
+                // تنظيف أي مشغل سابق
+                this.cleanup();
+                container.innerHTML = '<video id="main-video" controls autoplay playsinline></video>';
+                const video = document.getElementById('main-video');
 
-                // تنظيف المحرك السابق
-                if (this.shakaPlayer) { await this.shakaPlayer.destroy(); this.shakaPlayer = null; }
-                video.src = '';
-
-                // 1. يوتيوب
+                // 1. التعامل مع روابط يوتيوب
                 if (url.includes("youtube.com") || url.includes("youtu.be")) {
                     const id = url.includes("v=") ? url.split("v=")[1].split("&")[0] : url.split("/").pop();
-                    document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+                    container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
                     loader.style.display = 'none';
                     return;
                 }
 
-                // 2. محرك Shaka للروابط الصعبة (VLC Mode)
-                this.shakaPlayer = new shaka.Player(video);
-                this.shakaPlayer.configure({ streaming: { jumpLargeGaps: true } });
-
-                try {
-                    await this.shakaPlayer.load(url);
-                    loader.style.display = 'none';
-                } catch (e) {
-                    // إذا فشل Shaka، جرب HLS.js كخطة بديلة
-                    if (Hls.isSupported()) {
-                        const hls = new Hls();
-                        hls.loadSource(url);
-                        hls.attachMedia(video);
-                        hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play(); loader.style.display = 'none'; });
-                    } else {
-                        video.src = url;
-                        video.play();
-                        loader.style.display = 'none';
+                // 2. المحرك الرئيسي: تشغيل روابط IPTV (MPEG-TS) مثل VLC
+                if (mpegts.getFeatureList().mseLivePlayback) {
+                    try {
+                        this.tsPlayer = mpegts.createPlayer({ type: 'mse', isLive: true, url: url });
+                        this.tsPlayer.attachMediaElement(video);
+                        this.tsPlayer.load();
+                        this.tsPlayer.play();
+                        
+                        this.tsPlayer.on(mpegts.Events.METADATA_ARRIVED, () => { loader.style.display = 'none'; });
+                    } catch (e) {
+                        this.fallbackPlay(url, video, loader);
                     }
+                } else {
+                    this.fallbackPlay(url, video, loader);
                 }
+                
+                video.onplaying = () => loader.style.display = 'none';
+            },
+
+            fallbackPlay(url, video, loader) {
+                // محرك HLS الاحتياطي
+                if (Hls.isSupported()) {
+                    this.hlsPlayer = new Hls();
+                    this.hlsPlayer.loadSource(url);
+                    this.hlsPlayer.attachMedia(video);
+                    this.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => { video.play(); loader.style.display = 'none'; });
+                } else {
+                    video.src = url;
+                    video.play();
+                    loader.style.display = 'none';
+                }
+            },
+
+            cleanup() {
+                if (this.tsPlayer) { this.tsPlayer.destroy(); this.tsPlayer = null; }
+                if (this.hlsPlayer) { this.hlsPlayer.destroy(); this.hlsPlayer = null; }
             },
 
             close() {
                 document.getElementById('app-wrapper').classList.remove('is-playing');
-                if (this.shakaPlayer) this.shakaPlayer.destroy();
-                document.getElementById('video-container').innerHTML = '<video id="main-video" controls playsinline></video>';
+                this.cleanup();
+                document.getElementById('video-container').innerHTML = '';
             }
         };
-
-        window.onload = () => UIManager.init();
-    </script>
-</body>
-</html>
