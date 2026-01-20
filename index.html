@@ -63,7 +63,6 @@
     </div>
 
     <script>
-        // تم تحديث الروابط هنا لتكون روابط تصدير مباشرة لضمان العمل داخل التطبيق
         const API_LINKS = {
             live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/export?format=csv',
             anime: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/export?format=csv',
@@ -93,20 +92,20 @@
                     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                     el.classList.add('active');
                 }
-                document.getElementById('list').innerHTML = '<p class="text-center p-10 text-orange-500">جاري تحميل القائمة...</p>';
+                document.getElementById('list').innerHTML = '<p class="text-center p-10 text-orange-500 text-sm">جاري جلب القنوات...</p>';
                 try {
-                    const res = await fetch(API_LINKS[type]);
+                    const res = await fetch(API_LINKS[type] + '&cache=' + Date.now());
                     const text = await res.text();
                     this.render(this.parseCSV(text));
                 } catch(e) { 
-                    document.getElementById('list').innerHTML = '<p class="text-center p-10 text-red-500">خطأ في الاتصال بالسيرفر</p>';
+                    document.getElementById('list').innerHTML = '<p class="text-center p-10 text-red-500">فشل في الاتصال، تحقق من الإنترنت</p>';
                 }
             },
 
             parseCSV(csv) {
                 return csv.split('\n').slice(1).map(row => {
                     const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if(!p[1]) return null;
+                    if(!p || p.length < 2) return null;
                     return { 
                         name: p[0]?.replace(/"/g, '').trim(), 
                         url: p[1]?.replace(/"/g, '').trim(), 
@@ -117,7 +116,7 @@
 
             render(data) {
                 if(data.length === 0) {
-                    document.getElementById('list').innerHTML = '<p class="text-center p-10 text-gray-500">لا توجد قنوات متاحة حالياً</p>';
+                    document.getElementById('list').innerHTML = '<p class="text-center p-10 text-gray-500">القائمة فارغة حالياً</p>';
                     return;
                 }
                 document.getElementById('list').innerHTML = data.map(i => `
@@ -131,45 +130,60 @@
             play(url) {
                 const video = document.getElementById('main-video');
                 const loader = document.getElementById('loading-view');
+                const cleanUrl = url.trim().replace(/"/g, ''); 
+                
                 document.getElementById('app-wrapper').classList.add('is-playing');
                 loader.style.display = 'flex';
                 this.cleanup();
 
-                if (url.includes("youtube") || url.includes("youtu.be")) {
-                    const id = url.includes("v=") ? url.split("v=")[1].split("&")[0] : url.split("/").pop();
-                    document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+                // 1. YouTube Handling
+                if (cleanUrl.includes("youtube") || cleanUrl.includes("youtu.be")) {
+                    const id = cleanUrl.includes("v=") ? cleanUrl.split("v=")[1].split("&")[0] : cleanUrl.split("/").pop();
+                    document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
                     loader.style.display = 'none';
                     return;
                 }
 
-                if (mpegts.getFeatureList().mseLivePlayback) {
-                    this.tsPlayer = mpegts.createPlayer({ type: 'mse', isLive: true, url: url });
-                    this.tsPlayer.attachMediaElement(video);
-                    this.tsPlayer.load();
-                    this.tsPlayer.play().catch(() => this.fallbackHLS(url, video));
-                } else {
-                    this.fallbackHLS(url, video);
+                // 2. M3U8 (HLS) Handling - الجزيرة وغيرها
+                if (cleanUrl.toLowerCase().includes("m3u8")) {
+                    if (Hls.isSupported()) {
+                        this.hlsPlayer = new Hls();
+                        this.hlsPlayer.loadSource(cleanUrl);
+                        this.hlsPlayer.attachMedia(video);
+                        this.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        video.src = cleanUrl;
+                        video.play();
+                    }
+                } 
+                // 3. MPEG-TS Handling
+                else {
+                    if (mpegts.isSupported()) {
+                        this.tsPlayer = mpegts.createPlayer({ type: 'mse', isLive: true, url: cleanUrl });
+                        this.tsPlayer.attachMediaElement(video);
+                        this.tsPlayer.load();
+                        this.tsPlayer.play().catch(() => {
+                            video.src = cleanUrl;
+                            video.play();
+                        });
+                    } else {
+                        video.src = cleanUrl;
+                        video.play();
+                    }
                 }
 
                 video.onplaying = () => loader.style.display = 'none';
-                video.onerror = () => { loader.style.display = 'none'; };
-            },
-
-            fallbackHLS(url, video) {
-                if (Hls.isSupported()) {
-                    this.hlsPlayer = new Hls();
-                    this.hlsPlayer.loadSource(url);
-                    this.hlsPlayer.attachMedia(video);
-                    this.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                } else {
-                    video.src = url; video.play();
-                }
+                video.onerror = () => { 
+                    loader.style.display = 'none';
+                    alert("تعذر تشغيل هذا الرابط، قد يكون المصدر متوقفاً");
+                };
             },
 
             cleanup() {
                 if (this.tsPlayer) { this.tsPlayer.destroy(); this.tsPlayer = null; }
                 if (this.hlsPlayer) { this.hlsPlayer.destroy(); this.hlsPlayer = null; }
-                document.getElementById('video-container').innerHTML = '<video id="main-video" controls autoplay playsinline class="w-full h-full"></video>';
+                const container = document.getElementById('video-container');
+                container.innerHTML = '<video id="main-video" controls autoplay playsinline class="w-full h-full"></video>';
             },
 
             close() {
