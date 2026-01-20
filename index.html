@@ -21,7 +21,6 @@
             --card: #111111;
             --border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff;
-            --text-dim: #a0a0a0;
         }
 
         body {
@@ -69,8 +68,6 @@
         }
         body.is-playing .main-content { display: flex; }
 
-        .video-js { width: 100vw !important; height: 100vh !important; }
-
         .channel-card {
             background: var(--card);
             border-radius: 12px;
@@ -81,22 +78,21 @@
             gap: 12px;
             cursor: pointer;
             border: 1px solid var(--border);
-            transition: transform 0.2s;
         }
-        .channel-card:active { transform: scale(0.98); }
 
         .btn-external {
-            background: #e15b00;
+            background: #ff4d00;
             color: white;
-            padding: 12px 24px;
+            padding: 14px 28px;
             border-radius: 50px;
             font-weight: bold;
             margin-top: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 15px rgba(225, 91, 0, 0.3);
+            gap: 12px;
+            width: 100%;
+            text-decoration: none;
         }
 
         .spinner {
@@ -107,12 +103,6 @@
             animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .tab-active {
-            border-bottom: 2px solid var(--primary);
-            color: var(--primary);
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -130,21 +120,12 @@
                 </div>
             </div>
 
-            <!-- Search -->
-            <div class="px-4 mb-4">
-                <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 flex items-center gap-3">
-                    <i class="fas fa-search text-gray-500"></i>
-                    <input type="text" id="search-input" class="bg-transparent border-none outline-none text-sm w-full text-white" placeholder="ابحث عن قناة أو فيلم...">
-                </div>
-            </div>
-
             <!-- Tabs -->
             <div class="flex px-4 border-b border-[var(--border)] mb-2">
-                <div id="tab-live" class="flex-1 py-3 text-center cursor-pointer tab-active">بث مباشر</div>
+                <div id="tab-live" class="flex-1 py-3 text-center cursor-pointer border-b-2 border-primary text-primary font-bold">بث مباشر</div>
                 <div id="tab-vod" class="flex-1 py-3 text-center cursor-pointer text-gray-500">أفلام</div>
             </div>
 
-            <!-- List Container -->
             <div id="list" class="flex-1 overflow-y-auto pt-2"></div>
 
             <div class="p-4 text-center border-t border-[var(--border)]">
@@ -155,17 +136,26 @@
         <main class="main-content" id="player-screen">
             <div id="loading-view" class="absolute inset-0 z-[180] bg-black flex flex-col items-center justify-center">
                 <div class="spinner"></div>
-                <div id="error-options" class="hidden text-center mt-6 px-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" class="w-16 h-16 mx-auto mb-4">
-                    <p class="text-white text-sm mb-2 font-bold">عذراً، الرابط محمي</p>
-                    <p class="text-gray-400 text-xs mb-4">يتطلب هذا البث تطبيق VLC لتجاوز الحماية بنجاح.</p>
+                
+                <!-- صندوق خيارات المشغل الخارجي -->
+                <div id="vlc-box" class="hidden text-center mt-6 px-10">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/VLC_Icon.svg" class="w-20 h-20 mx-auto mb-6">
+                    <h2 class="text-white font-bold text-lg mb-2">تشغيل خارجي مطلوب</h2>
+                    <p class="text-gray-400 text-xs mb-6">هذا الرابط يعمل بشكل أفضل على تطبيق VLC. يرجى اختيار أحد الخيارات أدناه:</p>
                     
-                    <a id="vlc-link" href="#" class="btn-external">
+                    <!-- الخيار 1: بروتوكول VLC المباشر -->
+                    <a id="vlc-direct" href="#" class="btn-external mb-3">
                         <i class="fas fa-play"></i>
-                        <span>تشغيل في VLC</span>
+                        <span>فتح في VLC (الخيار 1)</span>
+                    </a>
+
+                    <!-- الخيار 2: الرابط المباشر -->
+                    <a id="vlc-stream" href="#" target="_blank" class="btn-external bg-white/10">
+                        <i class="fas fa-link"></i>
+                        <span>فتح الرابط مباشرة</span>
                     </a>
                     
-                    <button onclick="UIManager.close()" class="block w-full mt-6 text-gray-500 text-xs underline">رجوع للقائمة</button>
+                    <button onclick="UIManager.close()" class="mt-8 text-gray-500 text-xs underline">إلغاء والعودة</button>
                 </div>
             </div>
 
@@ -188,12 +178,13 @@
 
         const UIManager = {
             allData: [],
-            hls: null,
             currentType: 'live',
 
             async init() {
-                this.setupEvents();
+                document.getElementById('tab-live').onclick = () => this.loadCategory('live');
+                document.getElementById('tab-vod').onclick = () => this.loadCategory('vod');
                 await this.loadCategory('live');
+                
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.opacity = '0';
                     setTimeout(() => {
@@ -203,14 +194,11 @@
                 }, 1000);
             },
 
-            setupEvents() {
-                document.getElementById('tab-live').onclick = () => this.switchTab('live');
-                document.getElementById('tab-vod').onclick = () => this.switchTab('vod');
-                document.getElementById('search-input').oninput = (e) => this.filterData(e.target.value);
-            },
-
             async loadCategory(type) {
                 this.currentType = type;
+                document.getElementById('tab-live').className = `flex-1 py-3 text-center cursor-pointer ${type==='live'?'border-b-2 border-primary text-primary font-bold':'text-gray-500'}`;
+                document.getElementById('tab-vod').className = `flex-1 py-3 text-center cursor-pointer ${type==='vod'?'border-b-2 border-primary text-primary font-bold':'text-gray-500'}`;
+                
                 const list = document.getElementById('list');
                 list.innerHTML = `<div class="flex justify-center p-10"><div class="spinner"></div></div>`;
                 
@@ -218,21 +206,12 @@
                     const res = await fetch(API_LINKS[type]);
                     const text = await res.text();
                     let data = this.parseCSV(text);
-
-                    // إضافة رابطك الخاص في البداية عند فتح قسم المباشر
                     if(type === 'live') {
-                        data.unshift({
-                            name: "رابطك الخاص (VLC Only)",
-                            url: MY_URL,
-                            logo: "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png",
-                            isVip: true
-                        });
+                        data.unshift({ name: "رابطك الخاص (VLC Fix)", url: MY_URL, isVip: true });
                     }
-
-                    this.allData = data;
                     this.render(data);
                 } catch(e) {
-                    list.innerHTML = `<p class="text-center p-5 text-red-500 text-xs">فشل تحميل البيانات، تأكد من الاتصال.</p>`;
+                    list.innerHTML = `<p class="text-center p-5 text-red-500">حدث خطأ في الاتصال</p>`;
                 }
             },
 
@@ -240,102 +219,73 @@
                 const lines = csv.split('\n').filter(l => l.trim() !== '');
                 return lines.slice(1).map(row => {
                     const parts = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                    const clean = (s) => s ? s.replace(/^"|"$/g, '').trim() : '';
-                    return {
-                        name: clean(parts[0]),
-                        url: clean(parts[1]),
-                        logo: clean(parts[2]) || ""
-                    };
+                    const cl = (s) => s ? s.replace(/^"|"$/g, '').trim() : '';
+                    return { name: cl(parts[0]), url: cl(parts[1]), logo: cl(parts[2]) || "" };
                 }).filter(i => i.url && i.name);
             },
 
             render(data) {
-                const list = document.getElementById('list');
-                if(data.length === 0) {
-                    list.innerHTML = `<p class="text-center p-5 text-gray-500 text-xs">لا توجد نتائج</p>`;
-                    return;
-                }
-                list.innerHTML = data.map(item => `
-                    <div class="channel-card ${item.isVip ? 'border-primary/50 bg-primary/5' : ''}" onclick="UIManager.play('${item.url}')">
-                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg bg-white/5" onerror="this.src='https://via.placeholder.com/40?text=TV'">
-                        <div class="flex-1">
-                            <h3 class="font-bold text-sm truncate">${item.name}</h3>
-                            <p class="text-[9px] text-gray-500">${item.isVip ? 'يتطلب VLC' : 'HD Quality'}</p>
+                document.getElementById('list').innerHTML = data.map(item => `
+                    <div class="channel-card ${item.isVip ? 'border-primary' : ''}" onclick="UIManager.play('${item.url}')">
+                        <div class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg text-primary">
+                            <i class="fas fa-play text-xs"></i>
                         </div>
-                        <i class="fas fa-play-circle text-primary text-xl opacity-80"></i>
+                        <div class="flex-1 font-bold text-sm truncate">${item.name}</div>
                     </div>
                 `).join('');
-            },
-
-            filterData(term) {
-                const filtered = this.allData.filter(i => i.name.toLowerCase().includes(term.toLowerCase()));
-                this.render(filtered);
-            },
-
-            switchTab(type) {
-                document.getElementById('tab-live').className = `flex-1 py-3 text-center cursor-pointer ${type==='live'?'tab-active':'text-gray-500'}`;
-                document.getElementById('tab-vod').className = `flex-1 py-3 text-center cursor-pointer ${type==='vod'?'tab-active':'text-gray-500'}`;
-                this.loadCategory(type);
             },
 
             play(url) {
                 document.body.classList.add('is-playing');
                 const loader = document.getElementById('loading-view');
-                const errOptions = document.getElementById('error-options');
-                const vlcBtn = document.getElementById('vlc-link');
-                const container = document.getElementById('video-container');
+                const vlcBox = document.getElementById('vlc-box');
+                const spinner = document.querySelector('.spinner');
                 
                 loader.classList.remove('hidden');
-                errOptions.classList.add('hidden');
-                document.querySelector('.spinner').classList.remove('hidden');
-                container.innerHTML = `<video id="v-player" class="video-js" playsinline autoplay></video>`;
+                spinner.classList.remove('hidden');
+                vlcBox.classList.add('hidden');
 
-                // إعداد رابط VLC
-                const vlcIntent = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=http;type=video/*;package=org.videolan.vlc;S.title=ADATA%20Stream;end`;
-                vlcBtn.onclick = (e) => {
-                    e.preventDefault();
-                    if (/Android/i.test(navigator.userAgent)) {
-                        window.location.href = vlcIntent;
-                    } else {
-                        window.open(url, '_blank');
-                    }
-                };
+                // إعداد الروابط
+                const streamUrl = url;
+                // الطريقة الأولى: بروتوكول vlc://
+                const vlcLink = `vlc://${streamUrl}`;
+                // الطريقة الثانية: الأندرويد intent
+                const intentLink = `intent://${streamUrl.replace(/^https?:\/\//, '')}#Intent;scheme=http;type=video/*;package=org.videolan.vlc;end`;
 
-                if(this.hls) { this.hls.destroy(); }
-                const video = document.getElementById('v-player');
+                document.getElementById('vlc-direct').href = vlcLink;
+                document.getElementById('vlc-stream').href = streamUrl;
 
-                // إذا كان الرابط هو رابطك الخاص المحمي، اظهر خيار VLC مباشرة لتوفير الوقت
+                // إذا كان الرابط هو رابطك الخاص، أظهر الخيارات فوراً
                 if(url === MY_URL) {
-                    setTimeout(() => this.showVlcPrompt(), 500);
-                    return;
-                }
-
-                if (Hls.isSupported()) {
-                    this.hls = new Hls();
-                    this.hls.loadSource(url);
-                    this.hls.attachMedia(video);
-                    this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                        video.play().then(() => loader.classList.add('hidden')).catch(() => this.showVlcPrompt());
-                    });
-                    this.hls.on(Hls.Events.ERROR, (e, data) => {
-                        if (data.fatal) this.showVlcPrompt();
-                    });
+                    spinner.classList.add('hidden');
+                    vlcBox.classList.remove('hidden');
+                    // محاولة الفتح التلقائي بالبروتوكول الجديد
+                    window.location.href = vlcLink;
                 } else {
-                    video.src = url;
-                    video.onerror = () => this.showVlcPrompt();
-                    video.onloadedmetadata = () => { loader.classList.add('hidden'); video.play(); };
+                    // تشغيل القنوات العادية في المتصفح
+                    const container = document.getElementById('video-container');
+                    container.innerHTML = `<video id="v-player" class="video-js" playsinline autoplay></video>`;
+                    const video = document.getElementById('v-player');
+                    if (Hls.isSupported()) {
+                        const hls = new Hls();
+                        hls.loadSource(url);
+                        hls.attachMedia(video);
+                        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            video.play().then(() => loader.classList.add('hidden')).catch(() => {
+                                spinner.classList.add('hidden');
+                                vlcBox.classList.remove('hidden');
+                            });
+                        });
+                        hls.on(Hls.Events.ERROR, () => {
+                            spinner.classList.add('hidden');
+                            vlcBox.classList.remove('hidden');
+                        });
+                    }
                 }
-            },
-
-            showVlcPrompt() {
-                document.getElementById('loading-view').classList.remove('hidden');
-                document.getElementById('error-options').classList.remove('hidden');
-                document.querySelector('.spinner').classList.add('hidden');
             },
 
             close() {
                 document.body.classList.remove('is-playing');
-                if(this.hls) this.hls.destroy();
                 document.getElementById('video-container').innerHTML = '';
             }
         };
