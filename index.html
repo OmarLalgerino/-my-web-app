@@ -2,90 +2,228 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ADATA TV PRO - Ultimate Player</title>
+    <meta name="referrer" content="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ADATA TV - Native Player</title>
     
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-        body { background: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; }
-        .channel-item { background: #111; padding: 18px; margin: 10px 15px; border-radius: 12px; border: 1px solid #222; cursor: pointer; display: flex; align-items: center; transition: 0.3s; }
-        .channel-item:hover { border-color: #ff9500; background: #1a1a1a; }
-        #video-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: none; }
-        .video-js { width: 100% !important; height: 100% !important; }
-        .back-btn { position: absolute; top: 20px; left: 20px; z-index: 11000; background: rgba(255,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        
+        :root {
+            --primary: #ff9500;
+            --surface: #050505;
+            --card: #111111;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-dim: #a0a0a0;
+        }
+
+        body.light-mode {
+            --surface: #f3f4f6;
+            --card: #ffffff;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-main: #111111;
+            --text-dim: #4b5563;
+        }
+
+        body {
+            background-color: var(--surface);
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            user-select: none;
+            height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar {
+            width: 100%;
+            height: 100vh;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .channel-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+
+        .search-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 0 12px 12px 12px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--primary);
+        }
     </style>
 </head>
 <body>
 
-    <div id="ui-content">
-        <div class="p-4 bg-zinc-900 shadow-2xl text-center font-bold text-orange-500 text-xl border-b border-orange-500/20">ADATA TV PRO</div>
-        <div id="list" class="py-4 pb-20">
-            <div class="text-center p-10 text-gray-500 animate-pulse">جاري جلب القنوات من Google Sheets...</div>
-        </div>
+    <div id="splash-screen" class="fixed inset-0 bg-black z-[9999] flex items-center justify-center">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
     </div>
 
-    <div id="video-overlay">
-        <div class="back-btn" onclick="closePlayer()">إغلاق X</div>
-        <video id="my-video" class="video-js vjs-big-play-centered vjs-theme-city" controls preload="auto" width="auto" height="auto"></video>
+    <div class="sidebar">
+        <div class="p-5 flex items-center justify-between">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
+            <div class="theme-toggle" id="theme-btn">
+                <i class="fas fa-moon"></i>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <i class="fas fa-search text-gray-500 text-sm"></i>
+            <input type="text" id="search-input" placeholder="ابحث عن قناة أو فيلم...">
+        </div>
+
+        <div class="flex px-4 border-b border-[var(--border)]">
+            <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm" id="tab-live">مباشر</div>
+            <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm" id="tab-vod">أفلام</div>
+        </div>
+
+        <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
     </div>
 
     <script>
-        // رابط الشيت الخاص بك (تأكد أنه متاح للجميع)
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
-        
-        // إعداد المشغل
-        let player = videojs('my-video');
+        const API_LINKS = {
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
+        };
 
-        async function fetchChannels() {
-            try {
-                const response = await fetch(SHEET_URL);
-                const csvText = await response.text();
-                const rows = csvText.split('\n').slice(1);
+        const UIManager = {
+            allData: [],
+            filteredData: [],
+            currentTab: 'live',
+            isDarkMode: true,
+
+            async init() {
+                await this.loadCategory('live');
+                this.setupGlobalEvents();
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                }, 1500);
+            },
+
+            async loadCategory(type) {
+                try {
+                    const res = await fetch(API_LINKS[type]);
+                    const text = await res.text();
+                    this.allData = this.parseCSV(text);
+                    this.filteredData = this.allData;
+                    this.renderList();
+                } catch(e) { console.error("Error loading data"); }
+            },
+
+            parseCSV(csv) {
+                return csv.split('\n').slice(1).map(row => {
+                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return {
+                        name: parts[0]?.replace(/"/g, '').trim(),
+                        url: parts[1]?.replace(/"/g, '').trim(),
+                        logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
+                    };
+                }).filter(i => i.url);
+            },
+
+            renderList() {
+                const list = document.getElementById('list');
+                list.innerHTML = this.filteredData.map(item => `
+                    <div class="channel-card" onclick="UIManager.playNative('${item.url}')">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg bg-black/10">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-xs truncate" style="color: var(--text-main)">${item.name}</h3>
+                        </div>
+                        <i class="fas fa-play text-[10px] text-orange-500"></i>
+                    </div>
+                `).join('');
+            },
+
+            // هذا هو التعديل المهم لتشغيل مشغل Median الأصلي
+            playNative(url) {
+                if(!url) return;
                 
-                let html = '';
-                rows.forEach(row => {
-                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if(columns.length >= 2) {
-                        const name = columns[0].replace(/"/g, '');
-                        const url = columns[1].replace(/"/g, '');
-                        html += `
-                            <div class="channel-item" onclick="openPlayer('${url.trim()}')">
-                                <div class="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center ml-4">
-                                    <span class="text-orange-500">▶</span>
-                                </div>
-                                <span class="text-lg font-medium">${name}</span>
-                            </div>`;
-                    }
-                });
-                document.getElementById('list').innerHTML = html;
-            } catch (err) {
-                document.getElementById('list').innerHTML = '<div class="text-center text-red-500">فشل تحميل القنوات</div>';
+                // تحديد إذا كان بث مباشر (m3u8) أم فيديو عادي
+                const isLive = url.includes('.m3u8') || url.includes('.ts');
+
+                if (window.median && window.median.mediaplayer) {
+                    // أمر تشغيل مشغل ميديان الأصلي
+                    median.mediaplayer.play({
+                        'url': url,
+                        'isLive': isLive
+                    });
+                } else {
+                    alert("المشغل يعمل فقط داخل تطبيق الهاتف");
+                    console.log("Playing URL:", url);
+                }
+            },
+
+            setupGlobalEvents() {
+                document.getElementById('tab-live').onclick = (e) => this.switchTab(e.target, 'live');
+                document.getElementById('tab-vod').onclick = (e) => this.switchTab(e.target, 'vod');
+
+                document.getElementById('search-input').oninput = (e) => {
+                    const term = e.target.value.toLowerCase();
+                    this.filteredData = this.allData.filter(item => 
+                        item.name.toLowerCase().includes(term)
+                    );
+                    this.renderList();
+                };
+
+                document.getElementById('theme-btn').onclick = () => {
+                    this.isDarkMode = !this.isDarkMode;
+                    document.body.classList.toggle('light-mode', !this.isDarkMode);
+                    const icon = document.querySelector('#theme-btn i');
+                    icon.className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+                };
+            },
+
+            switchTab(el, type) {
+                if (this.currentTab === type) return;
+                this.currentTab = type;
+                document.getElementById('search-input').value = '';
+                document.getElementById('tab-live').className = document.getElementById('tab-vod').className = "flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm";
+                el.className = "flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm";
+                this.loadCategory(type);
             }
-        }
+        };
 
-        function openPlayer(url) {
-            document.getElementById('video-overlay').style.display = 'block';
-            
-            // تحديد نوع الملف تلقائياً
-            let type = 'application/x-mpegURL'; // لروابط m3u8 و hls
-            if (url.toLowerCase().includes('.mp4')) type = 'video/mp4';
-            if (url.toLowerCase().includes('.ts')) type = 'video/mp2t';
-            if (url.toLowerCase().includes('.mkv')) type = 'video/webm';
-
-            player.src({ src: url, type: type });
-            player.play();
-        }
-
-        function closePlayer() {
-            player.pause();
-            document.getElementById('video-overlay').style.display = 'none';
-        }
-
-        window.onload = fetchChannels;
+        window.onload = () => UIManager.init();
     </script>
 </body>
 </html>
