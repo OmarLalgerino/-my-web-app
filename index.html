@@ -2,57 +2,92 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADATA TV - VLC Private</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ADATA Private Player</title>
+    
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-        body { background: #050505; color: white; font-family: 'Cairo', sans-serif; }
-        .card { background: #111; border-radius: 12px; padding: 12px; margin: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid #222; cursor: pointer; }
-        .vlc-icon { color: #ff9500; font-size: 20px; margin-right: auto; }
+        body { background-color: #000; color: #fff; font-family: 'Cairo', sans-serif; margin: 0; padding: 0; overflow: hidden; }
+        
+        /* تصميم قائمة القنوات */
+        .channel-list { height: 100vh; overflow-y: auto; padding: 15px; }
+        .card { background: #111; border: 1px solid #222; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
+        .card:active { background: #1a1a1a; }
+        
+        /* واجهة المشغل */
+        #player-wrapper { position: fixed; inset: 0; background: #000; z-index: 100; display: none; flex-direction: column; }
+        .vjs-default-skin { width: 100% !important; height: 100% !important; }
+        .back-btn { position: absolute; top: 20px; right: 20px; z-index: 110; background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="p-4">
-        <div class="text-center mb-6">
-            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" style="height:35px; margin: auto;">
-            <p class="text-[10px] mt-2 opacity-50 text-orange-500 font-bold">نمط التشفير المتقدم لـ VLC</p>
+    <div id="main-ui" class="channel-list">
+        <div class="flex items-center justify-between mb-6">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-8">
+            <span class="text-xs text-orange-500 font-bold">الوضع الخاص الآمن</span>
         </div>
+        <div id="list-container"></div>
+    </div>
 
-        <div id="list"></div>
+    <div id="player-wrapper">
+        <button class="back-btn" onclick="closePlayer()">✕ إغلاق</button>
+        <div id="video-target" class="flex-1"></div>
     </div>
 
     <script>
-        const API = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
+        const API_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
+        let player = null;
 
-        async function init() {
-            const res = await fetch(API);
-            const text = await res.text();
-            const data = text.split('\n').slice(1).map(row => {
-                const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                return { name: p[0]?.replace(/"/g, ''), url: p[1]?.replace(/"/g, ''), logo: p[2]?.replace(/"/g, '') };
-            }).filter(i => i.url);
+        async function loadChannels() {
+            try {
+                const res = await fetch(API_URL);
+                const text = await res.text();
+                const rows = text.split('\n').slice(1);
+                const channels = rows.map(r => {
+                    const c = r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return { name: c[0]?.replace(/"/g, ''), url: c[1]?.replace(/"/g, ''), logo: c[2]?.replace(/"/g, '') };
+                }).filter(i => i.url);
 
-            document.getElementById('list').innerHTML = data.map(i => `
-                <div class="card" onclick="playPrivate('${i.url}', '${i.name}')">
-                    <img src="${i.logo}" class="w-10 h-10 object-contain rounded" onerror="this.src='https://via.placeholder.com/40'">
-                    <div class="font-bold text-sm">${i.name}</div>
-                    <i class="fas fa-shield-alt vlc-icon"></i>
-                </div>
-            `).join('');
+                document.getElementById('list-container').innerHTML = channels.map(chan => `
+                    <div class="card" onclick="openPlayer('${chan.url}')">
+                        <img src="${chan.logo}" class="w-12 h-12 object-contain rounded bg-white/5" onerror="this.src='https://via.placeholder.com/50'">
+                        <div class="font-bold text-sm">${chan.name}</div>
+                        <div class="mr-auto text-orange-500"><i class="fas fa-play"></i></div>
+                    </div>
+                `).join('');
+            } catch (e) { alert("خطأ في تحميل البيانات"); }
         }
 
-        function playPrivate(url, title) {
-            // تنظيف الرابط وتجهيز الـ Intent المخصص للحماية
-            const cleanUrl = url.trim().replace(/^https?:\/\//, "");
-            const secureIntent = `intent://${cleanUrl}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=${encodeURIComponent(title)};B.no_history=true;end`;
-            
-            window.location.href = secureIntent;
+        function openPlayer(url) {
+            document.getElementById('player-wrapper').style.display = 'flex';
+            const target = document.getElementById('video-target');
+            target.innerHTML = `<video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto" playsinline></video>`;
+
+            player = videojs('my-video', {
+                autoplay: true,
+                fluid: true,
+                sources: [{ src: url, type: 'application/x-mpegURL' }] // يدعم روابط IPTV و M3U8
+            });
+
+            // إخفاء الرابط برمجياً من الكونسول
+            console.clear();
         }
 
-        init();
+        function closePlayer() {
+            if (player) {
+                player.dispose();
+                player = null;
+            }
+            document.getElementById('player-wrapper').style.display = 'none';
+        }
+
+        window.onload = loadChannels;
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
 </body>
 </html>
