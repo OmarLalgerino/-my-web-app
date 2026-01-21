@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - PotPlayer</title>
+    <title>ADATA TV Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -36,7 +36,7 @@
             height: 100vh;
         }
 
-        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
 
         .sidebar { width: 100%; background: var(--surface); display: flex; flex-direction: column; z-index: 50; }
@@ -71,7 +71,7 @@
         .tab-item { cursor: pointer; padding: 12px 0; text-align: center; flex: 1; font-weight: bold; font-size: 0.85rem; color: gray; border-bottom: 2px solid transparent; transition: 0.3s; }
         .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-        .pot-badge {
+        .vlc-badge {
             font-size: 10px;
             background: #ff9500;
             color: #000;
@@ -164,10 +164,10 @@
                 const list = document.getElementById('list');
                 list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد نتائج</div>' :
                     data.map(item => `
-                        <div class="channel-card" onclick="UIManager.playInPotPlayer('${item.url}')">
+                        <div class="channel-card" onclick="UIManager.playVLC('${item.url}')">
                             <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
                             <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
-                            <span class="pot-badge">POT</span>
+                            <span class="vlc-badge">VLC</span>
                         </div>
                     `).join('');
             },
@@ -183,10 +183,18 @@
                 };
             },
 
-            playInPotPlayer(url) {
-                // استخدام بروتوكول PotPlayer لفتح الرابط مباشرة على ويندوز
-                const potUrl = `potplayer://${url.trim()}`;
-                window.location.href = potUrl;
+            playVLC(url) {
+                const cleanUrl = url.trim();
+                // نظام أندرويد لفتح VLC تلقائياً
+                const intent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;end`;
+                window.location.href = intent;
+                
+                // نسخة احتياطية لأجهزة الكمبيوتر إذا لم يكن أندرويد
+                setTimeout(() => {
+                    if (!document.hidden) {
+                        window.location.href = cleanUrl;
+                    }
+                }, 1000);
             }
         };
 
