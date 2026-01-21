@@ -2,167 +2,222 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ADATA TV - PRO</title>
+    <meta name="referrer" content="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ADATA TV Pro</title>
     
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
         
-        body { 
-            background-color: #050505; 
-            color: white; 
-            font-family: 'Cairo', sans-serif; 
-            margin: 0; 
-            padding: 0;
-            overflow-x: hidden;
+        :root {
+            --primary: #ff9500;
+            --surface: #050505;
+            --card: #111111;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
         }
 
-        /* تنسيق بطاقة القناة */
-        .channel-card { 
-            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
-            border-radius: 15px; 
-            padding: 15px; 
-            margin: 10px 15px; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            border: 1px solid #222; 
-            transition: 0.3s;
+        body.light-mode {
+            --surface: #f3f4f6;
+            --card: #ffffff;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-main: #111111;
+        }
+
+        body {
+            background-color: var(--surface);
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #video-container { position: absolute; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; }
+        .video-js { width: 100vw !important; height: 100vh !important; }
+
+        /* Zoom Modes */
+        .zoom-normal video { object-fit: contain !important; }
+        .zoom-fill video { object-fit: fill !important; }
+        .zoom-crop video { object-fit: cover !important; }
+
+        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
+
+        .sidebar { width: 100%; background: var(--surface); display: flex; flex-direction: column; z-index: 50; }
+        .main-content { position: fixed; inset: 0; background: #000; z-index: 100; display: none; }
+        .is-playing .main-content { display: flex; }
+
+        .channel-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .overlay-controls {
+            position: absolute;
+            top: 20px;
+            left: 15px;
+            right: 15px;
+            z-index: 200;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .btn-action {
+            background: rgba(0,0,0,0.6);
+            padding: 8px 14px;
+            border-radius: 40px;
+            color: white;
+            font-size: 12px;
+            backdrop-filter: blur(8px);
             cursor: pointer;
         }
-        
-        .channel-card:active { transform: scale(0.95); background: #222; }
 
-        /* شاشة المشغل Full Screen */
-        #player-screen { 
-            position: fixed; 
-            inset: 0; 
-            background: #000; 
-            z-index: 9999; 
-            display: none; 
-            flex-direction: column;
+        .search-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 0 12px 12px 12px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .close-btn { 
-            position: absolute; 
-            top: 20px; 
-            right: 20px; 
-            z-index: 10000; 
-            background: rgba(255, 0, 0, 0.8); 
-            color: white; 
-            padding: 8px 20px; 
-            border-radius: 50px; 
-            font-weight: bold;
-        }
-
-        .video-js { width: 100% !important; height: 100% !important; }
+        .search-box input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; }
     </style>
 </head>
 <body>
 
-    <div id="main-ui">
-        <div class="p-5 text-center border-b border-gray-800 bg-black sticky top-0 z-50">
-            <h1 class="text-xl font-bold text-orange-500 tracking-widest">ADATA TV</h1>
-            <p class="text-xs text-gray-400">جميع القنوات في مكان واحد</p>
-        </div>
-
-        <div id="list" class="pt-4 pb-20">
-            <div class="text-center py-20 text-gray-500 animate-pulse">جاري جلب القنوات من Google Sheets...</div>
-        </div>
+    <div id="splash-screen">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
     </div>
 
-    <div id="player-screen">
-        <div class="close-btn" onclick="stopVideo()"><i class="fas fa-times"></i> إغلاق</div>
-        <div id="video-container" class="w-full h-full"></div>
+    <div id="app-wrapper">
+        <aside class="sidebar">
+            <div class="p-5 flex items-center justify-between">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
+                <div id="theme-btn" class="cursor-pointer text-orange-500"><i class="fas fa-moon"></i></div>
+            </div>
+
+            <div class="search-box">
+                <i class="fas fa-search text-gray-500"></i>
+                <input type="text" id="search-input" placeholder="ابحث عن قناة...">
+            </div>
+
+            <div class="flex px-4 border-b border-[var(--border)]">
+                <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm" id="tab-live">مباشر</div>
+                <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm" id="tab-vod">أفلام</div>
+            </div>
+
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
+        </aside>
+
+        <main class="main-content" id="player-screen">
+            <div class="overlay-controls">
+                <div class="btn-action" onclick="UIManager.close()"> <i class="fas fa-chevron-right ml-1"></i> رجوع </div>
+                <div class="btn-action" id="zoom-btn"> <i class="fas fa-expand-arrows-alt ml-1"></i> <span id="zoom-label">افتراضي</span> </div>
+            </div>
+            <div id="video-container" class="zoom-normal"></div>
+        </main>
     </div>
 
     <script>
-        let player = null;
-        // رابط ملفك الخاص على Google Sheets بصيغة CSV
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
+        const API_LINKS = {
+            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
+        };
 
-        async function fetchChannels() {
-            try {
-                const response = await fetch(csvUrl);
-                const data = await response.text();
-                const rows = data.split('\n').slice(1); // تجاهل العنوان
-                const listContainer = document.getElementById('list');
-                listContainer.innerHTML = '';
+        const UIManager = {
+            allData: [],
+            player: null,
+            zoomIndex: 0,
+            zoomModes: [{c:'zoom-normal',l:'افتراضي'}, {c:'zoom-fill',l:'ملء'}, {c:'zoom-crop',l:'قص'}],
 
-                rows.forEach(row => {
-                    // تقسيم البيانات مع مراعاة الفواصل داخل النصوص
-                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    const name = columns[0]?.replace(/"/g, '').trim();
-                    const url = columns[1]?.replace(/"/g, '').trim();
-                    const logo = columns[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/150/000000/FFFFFF?text=TV";
+            async init() {
+                await this.loadCategory('live');
+                this.setupEvents();
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                    document.getElementById('app-wrapper').style.visibility = 'visible';
+                }, 1500);
+            },
 
-                    if (url && url.startsWith('http')) {
-                        const card = document.createElement('div');
-                        card.className = 'channel-card shadow-lg';
-                        card.onclick = () => startVideo(url);
-                        card.innerHTML = `
-                            <img src="${logo}" class="w-14 h-14 rounded-lg object-contain bg-black border border-gray-700">
-                            <div class="flex-1">
-                                <div class="font-bold text-lg text-white">${name}</div>
-                                <div class="text-xs text-green-500"><i class="fas fa-circle text-[8px] animate-pulse"></i> بث مباشر بجودة عالية</div>
-                            </div>
-                            <i class="fas fa-play-circle text-orange-500 text-2xl"></i>
-                        `;
-                        listContainer.appendChild(card);
-                    }
-                });
-            } catch (error) {
-                document.getElementById('list').innerHTML = `
-                    <div class="text-center p-10 text-red-500">
-                        <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
-                        <p>فشل الاتصال بـ Google Sheets</p>
-                    </div>`;
+            async loadCategory(type) {
+                const res = await fetch(API_LINKS[type]);
+                const text = await res.text();
+                this.allData = text.split('\n').slice(1).map(row => {
+                    const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return {
+                        name: p[0]?.replace(/"/g, '').trim(),
+                        url: p[1]?.replace(/"/g, '').trim(),
+                        logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
+                    };
+                }).filter(i => i.url);
+                this.render(this.allData);
+            },
+
+            render(data) {
+                const list = document.getElementById('list');
+                list.innerHTML = data.map(item => `
+                    <div class="channel-card" onclick="UIManager.play('${item.url}')">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded bg-black/10">
+                        <div class="flex-1 font-bold text-sm">${item.name}</div>
+                        <i class="fas fa-play-circle text-orange-500"></i>
+                    </div>
+                `).join('');
+            },
+
+            setupEvents() {
+                document.getElementById('search-input').oninput = (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const filtered = this.allData.filter(i => i.name.toLowerCase().includes(term));
+                    this.render(filtered);
+                };
+                document.getElementById('zoom-btn').onclick = () => {
+                    this.zoomIndex = (this.zoomIndex + 1) % this.zoomModes.length;
+                    const mode = this.zoomModes[this.zoomIndex];
+                    document.getElementById('video-container').className = mode.c;
+                    document.getElementById('zoom-label').innerText = mode.l;
+                };
+                document.getElementById('theme-btn').onclick = () => document.body.classList.toggle('light-mode');
+            },
+
+            play(url) {
+                // فحص إذا كان الرابط صعباً (IPTV الخام) لفتحه في VLC
+                const isHardStream = !url.includes('.m3u8') && !url.includes('.mp4');
+                
+                if (isHardStream) {
+                    window.location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=http;type=video/*;end";
+                    return;
+                }
+
+                document.getElementById('app-wrapper').classList.add('is-playing');
+                const container = document.getElementById('video-container');
+                container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" controls playsinline></video>`;
+
+                this.player = videojs('main-video', { autoplay: true });
+                this.player.src({ src: url, type: url.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4" });
+            },
+
+            close() {
+                document.getElementById('app-wrapper').classList.remove('is-playing');
+                if(this.player) this.player.dispose();
             }
-        }
+        };
 
-        function startVideo(url) {
-            document.getElementById('player-screen').style.display = 'flex';
-            const container = document.getElementById('video-container');
-            
-            // إضافة عنصر الفيديو ديناميكياً
-            container.innerHTML = `
-                <video id="v-player" class="video-js vjs-default-skin vjs-big-play-centered" 
-                       controls playsinline preload="auto"></video>`;
-            
-            player = videojs('v-player', {
-                autoplay: true,
-                fluid: false,
-                playbackRates: [0.5, 1, 1.5, 2]
-            });
-
-            // تحديد نوع البث تلقائياً (m3u8 أو mp4)
-            const isM3U8 = url.includes('.m3u8') || url.includes('.ts');
-            player.src({
-                src: url,
-                type: isM3U8 ? 'application/x-mpegURL' : 'video/mp4'
-            });
-
-            player.on('error', function() {
-                alert('عذراً، هذا الرابط غير متاح حالياً أو لا يدعم المشغل.');
-                stopVideo();
-            });
-        }
-
-        function stopVideo() {
-            if (player) {
-                player.dispose();
-                player = null;
-            }
-            document.getElementById('player-screen').style.display = 'none';
-        }
-
-        // تشغيل الجلب عند فتح الصفحة
-        window.onload = fetchChannels;
+        window.onload = () => UIManager.init();
     </script>
 </body>
 </html>
