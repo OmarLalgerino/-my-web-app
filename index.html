@@ -41,7 +41,6 @@
         #video-container { position: absolute; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; }
         .video-js { width: 100vw !important; height: 100vh !important; }
 
-        /* Zoom Modes */
         .zoom-normal video { object-fit: contain !important; }
         .zoom-fill video { object-fit: fill !important; }
         .zoom-crop video { object-fit: cover !important; }
@@ -62,6 +61,7 @@
             align-items: center;
             gap: 12px;
             border: 1px solid var(--border);
+            cursor: pointer;
         }
 
         .overlay-controls {
@@ -96,6 +96,10 @@
         }
 
         .search-box input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; }
+        
+        /* التبويبات النشطة */
+        .tab-item { cursor: pointer; padding: 12px 0; text-align: center; flex: 1; font-weight: bold; font-size: 0.85rem; color: gray; border-bottom: 2px solid transparent; transition: 0.3s; }
+        .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); }
     </style>
 </head>
 <body>
@@ -113,12 +117,14 @@
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث عن قناة...">
+                <input type="text" id="search-input" placeholder="ابحث...">
             </div>
 
             <div class="flex px-4 border-b border-[var(--border)]">
-                <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm" id="tab-live">مباشر</div>
-                <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm" id="tab-vod">أفلام</div>
+                <div class="tab-item active" onclick="UIManager.switchTab('live', this)">مباشر</div>
+                <div class="tab-item" onclick="UIManager.switchTab('vod', this)">أفلام</div>
+                <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
+                <div class="tab-item" onclick="UIManager.switchTab('anime', this)">أنمي</div>
             </div>
 
             <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
@@ -136,7 +142,10 @@
     <script>
         const API_LINKS = {
             live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
+            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
+            // الروابط الجديدة التي زودتنا بها
+            anime: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
+            series: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
@@ -155,24 +164,39 @@
             },
 
             async loadCategory(type) {
-                const res = await fetch(API_LINKS[type]);
-                const text = await res.text();
-                this.allData = text.split('\n').slice(1).map(row => {
-                    const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    return {
-                        name: p[0]?.replace(/"/g, '').trim(),
-                        url: p[1]?.replace(/"/g, '').trim(),
-                        logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
-                    };
-                }).filter(i => i.url);
-                this.render(this.allData);
+                document.getElementById('list').innerHTML = '<div class="p-10 text-center opacity-50">جاري التحميل...</div>';
+                try {
+                    const res = await fetch(API_LINKS[type]);
+                    const text = await res.text();
+                    this.allData = text.split('\n').slice(1).map(row => {
+                        const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                        return {
+                            name: p[0]?.replace(/"/g, '').trim(),
+                            url: p[1]?.replace(/"/g, '').trim(),
+                            logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
+                        };
+                    }).filter(i => i.url && i.name);
+                    this.render(this.allData);
+                } catch (e) {
+                    document.getElementById('list').innerHTML = '<div class="p-10 text-center text-red-500">خطأ في تحميل البيانات</div>';
+                }
+            },
+
+            switchTab(type, el) {
+                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                el.classList.add('active');
+                this.loadCategory(type);
             },
 
             render(data) {
                 const list = document.getElementById('list');
+                if(data.length === 0) {
+                    list.innerHTML = '<div class="p-10 text-center opacity-50">لا توجد نتائج</div>';
+                    return;
+                }
                 list.innerHTML = data.map(item => `
                     <div class="channel-card" onclick="UIManager.play('${item.url}')">
-                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded bg-black/10">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded bg-black/10" onerror="this.src='https://via.placeholder.com/50'">
                         <div class="flex-1 font-bold text-sm">${item.name}</div>
                         <i class="fas fa-play-circle text-orange-500"></i>
                     </div>
@@ -195,10 +219,9 @@
             },
 
             play(url) {
-                // فحص إذا كان الرابط صعباً (IPTV الخام) لفتحه في VLC
-                const isHardStream = !url.includes('.m3u8') && !url.includes('.mp4');
+                const isHardStream = !url.includes('.m3u8') && !url.includes('.mp4') && !url.includes('.mkv');
                 
-                if (isHardStream) {
+                if (isHardStream && !url.includes('googlevideo')) {
                     window.location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=http;type=video/*;end";
                     return;
                 }
@@ -207,13 +230,24 @@
                 const container = document.getElementById('video-container');
                 container.innerHTML = `<video id="main-video" class="video-js vjs-big-play-centered" controls playsinline></video>`;
 
-                this.player = videojs('main-video', { autoplay: true });
-                this.player.src({ src: url, type: url.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4" });
+                this.player = videojs('main-video', { 
+                    autoplay: true,
+                    fluid: false,
+                    preload: 'auto'
+                });
+                
+                let type = "application/x-mpegURL";
+                if (url.includes(".mp4")) type = "video/mp4";
+                
+                this.player.src({ src: url, type: type });
             },
 
             close() {
                 document.getElementById('app-wrapper').classList.remove('is-playing');
-                if(this.player) this.player.dispose();
+                if(this.player) {
+                    this.player.dispose();
+                    this.player = null;
+                }
             }
         };
 
