@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - Privacy Mode</title>
+    <title>ADATA TV Pro - ASD Player</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -36,7 +36,7 @@
             height: 100vh;
         }
 
-        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
 
         .sidebar { width: 100%; background: var(--surface); display: flex; flex-direction: column; z-index: 50; }
@@ -73,13 +73,13 @@
 
         .brand-logo { height: 32px; width: auto; object-fit: contain; }
         
-        .vlc-secure-badge {
+        .asd-badge {
             font-size: 9px;
-            background: #ff950022;
-            color: var(--primary);
+            background: #2ecc71;
+            color: #000;
             padding: 2px 8px;
             border-radius: 20px;
-            border: 1px solid rgba(255, 149, 0, 0.3);
+            font-weight: 900;
             margin-right: auto;
         }
     </style>
@@ -99,7 +99,7 @@
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث...">
+                <input type="text" id="search-input" placeholder="ابحث في القنوات...">
             </div>
 
             <div class="flex px-4 border-b border-[var(--border)]">
@@ -138,7 +138,7 @@
 
             async loadCategory(type) {
                 const listEl = document.getElementById('list');
-                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري التحميل...</div>';
+                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري جلب البيانات...</div>';
                 try {
                     const res = await fetch(API_LINKS[type]);
                     const text = await res.text();
@@ -152,7 +152,7 @@
                     }).filter(i => i.url && i.name);
                     this.render(this.allData);
                 } catch (e) {
-                    listEl.innerHTML = '<div class="p-10 text-center text-red-500">خطأ في الاتصال</div>';
+                    listEl.innerHTML = '<div class="p-10 text-center text-red-500">حدث خطأ في جلب القنوات</div>';
                 }
             },
 
@@ -166,10 +166,10 @@
                 const list = document.getElementById('list');
                 list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد نتائج</div>' :
                     data.map(item => `
-                        <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
+                        <div class="channel-card" onclick="UIManager.playWithASD('${item.url}')">
                             <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
                             <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
-                            <span class="vlc-secure-badge">VLC Secure</span>
+                            <span class="asd-badge">ASD PLAYER</span>
                         </div>
                     `).join('');
             },
@@ -185,15 +185,14 @@
                 };
             },
 
-            playSecure(url) {
+            playWithASD(url) {
                 const cleanUrl = url.trim();
                 
-                // بروتوكول Intent المتقدم لـ VLC
-                // S.title: عنوان فارغ كي لا يظهر الاسم
-                // B.no_history: صحيح لمنع حفظ الرابط في سجل المشاهدة
-                const vlcIntent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=Stream;B.no_history=true;end`;
+                // بروتوكول Intent المخصص لمشغل ASD Player
+                // package=com.fglmedia.asdplayer هو المعرف الخاص بالتطبيق
+                const asdIntent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=com.fglmedia.asdplayer;type=video/*;end`;
                 
-                window.location.href = vlcIntent;
+                window.location.href = asdIntent;
             }
         };
 
