@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - Native Player</title>
+    <title>ADATA TV - Native Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -36,15 +36,15 @@
             margin: 0;
             user-select: none;
             height: 100vh;
-            transition: background-color 0.3s ease;
+            overflow: hidden;
         }
 
         .sidebar {
             width: 100%;
             height: 100vh;
-            background: var(--surface);
             display: flex;
             flex-direction: column;
+            background: var(--surface);
         }
 
         .channel-card {
@@ -57,7 +57,10 @@
             gap: 12px;
             cursor: pointer;
             border: 1px solid var(--border);
+            transition: transform 0.1s;
         }
+        
+        .channel-card:active { transform: scale(0.98); }
 
         .search-box {
             background: var(--card);
@@ -91,11 +94,21 @@
             border: 1px solid var(--border);
             color: var(--primary);
         }
+
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen" class="fixed inset-0 bg-black z-[9999] flex items-center justify-center">
+    <div id="splash-screen">
         <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
     </div>
 
@@ -152,7 +165,7 @@
 
             parseCSV(csv) {
                 return csv.split('\n').slice(1).map(row => {
-                    const parts = row.split(/,(?=(?:(?:[^3-9]*"){2})*[^"]*$)/);
+                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     return {
                         name: parts[0]?.replace(/"/g, '').trim(),
                         url: parts[1]?.replace(/"/g, '').trim(),
@@ -164,7 +177,7 @@
             renderList() {
                 const list = document.getElementById('list');
                 list.innerHTML = this.filteredData.map(item => `
-                    <div class="channel-card" onclick="UIManager.playNative('${item.url}')">
+                    <div class="channel-card" onclick="UIManager.playNative('${item.url}', '${item.name}', '${item.logo}')">
                         <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg bg-black/10">
                         <div class="flex-1 min-w-0">
                             <h3 class="font-bold text-xs truncate" style="color: var(--text-main)">${item.name}</h3>
@@ -174,23 +187,28 @@
                 `).join('');
             },
 
-            playNative(url) {
+            // الوظيفة المعتمدة على دليل Median الرسمي الذي أرسلته
+            async playNative(url, title, logo) {
                 if(!url) return;
-                const isLive = url.includes('.m3u8') || url.includes('.ts');
 
-                // هذا هو الاتصال مع مشغل Median الأصلي
-                if (typeof median !== 'undefined' && median.mediaplayer) {
-                    median.mediaplayer.play({
-                        'url': url,
-                        'isLive': isLive
-                    });
-                } else if (window.median && window.median.mediaplayer) {
-                     window.median.mediaplayer.play({
-                        'url': url,
-                        'isLive': isLive
-                    });
+                const track = {
+                    "url": url,
+                    "title": title,
+                    "album": "ADATA TV",
+                    "artist": "Live Streaming",
+                    "artwork": logo
+                };
+
+                if (window.median && window.median.backgroundMedia) {
+                    try {
+                        // استخدام نظام الـ Promise كما في الدليل
+                        const { success } = await median.backgroundMedia.playTrack(track);
+                        if(!success) console.error("Failed to play track");
+                    } catch (err) {
+                        console.error("Median Error:", err);
+                    }
                 } else {
-                    alert("المشغل يعمل فقط داخل تطبيق الهاتف (Native App)");
+                    alert("المشغل الأصلي غير متاح. تأكد من تفعيل إضافة Native Media Player وعمل Build جديد.");
                 }
             },
 
