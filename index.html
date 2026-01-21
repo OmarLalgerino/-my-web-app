@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - ASD Player</title>
+    <title>ADATA TV Pro - ASD Fix</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -166,7 +166,7 @@
                 const list = document.getElementById('list');
                 list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد نتائج</div>' :
                     data.map(item => `
-                        <div class="channel-card" onclick="UIManager.playWithASD('${item.url}')">
+                        <div class="channel-card" onclick="UIManager.playWithASD('${item.url}', '${item.name}')">
                             <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
                             <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
                             <span class="asd-badge">ASD PLAYER</span>
@@ -185,14 +185,16 @@
                 };
             },
 
-            playWithASD(url) {
-                const cleanUrl = url.trim();
+            playWithASD(videoUrl, videoTitle) {
+                // الطريقة الأكثر دقة لاستدعاء ASD Player
+                // نستخدم intent كـ URL مباشر مع تمرير البيانات الصحيحة
+                const intentUrl = `intent:${videoUrl}#Intent;package=com.fglmedia.asdplayer;type=video/*;S.title=${encodeURIComponent(videoTitle)};end`;
                 
-                // بروتوكول Intent المخصص لمشغل ASD Player
-                // package=com.fglmedia.asdplayer هو المعرف الخاص بالتطبيق
-                const asdIntent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=com.fglmedia.asdplayer;type=video/*;end`;
-                
-                window.location.href = asdIntent;
+                try {
+                    window.location.href = intentUrl;
+                } catch (e) {
+                    alert("تأكد من تحديث مشغل ASD Player");
+                }
             }
         };
 
