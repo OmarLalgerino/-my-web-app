@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - ASD Fix</title>
+    <title>ADATA TV - ASD Player Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
         
         :root {
             --primary: #ff9500;
@@ -18,13 +18,6 @@
             --card: #111111;
             --border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff;
-        }
-
-        body.light-mode {
-            --surface: #f3f4f6;
-            --card: #ffffff;
-            --border: rgba(0, 0, 0, 0.1);
-            --text-main: #111111;
         }
 
         body {
@@ -36,10 +29,7 @@
             height: 100vh;
         }
 
-        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
-        #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
-
-        .sidebar { width: 100%; background: var(--surface); display: flex; flex-direction: column; z-index: 50; }
+        .sidebar { width: 100%; display: flex; flex-direction: column; height: 100vh; }
 
         .channel-card {
             background: var(--card);
@@ -51,28 +41,22 @@
             gap: 12px;
             border: 1px solid var(--border);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: transform 0.2s;
         }
-        .channel-card:active { transform: scale(0.96); background: rgba(255, 149, 0, 0.1); }
+        .channel-card:active { transform: scale(0.97); }
 
         .search-box {
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 12px;
-            margin: 0 12px 12px 12px;
-            padding: 8px 12px;
+            margin: 0 12px 12px;
+            padding: 10px 15px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
+        .search-box input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 14px; }
 
-        .search-box input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; font-size: 14px; }
-        
-        .tab-item { cursor: pointer; padding: 12px 0; text-align: center; flex: 1; font-weight: bold; font-size: 0.85rem; color: gray; border-bottom: 2px solid transparent; transition: 0.3s; }
-        .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-        .brand-logo { height: 32px; width: auto; object-fit: contain; }
-        
         .asd-badge {
             font-size: 9px;
             background: #2ecc71;
@@ -86,119 +70,86 @@
 </head>
 <body>
 
-    <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="brand-logo animate-pulse">
-    </div>
+    <div class="sidebar">
+        <div class="p-6 flex justify-between items-center">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" style="height:32px">
+            <span class="text-[10px] opacity-50">V 4.3.25 Support</span>
+        </div>
 
-    <div id="app-wrapper">
-        <aside class="sidebar">
-            <div class="p-5 flex items-center justify-between">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="brand-logo">
-                <div id="theme-btn" class="p-2 cursor-pointer text-orange-500"><i class="fas fa-moon"></i></div>
-            </div>
+        <div class="search-box">
+            <i class="fas fa-search text-gray-500"></i>
+            <input type="text" id="search-input" placeholder="بحث عن قناة...">
+        </div>
 
-            <div class="search-box">
-                <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث في القنوات...">
-            </div>
-
-            <div class="flex px-4 border-b border-[var(--border)]">
-                <div class="tab-item active" onclick="UIManager.switchTab('live', this)">مباشر</div>
-                <div class="tab-item" onclick="UIManager.switchTab('vod', this)">أفلام</div>
-                <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
-                <div class="tab-item" onclick="UIManager.switchTab('anime', this)">أنمي</div>
-            </div>
-
-            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
-        </aside>
+        <div id="list" class="flex-1 overflow-y-auto pb-10">
+            <div class="text-center p-10 opacity-50">جاري تحميل القنوات...</div>
+        </div>
     </div>
 
     <script>
-        const API_LINKS = {
-            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            anime: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv'
-        };
+        const API_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
 
-        const UIManager = {
-            allData: [],
-
+        const App = {
+            data: [],
+            
             async init() {
-                await this.loadCategory('live');
-                this.setupEvents();
-                setTimeout(() => {
-                    document.getElementById('splash-screen').style.opacity = '0';
-                    setTimeout(() => {
-                        document.getElementById('splash-screen').style.display = 'none';
-                        document.getElementById('app-wrapper').style.visibility = 'visible';
-                    }, 500);
-                }, 1200);
-            },
-
-            async loadCategory(type) {
-                const listEl = document.getElementById('list');
-                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري جلب البيانات...</div>';
                 try {
-                    const res = await fetch(API_LINKS[type]);
+                    const res = await fetch(API_URL);
                     const text = await res.text();
-                    this.allData = text.split('\n').slice(1).map(row => {
+                    this.data = text.split('\n').slice(1).map(row => {
                         const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         return {
                             name: p[0]?.replace(/"/g, '').trim(),
                             url: p[1]?.replace(/"/g, '').trim(),
-                            logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
+                            logo: p[2]?.replace(/"/g, '').trim()
                         };
                     }).filter(i => i.url && i.name);
-                    this.render(this.allData);
+                    this.render(this.data);
                 } catch (e) {
-                    listEl.innerHTML = '<div class="p-10 text-center text-red-500">حدث خطأ في جلب القنوات</div>';
+                    document.getElementById('list').innerHTML = '<div class="text-center p-10 text-red-500">فشل الاتصال بالخادم</div>';
                 }
-            },
 
-            switchTab(type, el) {
-                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-                el.classList.add('active');
-                this.loadCategory(type);
-            },
-
-            render(data) {
-                const list = document.getElementById('list');
-                list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد نتائج</div>' :
-                    data.map(item => `
-                        <div class="channel-card" onclick="UIManager.playWithASD('${item.url}', '${item.name}')">
-                            <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
-                            <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
-                            <span class="asd-badge">ASD PLAYER</span>
-                        </div>
-                    `).join('');
-            },
-
-            setupEvents() {
                 document.getElementById('search-input').oninput = (e) => {
-                    const term = e.target.value.toLowerCase();
-                    const filtered = this.allData.filter(i => i.name.toLowerCase().includes(term));
+                    const filtered = this.data.filter(i => i.name.toLowerCase().includes(e.target.value.toLowerCase()));
                     this.render(filtered);
                 };
-                document.getElementById('theme-btn').onclick = () => {
-                    document.body.classList.toggle('light-mode');
-                };
             },
 
-            playWithASD(videoUrl, videoTitle) {
-                // الطريقة الأكثر دقة لاستدعاء ASD Player
-                // نستخدم intent كـ URL مباشر مع تمرير البيانات الصحيحة
-                const intentUrl = `intent:${videoUrl}#Intent;package=com.fglmedia.asdplayer;type=video/*;S.title=${encodeURIComponent(videoTitle)};end`;
-                
-                try {
-                    window.location.href = intentUrl;
-                } catch (e) {
-                    alert("تأكد من تحديث مشغل ASD Player");
+            render(items) {
+                const list = document.getElementById('list');
+                if (items.length === 0) {
+                    list.innerHTML = '<div class="text-center p-10 opacity-30">لا توجد نتائج</div>';
+                    return;
                 }
+                list.innerHTML = items.map(item => `
+                    <div class="channel-card" onclick="App.play('${item.url}')">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/40'">
+                        <div class="flex-1 font-bold text-sm leading-tight">${item.name}</div>
+                        <span class="asd-badge">ASD PLAYER</span>
+                    </div>
+                `).join('');
+            },
+
+            play(videoUrl) {
+                const cleanUrl = videoUrl.trim();
+                
+                // هذا هو المعرف الصحيح والكامل لاستدعاء ASD Player بالإصدارات الجديدة
+                // نستخدم نظام intent الشامل لضمان تشغيل التطبيق
+                const intent = `intent:${cleanUrl}#Intent;package=com.fglmedia.asdplayer;type=video/*;scheme=http;end`;
+                
+                // محاولة تشغيل التطبيق
+                window.location.href = intent;
+
+                // حل بديل في حال لم يستجب الـ Intent (فتح الرابط مباشرة)
+                setTimeout(() => {
+                    if (!document.hidden) {
+                        window.location.href = cleanUrl;
+                    }
+                }, 1000);
             }
         };
 
-        window.onload = () => UIManager.init();
+        window.onload = () => App.init();
     </script>
 </body>
 </html>
