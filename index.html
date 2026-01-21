@@ -2,191 +2,84 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="referrer" content="no-referrer" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - Professional Native</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ADATA TV - Free Version</title>
     
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        
-        :root {
-            --primary: #ff9500;
-            --surface: #050505;
-            --card: #111111;
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-        }
-
-        body {
-            background-color: var(--surface);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            margin: 0;
-            user-select: none;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .sidebar {
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .channel-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 12px;
-            margin: 4px 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            border: 1px solid var(--border);
-        }
-
-        .search-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin: 0 12px 12px 12px;
-            padding: 8px 12px;
-            display: flex;
-            align-items: center;
-        }
-
-        .search-box input {
-            background: transparent;
-            border: none;
-            color: white;
-            width: 100%;
-            outline: none;
-            margin-right: 10px;
-        }
-
-        #splash-screen {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; }
+        .sidebar { height: 100vh; display: flex; flex-direction: column; }
+        .channel-card { background: #111; border-radius: 12px; padding: 12px; margin: 5px 15px; display: flex; align-items: center; gap: 10px; border: 1px solid #222; cursor: pointer; }
+        .player-container { position: fixed; inset: 0; background: #000; z-index: 100; display: none; flex-direction: column; }
+        .is-playing .player-container { display: flex; }
+        .video-js { width: 100% !important; height: 100% !important; }
+        .close-btn { position: absolute; top: 20px; right: 20px; z-index: 110; background: rgba(0,0,0,0.5); padding: 10px 15px; border-radius: 50px; color: white; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
-    </div>
-
-    <div class="sidebar">
-        <div class="p-5 flex items-center justify-between">
-            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
+    <div id="app-wrapper" class="sidebar">
+        <div class="p-6 flex justify-center">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-8">
         </div>
 
-        <div class="search-box">
-            <i class="fas fa-search text-gray-500"></i>
-            <input type="text" id="search-input" placeholder="ابحث عن قناة...">
-        </div>
+        <div id="list" class="flex-1 overflow-y-auto">
+            </div>
 
-        <div class="flex px-4 border-b border-[var(--border)]">
-            <div class="flex-1 py-3 text-center border-b-2 border-orange-500 font-bold" id="tab-live">مباشر</div>
-            <div class="flex-1 py-3 text-center text-gray-500 font-bold" id="tab-vod">أفلام</div>
+        <div class="player-container" id="player-screen">
+            <div class="close-btn" onclick="closePlayer()"><i class="fas fa-times"></i> إغلاق</div>
+            <div id="video-target" class="w-full h-full"></div>
         </div>
-
-        <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
     </div>
 
     <script>
-        const API_LINKS = {
-            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv'
-        };
+        let player = null;
+        const API_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
 
-        const UIManager = {
-            allData: [],
-            filteredData: [],
+        async function loadChannels() {
+            const res = await fetch(API_URL);
+            const text = await res.text();
+            const rows = text.split('\n').slice(1);
+            const list = document.getElementById('list');
+            
+            list.innerHTML = rows.map(row => {
+                const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const name = p[0]?.replace(/"/g, '');
+                const url = p[1]?.replace(/"/g, '');
+                const logo = p[2]?.replace(/"/g, '') || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png";
+                if(!url) return '';
+                return `
+                    <div class="channel-card" onclick="playVideo('${url}')">
+                        <img src="${logo}" class="w-10 h-10 rounded">
+                        <span class="font-bold text-sm">${name}</span>
+                    </div>`;
+            }).join('');
+        }
 
-            async init() {
-                await this.loadCategory('live');
-                this.setupEvents();
-                setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 1000);
-            },
+        function playVideo(url) {
+            document.getElementById('app-wrapper').classList.add('is-playing');
+            const target = document.getElementById('video-target');
+            target.innerHTML = `<video id="my-video" class="video-js vjs-big-play-centered" controls playsinline preload="auto"></video>`;
+            
+            player = videojs('my-video', { autoplay: true });
+            let type = url.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4';
+            player.src({ src: url, type: type });
+        }
 
-            async loadCategory(type) {
-                const res = await fetch(API_LINKS[type]);
-                const text = await res.text();
-                this.allData = this.parseCSV(text);
-                this.filteredData = this.allData;
-                this.render();
-            },
-
-            parseCSV(csv) {
-                return csv.split('\n').slice(1).map(row => {
-                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    return {
-                        name: parts[0]?.replace(/"/g, '').trim(),
-                        url: parts[1]?.replace(/"/g, '').trim(),
-                        logo: parts[2]?.replace(/"/g, '').trim() || "https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png"
-                    };
-                }).filter(i => i.url);
-            },
-
-            render() {
-                const list = document.getElementById('list');
-                list.innerHTML = this.filteredData.map(item => `
-                    <div class="channel-card" onclick="UIManager.playNative('${item.url}', '${item.name}', '${item.logo}')">
-                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg">
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-xs truncate">${item.name}</h3>
-                        </div>
-                        <i class="fas fa-play text-orange-500 text-[10px]"></i>
-                    </div>
-                `).join('');
-            },
-
-            // هذا هو الجزء الذي يتخاطب مع الإضافة بالاسم الجديد backgroundMedia
-            async playNative(url, name, logo) {
-                if(!url) return;
-
-                const track = {
-                    "url": url,
-                    "title": name,
-                    "album": "ADATA TV",
-                    "artist": "بث مباشر",
-                    "artwork": logo
-                };
-
-                // التأكد من وجود الجسر البرمجي
-                if (window.median && window.median.backgroundMedia) {
-                    try {
-                        const { success } = await median.backgroundMedia.playTrack(track);
-                        if(!success) console.error("Native play failed");
-                    } catch (e) {
-                        console.error("Bridge Error:", e);
-                    }
-                } else {
-                    // إذا ظهر هذا التنبيه، فالمشكلة في الـ Build وليس الكود
-                    alert("يجب عمل Build جديد للتطبيق بعد تفعيل إضافة backgroundMedia");
-                }
-            },
-
-            setupEvents() {
-                document.getElementById('search-input').oninput = (e) => {
-                    const term = e.target.value.toLowerCase();
-                    this.filteredData = this.allData.filter(i => i.name.toLowerCase().includes(term));
-                    this.render();
-                };
+        function closePlayer() {
+            document.getElementById('app-wrapper').classList.remove('is-playing');
+            if (player) {
+                player.dispose();
+                player = null;
             }
-        };
+        }
 
-        window.onload = () => UIManager.init();
+        window.onload = loadChannels;
     </script>
 </body>
 </html>
