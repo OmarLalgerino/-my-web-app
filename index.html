@@ -2,154 +2,57 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="referrer" content="no-referrer" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - ASD Player Pro</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADATA TV - VLC Private</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-        
-        :root {
-            --primary: #ff9500;
-            --surface: #050505;
-            --card: #111111;
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-        }
-
-        body {
-            background-color: var(--surface);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .sidebar { width: 100%; display: flex; flex-direction: column; height: 100vh; }
-
-        .channel-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 12px;
-            margin: 6px 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .channel-card:active { transform: scale(0.97); }
-
-        .search-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin: 0 12px 12px;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .search-box input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 14px; }
-
-        .asd-badge {
-            font-size: 9px;
-            background: #2ecc71;
-            color: #000;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-weight: 900;
-            margin-right: auto;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { background: #050505; color: white; font-family: 'Cairo', sans-serif; }
+        .card { background: #111; border-radius: 12px; padding: 12px; margin: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid #222; cursor: pointer; }
+        .vlc-icon { color: #ff9500; font-size: 20px; margin-right: auto; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="p-6 flex justify-between items-center">
-            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" style="height:32px">
-            <span class="text-[10px] opacity-50">V 4.3.25 Support</span>
+    <div class="p-4">
+        <div class="text-center mb-6">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" style="height:35px; margin: auto;">
+            <p class="text-[10px] mt-2 opacity-50 text-orange-500 font-bold">نمط التشفير المتقدم لـ VLC</p>
         </div>
 
-        <div class="search-box">
-            <i class="fas fa-search text-gray-500"></i>
-            <input type="text" id="search-input" placeholder="بحث عن قناة...">
-        </div>
-
-        <div id="list" class="flex-1 overflow-y-auto pb-10">
-            <div class="text-center p-10 opacity-50">جاري تحميل القنوات...</div>
-        </div>
+        <div id="list"></div>
     </div>
 
     <script>
-        const API_URL = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
+        const API = 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv';
 
-        const App = {
-            data: [],
+        async function init() {
+            const res = await fetch(API);
+            const text = await res.text();
+            const data = text.split('\n').slice(1).map(row => {
+                const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                return { name: p[0]?.replace(/"/g, ''), url: p[1]?.replace(/"/g, ''), logo: p[2]?.replace(/"/g, '') };
+            }).filter(i => i.url);
+
+            document.getElementById('list').innerHTML = data.map(i => `
+                <div class="card" onclick="playPrivate('${i.url}', '${i.name}')">
+                    <img src="${i.logo}" class="w-10 h-10 object-contain rounded" onerror="this.src='https://via.placeholder.com/40'">
+                    <div class="font-bold text-sm">${i.name}</div>
+                    <i class="fas fa-shield-alt vlc-icon"></i>
+                </div>
+            `).join('');
+        }
+
+        function playPrivate(url, title) {
+            // تنظيف الرابط وتجهيز الـ Intent المخصص للحماية
+            const cleanUrl = url.trim().replace(/^https?:\/\//, "");
+            const secureIntent = `intent://${cleanUrl}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=${encodeURIComponent(title)};B.no_history=true;end`;
             
-            async init() {
-                try {
-                    const res = await fetch(API_URL);
-                    const text = await res.text();
-                    this.data = text.split('\n').slice(1).map(row => {
-                        const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        return {
-                            name: p[0]?.replace(/"/g, '').trim(),
-                            url: p[1]?.replace(/"/g, '').trim(),
-                            logo: p[2]?.replace(/"/g, '').trim()
-                        };
-                    }).filter(i => i.url && i.name);
-                    this.render(this.data);
-                } catch (e) {
-                    document.getElementById('list').innerHTML = '<div class="text-center p-10 text-red-500">فشل الاتصال بالخادم</div>';
-                }
+            window.location.href = secureIntent;
+        }
 
-                document.getElementById('search-input').oninput = (e) => {
-                    const filtered = this.data.filter(i => i.name.toLowerCase().includes(e.target.value.toLowerCase()));
-                    this.render(filtered);
-                };
-            },
-
-            render(items) {
-                const list = document.getElementById('list');
-                if (items.length === 0) {
-                    list.innerHTML = '<div class="text-center p-10 opacity-30">لا توجد نتائج</div>';
-                    return;
-                }
-                list.innerHTML = items.map(item => `
-                    <div class="channel-card" onclick="App.play('${item.url}')">
-                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/40'">
-                        <div class="flex-1 font-bold text-sm leading-tight">${item.name}</div>
-                        <span class="asd-badge">ASD PLAYER</span>
-                    </div>
-                `).join('');
-            },
-
-            play(videoUrl) {
-                const cleanUrl = videoUrl.trim();
-                
-                // هذا هو المعرف الصحيح والكامل لاستدعاء ASD Player بالإصدارات الجديدة
-                // نستخدم نظام intent الشامل لضمان تشغيل التطبيق
-                const intent = `intent:${cleanUrl}#Intent;package=com.fglmedia.asdplayer;type=video/*;scheme=http;end`;
-                
-                // محاولة تشغيل التطبيق
-                window.location.href = intent;
-
-                // حل بديل في حال لم يستجب الـ Intent (فتح الرابط مباشرة)
-                setTimeout(() => {
-                    if (!document.hidden) {
-                        window.location.href = cleanUrl;
-                    }
-                }, 1000);
-            }
-        };
-
-        window.onload = () => App.init();
+        init();
     </script>
 </body>
 </html>
