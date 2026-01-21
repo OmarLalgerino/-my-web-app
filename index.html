@@ -152,7 +152,7 @@
 
             parseCSV(csv) {
                 return csv.split('\n').slice(1).map(row => {
-                    const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    const parts = row.split(/,(?=(?:(?:[^3-9]*"){2})*[^"]*$)/);
                     return {
                         name: parts[0]?.replace(/"/g, '').trim(),
                         url: parts[1]?.replace(/"/g, '').trim(),
@@ -174,22 +174,23 @@
                 `).join('');
             },
 
-            // هذا هو التعديل المهم لتشغيل مشغل Median الأصلي
             playNative(url) {
                 if(!url) return;
-                
-                // تحديد إذا كان بث مباشر (m3u8) أم فيديو عادي
                 const isLive = url.includes('.m3u8') || url.includes('.ts');
 
-                if (window.median && window.median.mediaplayer) {
-                    // أمر تشغيل مشغل ميديان الأصلي
+                // هذا هو الاتصال مع مشغل Median الأصلي
+                if (typeof median !== 'undefined' && median.mediaplayer) {
                     median.mediaplayer.play({
                         'url': url,
                         'isLive': isLive
                     });
+                } else if (window.median && window.median.mediaplayer) {
+                     window.median.mediaplayer.play({
+                        'url': url,
+                        'isLive': isLive
+                    });
                 } else {
-                    alert("المشغل يعمل فقط داخل تطبيق الهاتف");
-                    console.log("Playing URL:", url);
+                    alert("المشغل يعمل فقط داخل تطبيق الهاتف (Native App)");
                 }
             },
 
