@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV - Native Pro</title>
+    <title>ADATA TV - Professional Native</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -18,15 +18,6 @@
             --card: #111111;
             --border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff;
-            --text-dim: #a0a0a0;
-        }
-
-        body.light-mode {
-            --surface: #f3f4f6;
-            --card: #ffffff;
-            --border: rgba(0, 0, 0, 0.1);
-            --text-main: #111111;
-            --text-dim: #4b5563;
         }
 
         body {
@@ -44,7 +35,6 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            background: var(--surface);
         }
 
         .channel-card {
@@ -57,10 +47,7 @@
             gap: 12px;
             cursor: pointer;
             border: 1px solid var(--border);
-            transition: transform 0.1s;
         }
-        
-        .channel-card:active { transform: scale(0.98); }
 
         .search-box {
             background: var(--card);
@@ -70,29 +57,15 @@
             padding: 8px 12px;
             display: flex;
             align-items: center;
-            gap: 10px;
         }
 
         .search-box input {
             background: transparent;
             border: none;
-            color: var(--text-main);
+            color: white;
             width: 100%;
             outline: none;
-            font-size: 14px;
-        }
-
-        .theme-toggle {
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--primary);
+            margin-right: 10px;
         }
 
         #splash-screen {
@@ -115,19 +88,16 @@
     <div class="sidebar">
         <div class="p-5 flex items-center justify-between">
             <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5">
-            <div class="theme-toggle" id="theme-btn">
-                <i class="fas fa-moon"></i>
-            </div>
         </div>
 
         <div class="search-box">
-            <i class="fas fa-search text-gray-500 text-sm"></i>
-            <input type="text" id="search-input" placeholder="ابحث عن قناة أو فيلم...">
+            <i class="fas fa-search text-gray-500"></i>
+            <input type="text" id="search-input" placeholder="ابحث عن قناة...">
         </div>
 
         <div class="flex px-4 border-b border-[var(--border)]">
-            <div class="flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm" id="tab-live">مباشر</div>
-            <div class="flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm" id="tab-vod">أفلام</div>
+            <div class="flex-1 py-3 text-center border-b-2 border-orange-500 font-bold" id="tab-live">مباشر</div>
+            <div class="flex-1 py-3 text-center text-gray-500 font-bold" id="tab-vod">أفلام</div>
         </div>
 
         <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
@@ -142,25 +112,19 @@
         const UIManager = {
             allData: [],
             filteredData: [],
-            currentTab: 'live',
-            isDarkMode: true,
 
             async init() {
                 await this.loadCategory('live');
-                this.setupGlobalEvents();
-                setTimeout(() => {
-                    document.getElementById('splash-screen').style.display = 'none';
-                }, 1500);
+                this.setupEvents();
+                setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 1000);
             },
 
             async loadCategory(type) {
-                try {
-                    const res = await fetch(API_LINKS[type]);
-                    const text = await res.text();
-                    this.allData = this.parseCSV(text);
-                    this.filteredData = this.allData;
-                    this.renderList();
-                } catch(e) { console.error("Error loading data"); }
+                const res = await fetch(API_LINKS[type]);
+                const text = await res.text();
+                this.allData = this.parseCSV(text);
+                this.filteredData = this.allData;
+                this.render();
             },
 
             parseCSV(csv) {
@@ -174,71 +138,51 @@
                 }).filter(i => i.url);
             },
 
-            renderList() {
+            render() {
                 const list = document.getElementById('list');
                 list.innerHTML = this.filteredData.map(item => `
                     <div class="channel-card" onclick="UIManager.playNative('${item.url}', '${item.name}', '${item.logo}')">
-                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg bg-black/10">
+                        <img src="${item.logo}" class="w-10 h-10 object-contain rounded-lg">
                         <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-xs truncate" style="color: var(--text-main)">${item.name}</h3>
+                            <h3 class="font-bold text-xs truncate">${item.name}</h3>
                         </div>
-                        <i class="fas fa-play text-[10px] text-orange-500"></i>
+                        <i class="fas fa-play text-orange-500 text-[10px]"></i>
                     </div>
                 `).join('');
             },
 
-            // الوظيفة المعتمدة على دليل Median الرسمي الذي أرسلته
-            async playNative(url, title, logo) {
+            // هذا هو الجزء الذي يتخاطب مع الإضافة بالاسم الجديد backgroundMedia
+            async playNative(url, name, logo) {
                 if(!url) return;
 
                 const track = {
                     "url": url,
-                    "title": title,
+                    "title": name,
                     "album": "ADATA TV",
-                    "artist": "Live Streaming",
+                    "artist": "بث مباشر",
                     "artwork": logo
                 };
 
+                // التأكد من وجود الجسر البرمجي
                 if (window.median && window.median.backgroundMedia) {
                     try {
-                        // استخدام نظام الـ Promise كما في الدليل
                         const { success } = await median.backgroundMedia.playTrack(track);
-                        if(!success) console.error("Failed to play track");
-                    } catch (err) {
-                        console.error("Median Error:", err);
+                        if(!success) console.error("Native play failed");
+                    } catch (e) {
+                        console.error("Bridge Error:", e);
                     }
                 } else {
-                    alert("المشغل الأصلي غير متاح. تأكد من تفعيل إضافة Native Media Player وعمل Build جديد.");
+                    // إذا ظهر هذا التنبيه، فالمشكلة في الـ Build وليس الكود
+                    alert("يجب عمل Build جديد للتطبيق بعد تفعيل إضافة backgroundMedia");
                 }
             },
 
-            setupGlobalEvents() {
-                document.getElementById('tab-live').onclick = (e) => this.switchTab(e.target, 'live');
-                document.getElementById('tab-vod').onclick = (e) => this.switchTab(e.target, 'vod');
-
+            setupEvents() {
                 document.getElementById('search-input').oninput = (e) => {
                     const term = e.target.value.toLowerCase();
-                    this.filteredData = this.allData.filter(item => 
-                        item.name.toLowerCase().includes(term)
-                    );
-                    this.renderList();
+                    this.filteredData = this.allData.filter(i => i.name.toLowerCase().includes(term));
+                    this.render();
                 };
-
-                document.getElementById('theme-btn').onclick = () => {
-                    this.isDarkMode = !this.isDarkMode;
-                    document.body.classList.toggle('light-mode', !this.isDarkMode);
-                    const icon = document.querySelector('#theme-btn i');
-                    icon.className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
-                };
-            },
-
-            switchTab(el, type) {
-                if (this.currentTab === type) return;
-                this.currentTab = type;
-                document.getElementById('search-input').value = '';
-                document.getElementById('tab-live').className = document.getElementById('tab-vod').className = "flex-1 py-3 text-center cursor-pointer text-gray-500 font-bold text-sm";
-                el.className = "flex-1 py-3 text-center cursor-pointer border-b-2 border-orange-500 font-bold text-sm";
-                this.loadCategory(type);
             }
         };
 
