@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - VLC Mode</title>
+    <title>ADATA TV Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -51,9 +51,9 @@
             gap: 12px;
             border: 1px solid var(--border);
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: all 0.2s;
         }
-        .channel-card:active { transform: scale(0.98); }
+        .channel-card:active { transform: scale(0.96); background: rgba(255, 149, 0, 0.1); }
 
         .search-box {
             background: var(--card);
@@ -66,40 +66,45 @@
             gap: 10px;
         }
 
-        .search-box input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; }
+        .search-box input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; font-size: 14px; }
         
         .tab-item { cursor: pointer; padding: 12px 0; text-align: center; flex: 1; font-weight: bold; font-size: 0.85rem; color: gray; border-bottom: 2px solid transparent; transition: 0.3s; }
         .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); }
 
         .vlc-badge {
             font-size: 10px;
-            background: #ff950022;
-            color: var(--primary);
-            padding: 2px 6px;
+            background: #ff9500;
+            color: #000;
+            padding: 1px 6px;
             border-radius: 4px;
+            font-weight: 900;
             margin-right: auto;
+        }
+
+        /* تعديل الشعار */
+        .brand-logo {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
         }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
-        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="w-24 animate-pulse">
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="brand-logo animate-pulse">
     </div>
 
     <div id="app-wrapper">
         <aside class="sidebar">
             <div class="p-5 flex items-center justify-between">
-                <div class="flex flex-col">
-                    <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-5 mb-1">
-                    <span class="text-[10px] text-gray-500">مشغل VLC الخارجي</span>
-                </div>
-                <div id="theme-btn" class="cursor-pointer text-orange-500"><i class="fas fa-moon"></i></div>
+                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="brand-logo">
+                <div id="theme-btn" class="p-2 cursor-pointer text-orange-500"><i class="fas fa-moon"></i></div>
             </div>
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث...">
+                <input type="text" id="search-input" placeholder="ابحث عن عنوان أو قناة...">
             </div>
 
             <div class="flex px-4 border-b border-[var(--border)]">
@@ -128,13 +133,15 @@
                 await this.loadCategory('live');
                 this.setupEvents();
                 setTimeout(() => {
-                    document.getElementById('splash-screen').style.display = 'none';
+                    document.getElementById('splash-screen').style.opacity = '0';
+                    setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 500);
                     document.getElementById('app-wrapper').style.visibility = 'visible';
-                }, 1500);
+                }, 1200);
             },
 
             async loadCategory(type) {
-                document.getElementById('list').innerHTML = '<div class="p-10 text-center opacity-50">جاري التحميل...</div>';
+                const listEl = document.getElementById('list');
+                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري جلب البيانات...</div>';
                 try {
                     const res = await fetch(API_LINKS[type]);
                     const text = await res.text();
@@ -148,7 +155,7 @@
                     }).filter(i => i.url && i.name);
                     this.render(this.allData);
                 } catch (e) {
-                    document.getElementById('list').innerHTML = '<div class="p-10 text-center text-red-500">خطأ في تحميل البيانات</div>';
+                    listEl.innerHTML = '<div class="p-10 text-center text-red-500">حدث خطأ في الاتصال</div>';
                 }
             },
 
@@ -160,13 +167,12 @@
 
             render(data) {
                 const list = document.getElementById('list');
-                list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-50">لا توجد نتائج</div>' :
+                list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد نتائج بحث</div>' :
                     data.map(item => `
                         <div class="channel-card" onclick="UIManager.playExternal('${item.url}')">
-                            <img src="${item.logo}" class="w-10 h-10 object-contain rounded bg-black/10" onerror="this.src='https://via.placeholder.com/50'">
-                            <div class="flex-1 font-bold text-sm">${item.name}</div>
+                            <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
+                            <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
                             <span class="vlc-badge">VLC</span>
-                            <i class="fas fa-external-link-alt text-orange-500 text-xs"></i>
                         </div>
                     `).join('');
             },
@@ -177,20 +183,19 @@
                     const filtered = this.allData.filter(i => i.name.toLowerCase().includes(term));
                     this.render(filtered);
                 };
-                document.getElementById('theme-btn').onclick = () => document.body.classList.toggle('light-mode');
+                document.getElementById('theme-btn').onclick = () => {
+                    document.body.classList.toggle('light-mode');
+                    const icon = document.querySelector('#theme-btn i');
+                    icon.classList.toggle('fa-moon');
+                    icon.classList.toggle('fa-sun');
+                };
             },
 
-            // دالة الفتح في مشغل خارجي (VLC)
             playExternal(url) {
-                // تنظيف الرابط من أي مسافات
                 const cleanUrl = url.trim();
-                
-                // بروتوكول Intent المخصص لأندرويد لفتح VLC مباشرة
-                // سيحاول فتح VLC وإذا لم يتوفر سيفتح قائمة المشغلات
-                const vlcIntent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;end`;
-                
-                // محاولة الفتح
-                window.location.href = vlcIntent;
+                // فتح عبر VLC أندرويد بشكل مباشر
+                const intent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;end`;
+                window.location.href = intent;
             }
         };
 
