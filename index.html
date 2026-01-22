@@ -2,182 +2,144 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="referrer" content="no-referrer" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NETGo TV Pro - Modern UI</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NETGo Pro - Arch Scroll</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Orbitron:wght@700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Orbitron:wght@900&display=swap');
         
-        * { -webkit-user-select: none; user-select: none; outline: none; }
-
-        :root {
-            --primary: #22c55e; 
-            --surface: #0a0a0c;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --text-main: #ffffff;
-        }
-
         body {
-            background-color: var(--surface);
-            color: var(--text-main);
+            background-color: #0a0a0c;
+            color: white;
             font-family: 'Cairo', sans-serif;
             margin: 0;
-            overflow-x: hidden;
+            overflow: hidden;
             height: 100vh;
         }
 
-        /* منع ظهور شريط التمرير */
-        ::-webkit-scrollbar { display: none; }
-
-        /* تصميم الإطار (Card) مثل Netfly */
-        .channel-frame {
-            min-width: 140px;
-            max-width: 140px;
-            height: 200px;
-            background: #16161a;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: transform 0.3s;
-            flex-shrink: 0;
-            cursor: pointer;
+        /* حاوية الأقواس - Perspective تعطي بعداً ثلاثي الأبعاد */
+        .arch-container {
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            padding: 50px 10vw;
+            gap: 20px;
+            perspective: 1000px; /* سر التأثير ثلاثي الأبعاد */
+            scroll-snap-type: x mandatory;
+            height: 400px;
         }
 
-        .channel-frame:active { transform: scale(0.95); }
+        .arch-container::-webkit-scrollbar { display: none; }
 
-        .channel-frame img {
+        /* تصميم القناة كإطار مقوس */
+        .channel-card {
+            min-width: 200px;
+            height: 300px;
+            background: #111;
+            border-radius: 20px;
+            position: relative;
+            scroll-snap-align: center;
+            transition: transform 0.4s ease, filter 0.4s ease;
+            transform-style: preserve-3d;
+            border: 2px solid rgba(34, 197, 94, 0.2);
+            overflow: hidden;
+        }
+
+        /* التأثير البرمجي سيتم عبر CSS Scroll Timeline أو JS */
+        /* هنا نستخدم تقنية تجعل البطاقة في الوسط كبيرة وعلى الأطراف مائلة */
+        .channel-card img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .channel-overlay {
+        .channel-name {
             position: absolute;
             bottom: 0;
             width: 100%;
-            padding: 10px 5px;
+            padding: 15px;
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
             text-align: center;
-            font-size: 12px;
-            font-weight: 600;
+            font-weight: bold;
         }
 
-        /* حاوية التمرير الأفقي */
-        .horizontal-scroll {
-            display: flex;
-            gap: 12px;
-            padding: 10px 16px;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
+        /* تظليل للأطراف لزيادة التركيز على الوسط */
+        .faded {
+            opacity: 0.4;
+            transform: scale(0.8) rotateY(25deg);
         }
 
-        .section-title {
-            padding: 0 16px;
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .section-title span { color: var(--primary); font-size: 12px; }
-
-        /* شاشة الدخول */
-        #splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #0a0a0a; display: flex; justify-content: center; align-items: center;
-            z-index: 9999; transition: opacity 0.8s;
+        .active-card {
+            opacity: 1;
+            transform: scale(1.1) rotateY(0deg);
+            border-color: #22c55e;
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
         }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen">
-        <div class="text-4xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
+    <header class="p-6 text-center">
+        <div class="text-3xl font-black tracking-tighter" style="font-family: 'Orbitron';">
             <span class="text-white">NET</span><span class="text-green-500">Go</span>
         </div>
-    </div>
+    </header>
 
-    <div id="app-wrapper" class="opacity-0 transition-opacity duration-700">
-        <header class="p-4 flex justify-between items-center">
-            <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
-                <span class="text-white">NET</span><span class="text-green-500">Go</span>
-            </div>
-            <i class="fas fa-search text-gray-400 text-xl"></i>
-        </header>
+    <div class="arch-container" id="channel-slider">
+        </div>
 
-        <main id="main-content" class="pb-20">
-            </main>
-    </div>
+    <div class="text-center mt-4 opacity-50 text-sm">اسحب لليمين واليسار للتصفح</div>
 
     <script>
-        const API_LINKS = {
-            "قنوات رياضية": 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            "أفلام ومسلسلات": 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            "وثائقي وأخبار": 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv'
-        };
+        const CHANNELS = [
+            { name: "بي إن سبورت 1", logo: "https://via.placeholder.com/300x400/111/22c55e?text=beIN+1" },
+            { name: "بي إن سبورت 2", logo: "https://via.placeholder.com/300x400/111/22c55e?text=beIN+2" },
+            { name: "سكاي نيوز", logo: "https://via.placeholder.com/300x400/111/22c55e?text=Sky+News" },
+            { name: "إم بي سي 1", logo: "https://via.placeholder.com/300x400/111/22c55e?text=MBC+1" },
+            { name: "ناشيونال جيوغرافيك", logo: "https://via.placeholder.com/300x400/111/22c55e?text=Nat+Geo" }
+        ];
 
-        async function initApp() {
-            const container = document.getElementById('main-content');
-            
-            for (const [title, url] of Object.entries(API_LINKS)) {
-                const channels = await fetchChannels(url);
-                if (channels.length > 0) {
-                    renderSection(title, channels, container);
-                }
-            }
+        const slider = document.getElementById('channel-slider');
 
-            // إخفاء Splash
-            setTimeout(() => {
-                document.getElementById('splash-screen').style.opacity = '0';
-                document.getElementById('app-wrapper').style.opacity = '1';
-                setTimeout(() => document.getElementById('splash-screen').remove(), 800);
-            }, 2000);
-        }
-
-        async function fetchChannels(url) {
-            try {
-                const res = await fetch(url);
-                const text = await res.text();
-                return text.split('\n').slice(1).map(row => {
-                    const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    return {
-                        name: p[0]?.replace(/"/g, '').trim(),
-                        url: p[1]?.replace(/"/g, '').trim(),
-                        logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/150x200/111/fff?text=No+Logo"
-                    };
-                }).filter(i => i.url && i.name);
-            } catch (e) { return []; }
-        }
-
-        function renderSection(title, data, target) {
-            const section = document.createElement('div');
-            section.innerHTML = `
-                <div class="section-title">${title} <span>عرض الكل</span></div>
-                <div class="horizontal-scroll">
-                    ${data.map(item => `
-                        <div class="channel-frame" onclick="play('${item.url}')">
-                            <img src="${item.logo}" onerror="this.src='https://via.placeholder.com/150x200/222/555?text=NETGo'">
-                            <div class="channel-overlay">${item.name}</div>
-                        </div>
-                    `).join('')}
+        function render() {
+            slider.innerHTML = CHANNELS.map((ch, index) => `
+                <div class="channel-card ${index === 0 ? 'active-card' : 'faded'}" data-index="${index}">
+                    <img src="${ch.logo}">
+                    <div class="channel-name">${ch.name}</div>
                 </div>
-            `;
-            target.appendChild(section);
+            `).join('');
         }
 
-        function play(url) {
-            window.location.href = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;end`;
-        }
+        // إضافة منطق التفاعل لتحويلها لقوس عند التحريك
+        slider.addEventListener('scroll', () => {
+            const cards = document.querySelectorAll('.channel-card');
+            const sliderCenter = slider.scrollLeft + (slider.offsetWidth / 2);
 
-        initApp();
+            cards.forEach(card => {
+                const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
+                const distanceFromCenter = Math.abs(sliderCenter - cardCenter);
+                
+                // حساب درجة الميلان بناءً على البعد عن المركز
+                const rotation = (cardCenter - sliderCenter) / 10; 
+                const scale = Math.max(0.8, 1.1 - (distanceFromCenter / 1000));
+                const opacity = Math.max(0.4, 1 - (distanceFromCenter / 500));
+
+                card.style.transform = `scale(${scale}) rotateY(${-rotation}deg)`;
+                card.style.opacity = opacity;
+                
+                if (distanceFromCenter < 100) {
+                    card.classList.add('active-card');
+                    card.style.borderColor = "#22c55e";
+                } else {
+                    card.classList.remove('active-card');
+                    card.style.borderColor = "rgba(255,255,255,0.1)";
+                }
+            });
+        });
+
+        render();
     </script>
 </body>
 </html>
