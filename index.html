@@ -13,7 +13,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
         
         :root {
-            /* تعديل اللون الأساسي للأخضر ليناسب الشعار */
             --primary: #22c55e; 
             --surface: #0a0a0c;
             --glass-bg: rgba(255, 255, 255, 0.03);
@@ -35,16 +34,10 @@
             margin: 0;
             overflow: hidden;
             height: 100vh;
-            /* خلفية متدرجة بلمسة خضراء */
             background-image: radial-gradient(circle at top right, rgba(34, 197, 94, 0.08) 0%, transparent 40%);
         }
 
-        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        
-        /* تكبير الشعار في شاشة التحميل */
-        #splash-screen img { height: 120px; width: auto; }
-
-        #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: visible; }
 
         .sidebar { width: 100%; background: transparent; display: flex; flex-direction: column; z-index: 50; }
 
@@ -69,7 +62,6 @@
             position: relative;
             padding: 2px;
             border-radius: 12px;
-            /* توهج أخضر وأبيض */
             background: linear-gradient(45deg, var(--primary), #ffffff, var(--primary));
             box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
         }
@@ -112,8 +104,13 @@
             box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
         }
 
-        /* تكبير الشعار في الهيدر */
-        .brand-logo { height: 70px; width: auto; filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.15)); }
+        /* تكبير الشعار هنا تم تعديل الارتفاع ليكون 100px */
+        .brand-logo { 
+            height: 100px; 
+            width: auto; 
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.15)); 
+        }
 
         .tg-mini-btn {
             width: 40px;
@@ -131,16 +128,12 @@
 </head>
 <body>
 
-    <div id="splash-screen">
-        <img src="Picsart_26-01-18_12-58-56-694.png" class="animate-pulse">
-    </div>
-
     <div id="app-wrapper">
         <aside class="sidebar">
-            <div class="p-4 flex items-center justify-between">
+            <div class="p-2 flex items-center justify-between">
                 <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo">
                 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 px-4">
                     <a href="https://t.me/zone1996" target="_blank" class="tg-mini-btn">
                         <i class="fab fa-telegram-plane"></i>
                     </a>
@@ -168,7 +161,6 @@
     </div>
 
     <script>
-        // الأكواد البرمجية (JavaScript) كما هي لضمان عمل التطبيق
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
@@ -185,10 +177,6 @@
             async init() {
                 await this.loadCategory('all');
                 this.setupEvents();
-                setTimeout(() => {
-                    document.getElementById('splash-screen').style.display = 'none';
-                    document.getElementById('app-wrapper').style.visibility = 'visible';
-                }, 1200);
             },
 
             sortAlphabetically(array) {
