@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NETGo TV - Pro</title>
+    <title>ADATA TV Pro - Green Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -41,30 +41,24 @@
 
         .sidebar { width: 100%; background: transparent; display: flex; flex-direction: column; z-index: 50; }
 
-        /* منطقة الهيدر المخصصة للشعار الضخم */
-        .header-container {
+        /* الهيدر الأصلي */
+        .header-main {
             padding: 10px 16px;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 10px;
-        }
-
-        .header-top-row {
-            width: 100%;
-            display: flex;
             justify-content: space-between;
-            align-items: center;
+            min-height: 110px; /* مساحة كافية للزوم */
         }
 
-        /* تكبير الشعار بشكل كبير جداً */
+        /* تكبير الشعار (Zoom) دون تغيير مكانه */
         .brand-logo { 
-            height: 140px; /* زيادة الارتفاع بشكل ملحوظ */
-            width: 100%;
-            max-width: 320px; /* تحديد عرض أقصى لضمان عدم التشويه */
+            height: 130px; /* حجم كبير جداً */
+            width: auto;
+            transform: scale(1.3); /* عمل زوم إضافي */
+            transform-origin: right center; /* الزوم يبدأ من جهة اليمين */
             object-fit: contain;
-            filter: drop-shadow(0 0 15px rgba(34, 197, 94, 0.25));
-            margin: -10px 0; /* تقليل المسافات العلوية والسفلية لضغط التصميم */
+            filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.2));
+            margin-right: -10px; /* موازنة الزوم */
         }
 
         .channel-card {
@@ -105,7 +99,7 @@
             backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
             border-radius: 14px;
-            margin: 0 16px 12px 16px;
+            margin: 0 16px 16px 16px;
             padding: 12px 16px;
             display: flex;
             align-items: center;
@@ -116,7 +110,7 @@
         
         .tab-item { 
             cursor: pointer; 
-            padding: 8px 18px; 
+            padding: 10px 20px; 
             font-weight: 600; 
             font-size: 0.85rem; 
             color: #888; 
@@ -147,19 +141,20 @@
 
     <div id="app-wrapper">
         <aside class="sidebar">
-            <div class="header-container">
-                <div class="header-top-row">
-                    <div id="theme-btn" class="p-2 cursor-pointer text-green-500 text-xl"><i class="fas fa-moon"></i></div>
+            <div class="header-main">
+                <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo">
+                
+                <div class="flex items-center gap-3">
                     <a href="https://t.me/zone1996" target="_blank" class="tg-mini-btn">
                         <i class="fab fa-telegram-plane"></i>
                     </a>
+                    <div id="theme-btn" class="p-2 cursor-pointer text-green-500 text-xl"><i class="fas fa-moon"></i></div>
                 </div>
-                <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo" alt="NETGo">
             </div>
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث عن قناتك...">
+                <input type="text" id="search-input" placeholder="ابحث في القنوات...">
             </div>
 
             <div class="tabs-container flex overflow-x-auto whitespace-nowrap px-3 mb-2" id="tabs-nav" style="scrollbar-width: none;">
@@ -177,7 +172,6 @@
     </div>
 
     <script>
-        // الأكواد البرمجية (JavaScript) كما هي لضمان عمل التطبيق
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
@@ -233,7 +227,7 @@
                         <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
                             <div class="img-wrapper"><img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50'"></div>
                             <div class="flex-1 font-bold text-[15px] tracking-wide">${item.name}</div>
-                            <div class="text-green-500 opacity-60 text-[12px]"><i class="fas fa-play-circle"></i></div>
+                            <div class="text-green-500 opacity-60 text-[12px]"><i class="fas fa-play"></i></div>
                         </div>
                     `).join('');
             },
