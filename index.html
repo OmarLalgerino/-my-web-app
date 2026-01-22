@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - Privacy Mode</title>
+    <title>ADATA TV Pro - All Channels</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -68,7 +68,28 @@
 
         .search-box input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; font-size: 14px; }
         
-        .tab-item { cursor: pointer; padding: 12px 0; text-align: center; flex: 1; font-weight: bold; font-size: 0.85rem; color: gray; border-bottom: 2px solid transparent; transition: 0.3s; }
+        /* تحسين التبويبات لتكون قابلة للتمرير */
+        .tabs-container {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+            padding: 0 10px;
+            scrollbar-width: none; /* للهواتف */
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab-item { 
+            cursor: pointer; 
+            padding: 12px 15px; 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 0.85rem; 
+            color: gray; 
+            border-bottom: 2px solid transparent; 
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
         .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); }
 
         .brand-logo { height: 32px; width: auto; object-fit: contain; }
@@ -99,14 +120,16 @@
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث...">
+                <input type="text" id="search-input" placeholder="ابحث في هذه الفئة...">
             </div>
 
-            <div class="flex px-4 border-b border-[var(--border)]">
-                <div class="tab-item active" onclick="UIManager.switchTab('live', this)">مباشر</div>
-                <div class="tab-item" onclick="UIManager.switchTab('vod', this)">أفلام</div>
+            <div class="tabs-container">
+                <div class="tab-item active" onclick="UIManager.switchTab('sports', this)">رياضة</div>
+                <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
                 <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
-                <div class="tab-item" onclick="UIManager.switchTab('anime', this)">أنمي</div>
+                <div class="tab-item" onclick="UIManager.switchTab('news', this)">أخبار</div>
+                <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
+                <div class="tab-item" onclick="UIManager.switchTab('media', this)">ميديا</div>
             </div>
 
             <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
@@ -114,18 +137,21 @@
     </div>
 
     <script>
+        // ربط جميع الروابط التي قدمتها
         const API_LINKS = {
-            live: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            vod: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            anime: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv'
+            sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
+            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
+            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
+            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
+            media: 'https://docs.google.com/spreadsheets/d/1OMXrU6bIGvfhqlrT70sSFzhNx7aZdyMuGWf4bhA6-1Q/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
             allData: [],
 
             async init() {
-                await this.loadCategory('live');
+                await this.loadCategory('sports');
                 this.setupEvents();
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.opacity = '0';
@@ -138,10 +164,12 @@
 
             async loadCategory(type) {
                 const listEl = document.getElementById('list');
-                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري التحميل...</div>';
+                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري جلب البيانات...</div>';
                 try {
                     const res = await fetch(API_LINKS[type]);
                     const text = await res.text();
+                    
+                    // معالجة بيانات CSV مع مراعاة الفواصل
                     this.allData = text.split('\n').slice(1).map(row => {
                         const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         return {
@@ -150,9 +178,10 @@
                             logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
                         };
                     }).filter(i => i.url && i.name);
+
                     this.render(this.allData);
                 } catch (e) {
-                    listEl.innerHTML = '<div class="p-10 text-center text-red-500">خطأ في الاتصال</div>';
+                    listEl.innerHTML = '<div class="p-10 text-center text-red-500">فشل في تحميل القائمة. تأكد من إعدادات مشاركة الملف.</div>';
                 }
             },
 
@@ -160,18 +189,22 @@
                 document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                 el.classList.add('active');
                 this.loadCategory(type);
+                document.getElementById('search-input').value = ''; // تصفير البحث عند الانتقال
             },
 
             render(data) {
                 const list = document.getElementById('list');
-                list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد نتائج</div>' :
-                    data.map(item => `
-                        <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
-                            <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
-                            <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
-                            <span class="vlc-secure-badge">VLC Secure</span>
-                        </div>
-                    `).join('');
+                if (data.length === 0) {
+                    list.innerHTML = '<div class="p-10 text-center opacity-30 text-sm">لا توجد محتويات حالياً</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
+                        <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
+                        <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
+                        <span class="vlc-secure-badge">VLC Secure</span>
+                    </div>
+                `).join('');
             },
 
             setupEvents() {
@@ -181,18 +214,19 @@
                     this.render(filtered);
                 };
                 document.getElementById('theme-btn').onclick = () => {
-                    document.body.classList.toggle('light-mode');
+                    const body = document.body;
+                    body.classList.toggle('light-mode');
+                    const icon = document.querySelector('#theme-btn i');
+                    icon.classList.toggle('fa-moon');
+                    icon.classList.toggle('fa-sun');
                 };
             },
 
             playSecure(url) {
+                if (!url) return;
                 const cleanUrl = url.trim();
-                
-                // بروتوكول Intent المتقدم لـ VLC
-                // S.title: عنوان فارغ كي لا يظهر الاسم
-                // B.no_history: صحيح لمنع حفظ الرابط في سجل المشاهدة
-                const vlcIntent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=Stream;B.no_history=true;end`;
-                
+                // فتح الرابط مباشرة عبر مشغل VLC المثبت على الجهاز
+                const vlcIntent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=ADATA_Stream;B.no_history=true;end`;
                 window.location.href = vlcIntent;
             }
         };
