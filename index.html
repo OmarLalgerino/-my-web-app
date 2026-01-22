@@ -18,6 +18,8 @@
             --glass-bg: rgba(255, 255, 255, 0.03);
             --glass-border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff;
+            --icon-bg: #ffffff; /* لون الأيقونات العلوي */
+            --icon-text: #000000;
         }
 
         body.light-mode {
@@ -25,6 +27,8 @@
             --glass-bg: rgba(0, 0, 0, 0.04);
             --glass-border: rgba(0, 0, 0, 0.08);
             --text-main: #1e293b;
+            --icon-bg: #000000; /* تنعكس الألوان في الوضع الفاتح */
+            --icon-text: #ffffff;
         }
 
         body {
@@ -35,6 +39,7 @@
             overflow: hidden;
             height: 100vh;
             background-image: radial-gradient(circle at top right, rgba(34, 197, 94, 0.08) 0%, transparent 40%);
+            transition: background 0.5s ease;
         }
 
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: visible; }
@@ -58,7 +63,27 @@
             margin-right: -10px;
         }
 
-        /* تعديلات القنوات والأيقونات */
+        /* تنسيق الأيقونات العلوية (أسود وأبيض) */
+        .top-icon {
+            width: 42px;
+            height: 42px;
+            background-color: var(--icon-bg);
+            color: var(--icon-text);
+            border-radius: 50%; /* شكل دائري */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* حركة الأيقونات عند الضغط */
+        .top-icon:active {
+            transform: scale(1.4) rotate(360deg);
+        }
+
         .channel-card {
             background: var(--glass-bg);
             backdrop-filter: blur(15px);
@@ -70,18 +95,15 @@
             gap: 14px;
             border: 1px solid var(--glass-border);
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
         }
-
-        /* تحريك الكارد عند الضغط */
-        .channel-card:active { transform: scale(0.95); }
 
         .img-wrapper {
             position: relative;
             padding: 2px;
             border-radius: 12px;
-            background: linear-gradient(45deg, #333, #888); /* إطار رمادي هادئ */
-            transition: all 0.4s ease;
+            background: linear-gradient(45deg, var(--primary), #ffffff);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);
         }
 
         .channel-logo {
@@ -90,22 +112,6 @@
             object-fit: contain;
             border-radius: 10px;
             background: #111;
-            /* جعل الأيقونة أسود وأبيض في الحالة العادية */
-            filter: grayscale(100%);
-            transition: all 0.4s ease;
-        }
-
-        /* تأثير الحركة وتحويل الألوان عند التفاعل */
-        .channel-card:hover .channel-logo,
-        .channel-card:active .channel-logo {
-            filter: grayscale(0%); /* عودة الألوان */
-            transform: scale(1.1) rotate(5deg); /* حركة زوم مع ميلان */
-        }
-
-        .channel-card:hover .img-wrapper,
-        .channel-card:active .img-wrapper {
-            background: linear-gradient(45deg, var(--primary), #ffffff); /* عودة إطار الأخضر والأبيض */
-            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
         }
 
         .search-box {
@@ -137,26 +143,6 @@
             background: var(--primary);
             box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
         }
-
-        .tg-mini-btn {
-            width: 42px;
-            height: 42px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: white;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-        }
-        
-        /* تأثير النبض للأيقونة النشطة */
-        @keyframes pulse-green {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
     </style>
 </head>
 <body>
@@ -165,11 +151,14 @@
         <aside class="sidebar">
             <div class="header-main">
                 <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo">
-                <div class="flex items-center gap-3">
-                    <a href="https://t.me/zone1996" target="_blank" class="tg-mini-btn">
+                
+                <div class="flex items-center gap-4">
+                    <a href="https://t.me/zone1996" target="_blank" class="top-icon">
                         <i class="fab fa-telegram-plane"></i>
                     </a>
-                    <div id="theme-btn" class="p-2 cursor-pointer text-green-500 text-xl"><i class="fas fa-moon"></i></div>
+                    <div id="theme-btn" class="top-icon">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </div>
                 </div>
             </div>
 
@@ -258,7 +247,15 @@
                     const filtered = this.allData.filter(i => i.name.toLowerCase().includes(term));
                     this.render(filtered);
                 };
-                document.getElementById('theme-btn').onclick = () => { document.body.classList.toggle('light-mode'); };
+                document.getElementById('theme-btn').onclick = () => { 
+                    document.body.classList.toggle('light-mode');
+                    const icon = document.getElementById('theme-icon');
+                    if(document.body.classList.contains('light-mode')) {
+                        icon.classList.replace('fa-moon', 'fa-sun');
+                    } else {
+                        icon.classList.replace('fa-sun', 'fa-moon');
+                    }
+                };
             },
             playSecure(url) {
                 const cleanUrl = url.trim();
