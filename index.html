@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NETGo TV Pro</title>
+    <title>NETGo TV Pro - Slider Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,12 +12,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Orbitron:wght@700;900&display=swap');
         
-        /* منع التحديد والنسخ */
-        * {
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-        }
+        * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
         :root {
             --primary: #22c55e; 
@@ -38,107 +33,62 @@
             --icon-text: #ffffff;
         }
 
-        body {
-            background-color: var(--surface);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
-            transition: background 0.5s ease;
-        }
+        body { background-color: var(--surface); color: var(--text-main); font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; transition: background 0.5s ease; }
 
-        /* --- شاشة الدخول مع الخطوط الخضراء --- */
-        #splash-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #0a0a0a;
-            display: flex; justify-content: center; align-items: center;
-            z-index: 9999;
-            transition: opacity 0.8s ease;
-            overflow: hidden;
-        }
-
-        .bg-glow {
-            position: absolute;
-            width: 300px; height: 300px;
-            background: radial-gradient(circle, rgba(46, 204, 113, 0.2) 0%, transparent 70%);
-            filter: blur(40px);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.3); opacity: 0.8; }
-        }
-
-        .speed-line {
-            position: absolute;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #2ecc71, transparent);
-            width: 200px;
-            animation: slide 1.5s linear infinite;
-        }
-
-        @keyframes slide {
-            0% { transform: translateX(-400px); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateX(400px); opacity: 0; }
-        }
-
-        .logo-wrapper {
-            display: flex; direction: ltr;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem; font-weight: 900;
-            position: relative;
-            z-index: 10;
-        }
+        /* --- شاشة الدخول --- */
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0a0a0a; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.8s ease; overflow: hidden; }
+        .bg-glow { position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(46, 204, 113, 0.2) 0%, transparent 70%); filter: blur(40px); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.3); opacity: 0.8; } }
+        .logo-wrapper { display: flex; direction: ltr; font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900; position: relative; z-index: 10; }
         .net-text { color: #ffffff; }
         .go-text { color: #2ecc71; text-shadow: 0 0 25px rgba(46, 204, 113, 0.8); }
+
+        /* --- المحرك الانزلاقي (Slider) --- */
+        .slider-container { position: relative; height: 180px; margin: 0 16px 16px 16px; border-radius: 20px; overflow: hidden; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .slider-track { display: flex; transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); height: 100%; width: 100%; }
+        .slide { min-width: 100%; position: relative; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; }
+        .slide-info { position: absolute; bottom: 0; right: 0; left: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); }
+        .dot-container { position: absolute; bottom: 10px; left: 20px; display: flex; gap: 6px; }
+        .dot { width: 6px; height: 6px; background: rgba(255,255,255,0.3); border-radius: 10px; transition: 0.3s; }
+        .dot.active { width: 20px; background: var(--primary); }
 
         /* --- واجهة التطبيق --- */
         #app-wrapper { opacity: 0; display: flex; height: 100vh; width: 100vw; transition: opacity 1s ease; }
         .sidebar { width: 100%; display: flex; flex-direction: column; z-index: 50; }
-        .header-main { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; min-height: 110px; }
-        .brand-logo { height: 130px; width: auto; transform: scale(1.3); transform-origin: right center; object-fit: contain; }
-        
-        .top-icon { width: 42px; height: 42px; background-color: var(--icon-bg); color: var(--icon-text); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
-        
-        .channel-card { background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 16px; padding: 14px; margin: 8px 16px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--glass-border); cursor: pointer; transition: 0.3s; }
+        .header-main { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; min-height: 100px; }
+        .brand-logo { height: 60px; width: auto; object-fit: contain; }
+        .top-icon { width: 42px; height: 42px; background-color: var(--icon-bg); color: var(--icon-text); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .channel-card { background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 16px; padding: 14px; margin: 8px 16px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--glass-border); }
         .img-wrapper { position: relative; padding: 2px; border-radius: 12px; background: linear-gradient(45deg, var(--primary), #ffffff); }
         .channel-logo { width: 46px; height: 46px; object-fit: contain; border-radius: 10px; background: #111; }
-        
         .search-box { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 14px; margin: 0 16px 16px 16px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
         .search-box input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; }
-        
-        .tab-item { cursor: pointer; padding: 10px 20px; font-weight: 600; color: #888; border-radius: 20px; transition: 0.3s; }
-        .tab-item.active { color: #fff; background: var(--primary); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); }
+        .tab-item { cursor: pointer; padding: 8px 18px; font-weight: 600; color: #888; border-radius: 20px; }
+        .tab-item.active { color: #fff; background: var(--primary); }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
         <div class="bg-glow"></div>
-        <div class="speed-line" style="top: 45%; animation-delay: 0s;"></div>
-        <div class="speed-line" style="top: 55%; animation-delay: 0.7s;"></div>
-        
-        <div class="logo-wrapper">
-            <span class="net-text">NET</span><span class="go-text">Go</span>
-        </div>
+        <div class="logo-wrapper"><span class="net-text">NET</span><span class="go-text">Go</span></div>
     </div>
 
     <div id="app-wrapper">
         <aside class="sidebar">
             <div class="header-main">
-                <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo">
+                <div class="text-2xl font-black italic tracking-tighter"><span class="text-white">NET</span><span class="text-green-500">Go</span></div>
                 <div class="flex items-center gap-4">
-                    <a href="https://t.me/zone1996" target="_blank" class="top-icon">
-                        <i class="fab fa-telegram-plane"></i>
-                    </a>
-                    <div id="theme-btn" class="top-icon">
-                        <i class="fas fa-moon" id="theme-icon"></i>
-                    </div>
+                    <a href="https://t.me/zone1996" target="_blank" class="top-icon"><i class="fab fa-telegram-plane"></i></a>
+                    <div id="theme-btn" class="top-icon"><i class="fas fa-moon" id="theme-icon"></i></div>
                 </div>
+            </div>
+
+            <div class="slider-container">
+                <div id="slider-track" class="slider-track">
+                    </div>
+                <div id="dot-container" class="dot-container"></div>
             </div>
 
             <div class="search-box">
@@ -151,50 +101,67 @@
                 <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
                 <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
                 <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
-                <div class="tab-item" onclick="UIManager.switchTab('news', this)">أخبار</div>
-                <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
-                <div class="tab-item" onclick="UIManager.switchTab('media', this)">ميديا</div>
             </div>
 
-            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-10"></div>
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-20"></div>
         </aside>
     </div>
 
     <script>
-        // التحكم في شاشة الدخول
+        // بيانات السلايدر (المحرك الانزلاقي)
+        const SLIDER_DATA = [
+            { title: "لعبة الحبّار - موسم جديد", img: "https://images.tmdb.org/t/p/original/6KIm9Ym6aryuCuzpYFTfdzMmZp9.jpg" },
+            { title: "بث مباشر: الدوري الإنجليزي", img: "https://images.tmdb.org/t/p/original/9vU96v9Eto21GfXWfNf2hF5uO6L.jpg" },
+            { title: "أقوى أفلام الأكشن 2024", img: "https://images.tmdb.org/t/p/original/58Dws7v7S79bd9nnS96v6O699XU.jpg" }
+        ];
+
+        const SliderManager = {
+            index: 0,
+            init() {
+                const track = document.getElementById('slider-track');
+                const dots = document.getElementById('dot-container');
+                SLIDER_DATA.forEach((item, i) => {
+                    track.innerHTML += `
+                        <div class="slide">
+                            <img src="${item.img}">
+                            <div class="slide-info"><div class="text-white font-bold">${item.title}</div></div>
+                        </div>`;
+                    dots.innerHTML += `<div class="dot ${i===0?'active':''}"></div>`;
+                });
+                setInterval(() => this.next(), 4000);
+            },
+            next() {
+                this.index = (this.index + 1) % SLIDER_DATA.length;
+                document.getElementById('slider-track').style.transform = `translateX(${this.index * 100}%)`;
+                const dots = document.querySelectorAll('.dot');
+                dots.forEach((d, i) => d.classList.toggle('active', i === this.index));
+            }
+        };
+
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('splash-screen').style.opacity = '0';
                 document.getElementById('app-wrapper').style.opacity = '1';
                 setTimeout(() => { document.getElementById('splash-screen').style.display = 'none'; }, 800);
-            }, 2500);
+                SliderManager.init();
+            }, 2000);
         });
 
-        // تفعيل زر التبديل
         document.getElementById('theme-btn').onclick = () => {
             document.body.classList.toggle('light-mode');
             const icon = document.getElementById('theme-icon');
-            if (icon.classList.contains('fa-moon')) {
-                icon.classList.replace('fa-moon', 'fa-sun');
-            } else {
-                icon.classList.replace('fa-sun', 'fa-moon');
-            }
+            icon.classList.toggle('fa-moon'); icon.classList.toggle('fa-sun');
         };
 
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
-            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
-            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
-            media: 'https://docs.google.com/spreadsheets/d/1OMXrU6bIGvfhqlrT70sSFzhNx7aZdyMuGWf4bhA6-1Q/gviz/tq?tqx=out:csv'
+            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
-            allData: [],
-            masterStore: {},
+            allData: [], masterStore: {},
             async init() { await this.loadCategory('all'); this.setupEvents(); },
-            sortAlphabetically(array) { return array.sort((a, b) => a.name.localeCompare(b.name, 'ar')); },
             async fetchData(type) {
                 if (this.masterStore[type]) return this.masterStore[type];
                 try {
@@ -208,9 +175,8 @@
                             logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
                         };
                     }).filter(i => i.url && i.name);
-                    const sortedData = this.sortAlphabetically(parsed);
-                    this.masterStore[type] = sortedData;
-                    return sortedData;
+                    this.masterStore[type] = parsed;
+                    return parsed;
                 } catch (e) { return []; }
             },
             async loadCategory(type) {
@@ -219,8 +185,7 @@
                 if (type === 'all') {
                     let combined = [];
                     for (const key in API_LINKS) { combined = [...combined, ...await this.fetchData(key)]; }
-                    const unique = Array.from(new Map(combined.map(item => [item.url, item])).values());
-                    this.allData = this.sortAlphabetically(unique);
+                    this.allData = combined;
                 } else { this.allData = await this.fetchData(type); }
                 this.render(this.allData);
             },
@@ -231,14 +196,13 @@
             },
             render(data) {
                 const list = document.getElementById('list');
-                list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد قنوات</div>' :
-                    data.map(item => `
-                        <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
-                            <div class="img-wrapper"><img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50'"></div>
-                            <div class="flex-1 font-bold text-[15px] tracking-wide">${item.name}</div>
-                            <div class="text-green-500 opacity-60 text-[12px]"><i class="fas fa-play-circle"></i></div>
-                        </div>
-                    `).join('');
+                list.innerHTML = data.map(item => `
+                    <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
+                        <div class="img-wrapper"><img src="${item.logo}" class="channel-logo"></div>
+                        <div class="flex-1 font-bold text-[15px]">${item.name}</div>
+                        <div class="text-green-500 opacity-60"><i class="fas fa-play-circle text-xl"></i></div>
+                    </div>
+                `).join('');
             },
             setupEvents() {
                 document.getElementById('search-input').oninput = (e) => {
@@ -248,8 +212,7 @@
                 };
             },
             playSecure(url) {
-                const cleanUrl = url.trim();
-                window.location.href = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=Stream;B.no_history=true;end`;
+                window.location.href = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;end`;
             }
         };
 
