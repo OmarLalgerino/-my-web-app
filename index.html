@@ -2,112 +2,175 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ADATA TV Pro - Final</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ADATA TV Pro - Premium</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
         
+        :root {
+            --accent: #ff9500;
+            --bg: #000000;
+            --surface: #121212;
+            --card: #1c1c1e;
+            --tg-color: #0088cc;
+        }
+
         body {
-            background-color: #050505;
-            color: #ffffff;
+            background-color: var(--bg);
+            color: white;
             font-family: 'Cairo', sans-serif;
             margin: 0;
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            user-select: none;
         }
 
-        /* حاوية البحث والقوائم */
-        .header-box { background: #050505; z-index: 100; position: sticky; top: 0; }
+        /* تأثير التدرج في الأعلى */
+        .premium-header {
+            background: linear-gradient(to bottom, rgba(255,149,0,0.15) 0%, transparent 100%);
+            padding: 20px;
+        }
 
-        .tab-item { 
-            padding: 10px 18px; 
-            cursor: pointer; 
-            color: #888; 
+        /* شريط التبويب الاحترافي */
+        .tabs-wrapper {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px 15px;
+            scrollbar-width: none;
+        }
+        .tabs-wrapper::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: var(--surface);
+            color: #888;
+            font-size: 13px;
+            font-weight: 600;
             white-space: nowrap;
-            font-weight: bold;
-            border-bottom: 2px solid transparent;
-            transition: 0.3s;
+            transition: 0.3s all cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
         }
-        .tab-item.active { color: #ff9500; border-bottom-color: #ff9500; }
+        .tab-btn.active {
+            background: var(--accent);
+            color: black;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255,149,0,0.3);
+        }
 
-        .channel-card {
-            background: #111;
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
+        /* تصميم الكارت الاحترافي */
+        .channel-item {
+            background: var(--card);
+            border-radius: 16px;
             padding: 12px;
-            margin: 6px 12px;
+            margin: 8px 15px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
+            transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+        .channel-item:active {
+            transform: scale(0.97);
+            background: #2c2c2e;
         }
 
-        /* زر التلجرام - ثابت في أسفل الشاشة */
-        .telegram-fixed {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: #0088cc;
-            color: white !important;
-            padding: 14px;
-            border-radius: 15px;
+        .img-container {
+            width: 50px;
+            height: 50px;
+            background: #252525;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            font-weight: bold;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-            z-index: 999;
-            text-decoration: none;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        
-        /* ترك مسافة في أسفل القائمة حتى لا يغطي الزر على آخر قناة */
-        #list { padding-bottom: 90px; }
-        
-        .loader { border-top-color: #ff9500; animation: spinner 0.6s linear infinite; }
-        @keyframes spinner { to { transform: rotate(360deg); } }
+
+        /* زر التلجرام العائم المحسن */
+        .tg-float {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--tg-color);
+            color: white !important;
+            width: 90%;
+            max-width: 350px;
+            padding: 14px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(0, 136, 204, 0.4);
+            z-index: 1000;
+            text-decoration: none;
+            animation: bounceIn 1s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            70% { transform: translateX(-50%) translateY(-10px); }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        #main-list { padding-bottom: 100px; }
     </style>
 </head>
 <body>
 
-    <div class="header-box">
-        <div class="p-4 flex justify-between items-center">
-            <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="h-8">
-            <span class="text-xs bg-orange-500/10 text-orange-500 px-2 py-1 rounded">V 2.0</span>
-        </div>
-
-        <div class="px-4 mb-2">
-            <div class="bg-[#1a1a1a] rounded-xl flex items-center px-4 py-2 gap-3">
-                <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="بحث أبجدي سريع..." class="bg-transparent border-none outline-none w-full text-sm">
+    <div class="premium-header">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <i class="fas fa-tv text-black text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black tracking-tight leading-none">ADATA TV</h1>
+                    <span class="text-[10px] text-orange-500 font-bold uppercase tracking-widest">Premium Access</span>
+                </div>
             </div>
+            <button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                <i class="fas fa-bell text-gray-400"></i>
+            </button>
         </div>
 
-        <div class="flex overflow-x-auto border-b border-white/5 no-scrollbar" id="tabs">
-            <div class="tab-item active" onclick="UI.switch('all', this)">الكل</div>
-            <div class="tab-item" onclick="UI.switch('sports', this)">رياضة</div>
-            <div class="tab-item" onclick="UI.switch('movies', this)">أفلام</div>
-            <div class="tab-item" onclick="UI.switch('series', this)">مسلسلات</div>
-            <div class="tab-item" onclick="UI.switch('news', this)">أخبار</div>
-            <div class="tab-item" onclick="UI.switch('docs', this)">وثائقي</div>
-            <div class="tab-item" onclick="UI.switch('media', this)">ميديا</div>
+        <div class="relative group">
+            <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+            <input type="text" id="search" placeholder="بحث سريع عن القنوات..." 
+                class="w-full bg-[#1c1c1e] border border-white/5 rounded-2xl py-4 pr-12 pl-4 text-sm focus:outline-none focus:border-orange-500/50 transition-all">
         </div>
     </div>
 
-    <div id="list" class="flex-1 overflow-y-auto"></div>
+    <div class="tabs-wrapper" id="tabs">
+        <button class="tab-btn active" onclick="App.changeTab('all', this)">الكل</button>
+        <button class="tab-btn" onclick="App.changeTab('sports', this)">الرياضة</button>
+        <button class="tab-btn" onclick="App.changeTab('movies', this)">الأفلام</button>
+        <button class="tab-btn" onclick="App.changeTab('series', this)">المسلسلات</button>
+        <button class="tab-btn" onclick="App.changeTab('news', this)">الأخبار</button>
+        <button class="tab-btn" onclick="App.changeTab('docs', this)">وثائقي</button>
+    </div>
 
-    <a href="https://t.me/zone1996" target="_blank" class="telegram-fixed">
-        <i class="fab fa-telegram-plane text-xl"></i>
-        <span>اضغط هنا لمتابعة جديدنا على التلجرام</span>
+    <div id="main-list" class="flex-1 overflow-y-auto pt-2"></div>
+
+    <a href="https://t.me/zone1996" target="_blank" class="tg-float">
+        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fab fa-telegram-plane"></i>
+        </div>
+        <span>انضم لقناتنا على تلجرام</span>
     </a>
 
     <script>
-        const SHEETS = {
+        const CONFIG = {
             sports: '14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM',
             movies: '1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA',
             series: '1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s',
@@ -116,64 +179,77 @@
             media: '1OMXrU6bIGvfhqlrT70sSFzhNx7aZdyMuGWf4bhA6-1Q'
         };
 
-        const UI = {
-            currentData: [],
+        const App = {
+            cache: [],
             
-            async fetch(key) {
-                const url = `https://docs.google.com/spreadsheets/d/${SHEETS[key]}/gviz/tq?tqx=out:csv`;
+            async init() {
+                await this.changeTab('all', document.querySelector('.tab-btn'));
+                document.getElementById('search').addEventListener('input', (e) => this.filter(e.target.value));
+            },
+
+            async fetchSheet(id) {
                 try {
-                    const r = await fetch(url);
-                    const t = await r.text();
-                    return t.split('\n').slice(1).map(row => {
-                        const c = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    const res = await fetch(`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`);
+                    const csv = await res.text();
+                    return csv.split('\n').slice(1).map(row => {
+                        const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         return {
-                            n: c[0]?.replace(/"/g, '').trim(),
-                            u: c[1]?.replace(/"/g, '').trim(),
-                            l: c[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
+                            name: cols[0]?.replace(/"/g, '').trim(),
+                            link: cols[1]?.replace(/"/g, '').trim(),
+                            logo: cols[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
                         }
-                    }).filter(i => i.n && i.u);
+                    }).filter(v => v.name && v.link);
                 } catch { return []; }
             },
 
-            async load(type) {
-                const list = document.getElementById('list');
-                list.innerHTML = '<div class="flex justify-center p-20"><div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10"></div></div>';
+            async changeTab(key, btn) {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
                 
-                let results = [];
-                if(type === 'all') {
-                    for(let k in SHEETS) { results = [...results, ...await this.fetch(k)]; }
+                const list = document.getElementById('main-list');
+                list.innerHTML = `<div class="p-20 text-center"><i class="fas fa-circle-notch fa-spin text-orange-500 text-3xl"></i></div>`;
+                
+                let data = [];
+                if(key === 'all') {
+                    for(let k in CONFIG) data = [...data, ...await this.fetchSheet(CONFIG[k])];
                 } else {
-                    results = await this.fetch(type);
+                    data = await this.fetchSheet(CONFIG[key]);
                 }
 
-                // الترتيب الأبجدي الدقيق
-                this.currentData = results.sort((a,b) => a.n.localeCompare(b.n, 'ar'));
-                this.render(this.currentData);
+                this.cache = data.sort((a,b) => a.name.localeCompare(b.name, 'ar'));
+                this.render(this.cache);
             },
 
-            render(data) {
-                document.getElementById('list').innerHTML = data.map(i => `
-                    <div class="channel-card" onclick="window.location.href='intent://${i.u.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=${encodeURIComponent(i.n)};end'">
-                        <img src="${i.l}" class="w-10 h-10 object-contain rounded" onerror="this.src='https://via.placeholder.com/50'">
-                        <div class="flex-1 font-bold text-sm">${i.n}</div>
-                        <i class="fas fa-play-circle text-orange-500 opacity-50"></i>
+            render(items) {
+                const list = document.getElementById('main-list');
+                list.innerHTML = items.length ? items.map(i => `
+                    <div class="channel-item" onclick="App.play('${i.link}', '${i.name}')">
+                        <div class="img-container">
+                            <img src="${i.logo}" class="w-full h-full object-contain p-1" onerror="this.src='https://via.placeholder.com/50'">
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-bold text-gray-100">${i.name}</h3>
+                            <p class="text-[10px] text-gray-500 uppercase">استقرار عالي • VLC</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-full border border-white/5 flex items-center justify-center group">
+                            <i class="fas fa-play text-[10px] text-orange-500"></i>
+                        </div>
                     </div>
-                `).join('');
+                `).join('') : `<div class="p-20 text-center text-gray-500">لم يتم العثور على نتائج</div>`;
             },
 
-            switch(type, el) {
-                document.querySelectorAll('.tab-item').forEach(x => x.classList.remove('active'));
-                el.classList.add('active');
-                this.load(type);
+            filter(val) {
+                const res = this.cache.filter(i => i.name.toLowerCase().includes(val.toLowerCase()));
+                this.render(res);
+            },
+
+            play(url, title) {
+                const intent = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=${encodeURIComponent(title)};end`;
+                window.location.href = intent;
             }
         };
 
-        document.getElementById('search-input').oninput = (e) => {
-            const val = e.target.value.toLowerCase();
-            UI.render(UI.currentData.filter(i => i.n.toLowerCase().includes(val)));
-        };
-
-        window.onload = () => UI.load('all');
+        window.onload = () => App.init();
     </script>
 </body>
 </html>
