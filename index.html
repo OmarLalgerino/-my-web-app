@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - Green Edition</title>
+    <title>NETGo TV - Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -40,6 +40,32 @@
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: visible; }
 
         .sidebar { width: 100%; background: transparent; display: flex; flex-direction: column; z-index: 50; }
+
+        /* منطقة الهيدر المخصصة للشعار الضخم */
+        .header-container {
+            padding: 10px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-top-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* تكبير الشعار بشكل كبير جداً */
+        .brand-logo { 
+            height: 140px; /* زيادة الارتفاع بشكل ملحوظ */
+            width: 100%;
+            max-width: 320px; /* تحديد عرض أقصى لضمان عدم التشويه */
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(34, 197, 94, 0.25));
+            margin: -10px 0; /* تقليل المسافات العلوية والسفلية لضغط التصميم */
+        }
 
         .channel-card {
             background: var(--glass-bg);
@@ -79,7 +105,7 @@
             backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
             border-radius: 14px;
-            margin: 0 16px 16px 16px;
+            margin: 0 16px 12px 16px;
             padding: 12px 16px;
             display: flex;
             align-items: center;
@@ -90,7 +116,7 @@
         
         .tab-item { 
             cursor: pointer; 
-            padding: 10px 20px; 
+            padding: 8px 18px; 
             font-weight: 600; 
             font-size: 0.85rem; 
             color: #888; 
@@ -104,17 +130,9 @@
             box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
         }
 
-        /* تكبير الشعار هنا تم تعديل الارتفاع ليكون 100px */
-        .brand-logo { 
-            height: 100px; 
-            width: auto; 
-            object-fit: contain;
-            filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.15)); 
-        }
-
         .tg-mini-btn {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
             color: white;
@@ -122,7 +140,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: 0.3s;
         }
     </style>
 </head>
@@ -130,20 +147,19 @@
 
     <div id="app-wrapper">
         <aside class="sidebar">
-            <div class="p-2 flex items-center justify-between">
-                <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo">
-                
-                <div class="flex items-center gap-3 px-4">
+            <div class="header-container">
+                <div class="header-top-row">
+                    <div id="theme-btn" class="p-2 cursor-pointer text-green-500 text-xl"><i class="fas fa-moon"></i></div>
                     <a href="https://t.me/zone1996" target="_blank" class="tg-mini-btn">
                         <i class="fab fa-telegram-plane"></i>
                     </a>
-                    <div id="theme-btn" class="p-2 cursor-pointer text-green-500 text-xl"><i class="fas fa-moon"></i></div>
                 </div>
+                <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo" alt="NETGo">
             </div>
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث في القنوات...">
+                <input type="text" id="search-input" placeholder="ابحث عن قناتك...">
             </div>
 
             <div class="tabs-container flex overflow-x-auto whitespace-nowrap px-3 mb-2" id="tabs-nav" style="scrollbar-width: none;">
@@ -161,6 +177,7 @@
     </div>
 
     <script>
+        // الأكواد البرمجية (JavaScript) كما هي لضمان عمل التطبيق
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
@@ -173,16 +190,8 @@
         const UIManager = {
             allData: [],
             masterStore: {},
-
-            async init() {
-                await this.loadCategory('all');
-                this.setupEvents();
-            },
-
-            sortAlphabetically(array) {
-                return array.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-            },
-
+            async init() { await this.loadCategory('all'); this.setupEvents(); },
+            sortAlphabetically(array) { return array.sort((a, b) => a.name.localeCompare(b.name, 'ar')); },
             async fetchData(type) {
                 if (this.masterStore[type]) return this.masterStore[type];
                 try {
@@ -196,69 +205,51 @@
                             logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
                         };
                     }).filter(i => i.url && i.name);
-                    
                     const sortedData = this.sortAlphabetically(parsed);
                     this.masterStore[type] = sortedData;
                     return sortedData;
                 } catch (e) { return []; }
             },
-
             async loadCategory(type) {
                 const listEl = document.getElementById('list');
                 listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري التحميل...</div>';
-                
                 if (type === 'all') {
                     let combined = [];
-                    for (const key in API_LINKS) {
-                        const data = await this.fetchData(key);
-                        combined = [...combined, ...data];
-                    }
+                    for (const key in API_LINKS) { combined = [...combined, ...await this.fetchData(key)]; }
                     const unique = Array.from(new Map(combined.map(item => [item.url, item])).values());
                     this.allData = this.sortAlphabetically(unique);
-                } else {
-                    this.allData = await this.fetchData(type);
-                }
+                } else { this.allData = await this.fetchData(type); }
                 this.render(this.allData);
             },
-
             switchTab(type, el) {
                 document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                 el.classList.add('active');
                 this.loadCategory(type);
             },
-
             render(data) {
                 const list = document.getElementById('list');
                 list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد قنوات</div>' :
                     data.map(item => `
                         <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
-                            <div class="img-wrapper">
-                                <img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50'">
-                            </div>
+                            <div class="img-wrapper"><img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50'"></div>
                             <div class="flex-1 font-bold text-[15px] tracking-wide">${item.name}</div>
-                            <div class="text-green-500 opacity-60 text-[12px]"><i class="fas fa-play"></i></div>
+                            <div class="text-green-500 opacity-60 text-[12px]"><i class="fas fa-play-circle"></i></div>
                         </div>
                     `).join('');
             },
-
             setupEvents() {
                 document.getElementById('search-input').oninput = (e) => {
                     const term = e.target.value.toLowerCase();
                     const filtered = this.allData.filter(i => i.name.toLowerCase().includes(term));
                     this.render(filtered);
                 };
-                document.getElementById('theme-btn').onclick = () => {
-                    document.body.classList.toggle('light-mode');
-                };
+                document.getElementById('theme-btn').onclick = () => { document.body.classList.toggle('light-mode'); };
             },
-
             playSecure(url) {
                 const cleanUrl = url.trim();
-                const vlcIntent = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=Stream;B.no_history=true;end`;
-                window.location.href = vlcIntent;
+                window.location.href = `intent://${cleanUrl.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=org.videolan.vlc;type=video/*;S.title=Stream;B.no_history=true;end`;
             }
         };
-
         window.onload = () => UIManager.init();
     </script>
 </body>
