@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NETGo TV Pro - Final</title>
+    <title>NETGo TV Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,7 +12,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Orbitron:wght@700;900&display=swap');
         
-        * { -webkit-user-select: none; user-select: none; outline: none; }
+        * { -webkit-user-select: none; user-select: none; outline: none; box-sizing: border-box; }
 
         :root {
             --primary: #22c55e; 
@@ -24,7 +24,7 @@
         }
 
         body.light-mode {
-            --surface: #f8fafc;
+            --surface: #f1f5f9;
             --card-bg: #ffffff;
             --text-main: #1e293b;
             --icon-bg: #000000;
@@ -36,50 +36,50 @@
             color: var(--text-main);
             font-family: 'Cairo', sans-serif;
             margin: 0;
-            overflow: hidden;
             height: 100vh;
+            overflow: hidden;
             transition: background 0.4s ease;
         }
 
-        /* --- شاشة الدخول --- */
+        /* شاشة الدخول */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #0a0a0a; display: flex; justify-content: center; align-items: center;
             z-index: 9999; transition: opacity 0.8s ease;
         }
 
-        /* --- محرك القوس --- */
+        /* المحرك القوسي */
         .arch-container {
             display: flex; align-items: center; overflow-x: auto;
-            padding: 40px 15vw; gap: 25px; perspective: 1200px;
-            scroll-snap-type: x mandatory; height: 480px; scrollbar-width: none;
+            padding: 20px 10vw; gap: 20px; perspective: 1000px;
+            scroll-snap-type: x mandatory; height: 450px; scrollbar-width: none;
         }
         .arch-container::-webkit-scrollbar { display: none; }
 
         .channel-frame {
-            min-width: 240px; height: 350px; background: var(--card-bg);
-            border-radius: 25px; position: relative; scroll-snap-align: center;
-            transition: transform 0.3s ease, opacity 0.3s ease, border 0.3s;
+            min-width: 200px; height: 300px; background: var(--card-bg);
+            border-radius: 20px; position: relative; scroll-snap-align: center;
+            transition: transform 0.3s ease, opacity 0.3s ease;
             transform-style: preserve-3d; border: 2px solid rgba(128, 128, 128, 0.1);
-            flex-shrink: 0; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            flex-shrink: 0; overflow: hidden;
         }
 
         .channel-frame img { width: 100%; height: 100%; object-fit: cover; }
         .channel-overlay {
-            position: absolute; bottom: 0; width: 100%; padding: 25px 10px;
-            background: linear-gradient(transparent, rgba(0,0,0,0.85));
-            color: white; text-align: center; font-weight: 900; font-size: 18px;
+            position: absolute; bottom: 0; width: 100%; padding: 15px 5px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            color: white; text-align: center; font-weight: bold; font-size: 14px;
         }
 
         .top-icon {
-            width: 42px; height: 42px; background-color: var(--icon-bg);
+            width: 40px; height: 40px; background-color: var(--icon-bg);
             color: var(--icon-text); border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;
+            align-items: center; justify-content: center; cursor: pointer;
         }
 
-        #app-wrapper { opacity: 0; transition: opacity 1s ease; height: 100vh; display: flex; flex-direction: column; }
-        .tab-item { cursor: pointer; padding: 10px 22px; font-weight: 700; color: #888; border-radius: 25px; }
-        .tab-item.active { color: #fff; background: var(--primary); box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4); }
+        #app-wrapper { display: none; opacity: 0; transition: opacity 1s ease; flex-direction: column; height: 100vh; }
+        .tab-item { cursor: pointer; padding: 8px 18px; font-weight: 700; color: #888; border-radius: 20px; }
+        .tab-item.active { color: #fff; background: var(--primary); }
     </style>
 </head>
 <body>
@@ -91,21 +91,17 @@
     </div>
 
     <div id="app-wrapper">
-        <header class="p-6 flex justify-between items-center">
-            <div class="text-3xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
+        <header class="p-5 flex justify-between items-center">
+            <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
                 <span style="color: var(--text-main)">NET</span><span class="text-green-500">Go</span>
             </div>
             <div class="flex gap-3">
-                <a href="https://t.me/zone1996" target="_blank" class="top-icon">
-                    <i class="fab fa-telegram-plane text-xl"></i>
-                </a>
-                <div id="theme-btn" class="top-icon">
-                    <i class="fas fa-moon text-lg" id="theme-icon"></i>
-                </div>
+                <a href="https://t.me/zone1996" target="_blank" class="top-icon"><i class="fab fa-telegram-plane"></i></a>
+                <div id="theme-btn" class="top-icon"><i class="fas fa-moon" id="theme-icon"></i></div>
             </div>
         </header>
 
-        <div class="tabs-container flex overflow-x-auto whitespace-nowrap px-4 mb-4" id="tabs-nav" style="scrollbar-width: none;">
+        <div class="tabs flex overflow-x-auto px-4 mb-4 gap-2" style="scrollbar-width: none;">
             <div class="tab-item active" onclick="UIManager.switchTab('all', this)">الكل</div>
             <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
             <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
@@ -115,17 +111,10 @@
         <div class="arch-container" id="list">
             </div>
 
-        <div class="text-center p-4 opacity-40 text-sm font-bold">اسحب لليمين أو اليسار للتنقل بين القنوات</div>
+        <div class="text-center p-4 opacity-40 text-xs">اسحب لليمين واليسار للتنقل</div>
     </div>
 
     <script>
-        // زر التبديل
-        document.getElementById('theme-btn').onclick = () => {
-            document.body.classList.toggle('light-mode');
-            const icon = document.getElementById('theme-icon');
-            icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun text-lg' : 'fas fa-moon text-lg';
-        };
-
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
@@ -133,39 +122,48 @@
         };
 
         const UIManager = {
-            async init() { 
+            async init() {
+                document.getElementById('theme-btn').onclick = () => {
+                    document.body.classList.toggle('light-mode');
+                    const icon = document.getElementById('theme-icon');
+                    icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
+                };
+
                 await this.loadCategory('all');
-                window.addEventListener('load', () => {
+
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.opacity = '0';
+                    document.getElementById('app-wrapper').style.display = 'flex';
                     setTimeout(() => {
-                        document.getElementById('splash-screen').style.opacity = '0';
                         document.getElementById('app-wrapper').style.opacity = '1';
-                    }, 2000);
-                });
+                        document.getElementById('splash-screen').style.display = 'none';
+                    }, 100);
+                }, 2000);
             },
 
             async loadCategory(type) {
                 const listEl = document.getElementById('list');
-                listEl.innerHTML = '<div class="opacity-50 text-center w-full">جاري تحميل القنوات...</div>';
+                listEl.innerHTML = '<div class="w-full text-center opacity-50">جاري التحميل...</div>';
                 let data = [];
-                if (type === 'all') {
-                    for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; }
-                } else { data = await this.fetchData(type); }
-                this.render(data);
+                try {
+                    if (type === 'all') {
+                        for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; }
+                    } else { data = await this.fetchData(type); }
+                    this.render(data);
+                } catch (e) { listEl.innerHTML = "خطأ في الاتصال"; }
             },
 
             async fetchData(type) {
-                try {
-                    const res = await fetch(API_LINKS[type]);
-                    const text = await res.text();
-                    return text.split('\n').slice(1).map(row => {
-                        const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        return {
-                            name: p[0]?.replace(/"/g, '').trim(),
-                            url: p[1]?.replace(/"/g, '').trim(),
-                            logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/300x450/222/555?text=NETGo"
-                        };
-                    }).filter(i => i.url && i.name);
-                } catch (e) { return []; }
+                const res = await fetch(API_LINKS[type]);
+                const text = await res.text();
+                return text.split('\n').slice(1).map(row => {
+                    const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return {
+                        name: p[0]?.replace(/"/g, '').trim(),
+                        url: p[1]?.replace(/"/g, '').trim(),
+                        logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/300x450/222/555?text=NETGo"
+                    };
+                }).filter(i => i.url && i.name);
             },
 
             render(data) {
@@ -190,14 +188,12 @@
                 const update = () => {
                     const cards = document.querySelectorAll('.channel-frame');
                     const center = slider.scrollLeft + (slider.offsetWidth / 2);
-
                     cards.forEach(card => {
                         const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
                         const distance = Math.abs(center - cardCenter);
                         const rotation = (cardCenter - center) / 10;
-                        const scale = Math.max(0.7, 1.15 - (distance / 700));
+                        const scale = Math.max(0.7, 1.1 - (distance / 700));
                         const opacity = Math.max(0.4, 1 - (distance / 500));
-
                         card.style.transform = `scale(${scale}) rotateY(${-rotation}deg)`;
                         card.style.opacity = opacity;
                         card.style.borderColor = distance < 100 ? "var(--primary)" : "rgba(128,128,128,0.1)";
@@ -205,7 +201,6 @@
                 };
                 slider.addEventListener('scroll', update);
                 update();
-                setTimeout(update, 100);
             }
         };
 
