@@ -38,33 +38,30 @@
         }
 
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: visible; }
-
         .sidebar { width: 100%; background: transparent; display: flex; flex-direction: column; z-index: 50; }
 
-        /* الهيدر الأصلي */
         .header-main {
             padding: 10px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            min-height: 110px; /* مساحة كافية للزوم */
+            min-height: 110px;
         }
 
-        /* تكبير الشعار (Zoom) دون تغيير مكانه */
         .brand-logo { 
-            height: 130px; /* حجم كبير جداً */
+            height: 130px; 
             width: auto;
-            transform: scale(1.3); /* عمل زوم إضافي */
-            transform-origin: right center; /* الزوم يبدأ من جهة اليمين */
+            transform: scale(1.3); 
+            transform-origin: right center; 
             object-fit: contain;
             filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.2));
-            margin-right: -10px; /* موازنة الزوم */
+            margin-right: -10px;
         }
 
+        /* تعديلات القنوات والأيقونات */
         .channel-card {
             background: var(--glass-bg);
             backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
             border-radius: 16px;
             padding: 14px;
             margin: 8px 16px;
@@ -73,17 +70,18 @@
             gap: 14px;
             border: 1px solid var(--glass-border);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        .channel-card:active { transform: scale(0.96); background: rgba(34, 197, 94, 0.05); }
+
+        /* تحريك الكارد عند الضغط */
+        .channel-card:active { transform: scale(0.95); }
 
         .img-wrapper {
             position: relative;
             padding: 2px;
             border-radius: 12px;
-            background: linear-gradient(45deg, var(--primary), #ffffff, var(--primary));
-            box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
+            background: linear-gradient(45deg, #333, #888); /* إطار رمادي هادئ */
+            transition: all 0.4s ease;
         }
 
         .channel-logo {
@@ -92,6 +90,22 @@
             object-fit: contain;
             border-radius: 10px;
             background: #111;
+            /* جعل الأيقونة أسود وأبيض في الحالة العادية */
+            filter: grayscale(100%);
+            transition: all 0.4s ease;
+        }
+
+        /* تأثير الحركة وتحويل الألوان عند التفاعل */
+        .channel-card:hover .channel-logo,
+        .channel-card:active .channel-logo {
+            filter: grayscale(0%); /* عودة الألوان */
+            transform: scale(1.1) rotate(5deg); /* حركة زوم مع ميلان */
+        }
+
+        .channel-card:hover .img-wrapper,
+        .channel-card:active .img-wrapper {
+            background: linear-gradient(45deg, var(--primary), #ffffff); /* عودة إطار الأخضر والأبيض */
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
         }
 
         .search-box {
@@ -134,6 +148,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: 0.3s;
+        }
+        
+        /* تأثير النبض للأيقونة النشطة */
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -143,7 +165,6 @@
         <aside class="sidebar">
             <div class="header-main">
                 <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo">
-                
                 <div class="flex items-center gap-3">
                     <a href="https://t.me/zone1996" target="_blank" class="tg-mini-btn">
                         <i class="fab fa-telegram-plane"></i>
@@ -227,7 +248,7 @@
                         <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
                             <div class="img-wrapper"><img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50'"></div>
                             <div class="flex-1 font-bold text-[15px] tracking-wide">${item.name}</div>
-                            <div class="text-green-500 opacity-60 text-[12px]"><i class="fas fa-play"></i></div>
+                            <div class="text-green-500 opacity-60 text-[12px]"><i class="fas fa-play-circle"></i></div>
                         </div>
                     `).join('');
             },
