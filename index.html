@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro</title>
+    <title>ADATA TV Pro - Glass Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -14,17 +14,17 @@
         
         :root {
             --primary: #ff9500;
-            --surface: #050505;
-            --card: #111111;
-            --border: rgba(255, 255, 255, 0.08);
+            --surface: #0a0a0a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff;
             --telegram: #0088cc;
         }
 
         body.light-mode {
             --surface: #f3f4f6;
-            --card: #ffffff;
-            --border: rgba(0, 0, 0, 0.1);
+            --glass-bg: rgba(0, 0, 0, 0.05);
+            --glass-border: rgba(0, 0, 0, 0.1);
             --text-main: #111111;
         }
 
@@ -35,33 +35,58 @@
             margin: 0;
             overflow: hidden;
             height: 100vh;
+            /* إضافة خلفية متدرجة خفيفة لتعزيز شكل الزجاج */
+            background-image: radial-gradient(circle at top left, rgba(255, 149, 0, 0.05) 0%, transparent 40%);
         }
 
         #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
 
-        .sidebar { width: 100%; background: var(--surface); display: flex; flex-direction: column; z-index: 50; }
+        .sidebar { width: 100%; background: transparent; display: flex; flex-direction: column; z-index: 50; }
 
+        /* ستايل التصميم الزجاجي للكروت */
         .channel-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 12px;
-            margin: 6px 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 14px;
+            margin: 8px 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            border: 1px solid var(--border);
+            gap: 14px;
+            border: 1px solid var(--glass-border);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .channel-card:active { transform: scale(0.96); background: rgba(255, 149, 0, 0.1); }
+        
+        .channel-card:active { transform: scale(0.95); }
 
-        .search-box {
-            background: var(--card);
-            border: 1px solid var(--border);
+        /* التوهج حول إطار الصورة */
+        .img-wrapper {
+            position: relative;
+            padding: 2px;
             border-radius: 12px;
-            margin: 0 12px 12px 12px;
-            padding: 8px 12px;
+            background: linear-gradient(45deg, var(--primary), transparent, var(--primary));
+            box-shadow: 0 0 10px rgba(255, 149, 0, 0.3); /* التوهج */
+        }
+
+        .channel-logo {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: #111;
+        }
+
+        /* ستايل البحث الزجاجي */
+        .search-box {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            margin: 0 16px 16px 16px;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -73,36 +98,37 @@
             display: flex;
             overflow-x: auto;
             white-space: nowrap;
-            border-bottom: 1px solid var(--border);
-            padding: 0 10px;
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0 12px;
             scrollbar-width: none;
         }
         .tabs-container::-webkit-scrollbar { display: none; }
 
         .tab-item { 
             cursor: pointer; 
-            padding: 12px 15px; 
-            font-weight: bold; 
-            font-size: 0.85rem; 
+            padding: 12px 18px; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
             color: gray; 
-            border-bottom: 2px solid transparent; 
+            border-bottom: 3px solid transparent; 
             transition: 0.3s;
-            flex-shrink: 0;
         }
         .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-        .brand-logo { height: 32px; width: auto; object-fit: contain; }
+        .brand-logo { height: 35px; width: auto; }
 
         .tg-mini-btn {
-            width: 35px;
-            height: 35px;
-            background: var(--telegram);
+            width: 38px;
+            height: 38px;
+            background: rgba(0, 136, 204, 0.2);
+            border: 1px solid rgba(0, 136, 204, 0.3);
+            backdrop-filter: blur(5px);
             color: white;
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             transition: 0.3s;
         }
     </style>
@@ -115,11 +141,11 @@
 
     <div id="app-wrapper">
         <aside class="sidebar">
-            <div class="p-5 flex items-center justify-between">
+            <div class="p-6 flex items-center justify-between">
                 <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="brand-logo">
                 
                 <div class="flex items-center gap-3">
-                    <a href="https://t.me/zone1996" target="_blank" class="tg-mini-btn">
+                    <a href="https://t.me/zone1996" target="_blank" class="tg-mini-btn" title="Telegram">
                         <i class="fab fa-telegram-plane"></i>
                     </a>
                     <div id="theme-btn" class="p-2 cursor-pointer text-orange-500 text-xl"><i class="fas fa-moon"></i></div>
@@ -128,7 +154,7 @@
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث عن قناتك...">
+                <input type="text" id="search-input" placeholder="ابحث في القنوات...">
             </div>
 
             <div class="tabs-container" id="tabs-nav">
@@ -141,7 +167,7 @@
                 <div class="tab-item" onclick="UIManager.switchTab('media', this)">ميديا</div>
             </div>
 
-            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-6"></div>
+            <div id="list" class="flex-1 overflow-y-auto pt-2 pb-10"></div>
         </aside>
     </div>
 
@@ -221,9 +247,11 @@
                 list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد نتائج</div>' :
                     data.map(item => `
                         <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
-                            <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
-                            <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
-                            <i class="fas fa-play-circle text-gray-600 text-xs"></i>
+                            <div class="img-wrapper">
+                                <img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50'">
+                            </div>
+                            <div class="flex-1 font-bold text-[14px] tracking-wide">${item.name}</div>
+                            <div class="opacity-40 text-[10px]"><i class="fas fa-play"></i></div>
                         </div>
                     `).join('');
             },
