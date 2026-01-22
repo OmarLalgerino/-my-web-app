@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - All Access</title>
+    <title>ADATA TV Pro - Alphabetical Order</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -92,14 +92,13 @@
 
         .brand-logo { height: 32px; width: auto; object-fit: contain; }
         
-        .vlc-secure-badge {
-            font-size: 9px;
-            background: #ff950022;
+        .sort-indicator {
+            font-size: 10px;
             color: var(--primary);
-            padding: 2px 8px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 149, 0, 0.3);
-            margin-right: auto;
+            background: rgba(255, 149, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 12px;
         }
     </style>
 </head>
@@ -112,16 +111,19 @@
     <div id="app-wrapper">
         <aside class="sidebar">
             <div class="p-5 flex items-center justify-between">
-                <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="brand-logo">
+                <div class="flex items-center gap-2">
+                    <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/6/66/ADATA_logo.svg/960px-ADATA_logo.svg.png" class="brand-logo">
+                    <span class="sort-indicator"><i class="fas fa-sort-alpha-down"></i> أ-ي</span>
+                </div>
                 <div id="theme-btn" class="p-2 cursor-pointer text-orange-500"><i class="fas fa-moon"></i></div>
             </div>
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث في القنوات...">
+                <input type="text" id="search-input" placeholder="ابحث بالاسم...">
             </div>
 
-            <div class="tabs-container">
+            <div class="tabs-container" id="tabs-nav">
                 <div class="tab-item active" onclick="UIManager.switchTab('all', this)">الكل</div>
                 <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
                 <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
@@ -146,20 +148,23 @@
         };
 
         const UIManager = {
-            allData: [], // البيانات المعروضة حالياً
-            masterStore: {}, // مخزن لجميع البيانات لتجنب التحميل المتكرر
+            allData: [],
+            masterStore: {},
 
             async init() {
-                // تحميل "الكل" كافتراضي
                 await this.loadCategory('all');
                 this.setupEvents();
                 setTimeout(() => {
-                    document.getElementById('splash-screen').style.opacity = '0';
-                    setTimeout(() => {
-                        document.getElementById('splash-screen').style.display = 'none';
-                        document.getElementById('app-wrapper').style.visibility = 'visible';
-                    }, 500);
+                    document.getElementById('splash-screen').style.display = 'none';
+                    document.getElementById('app-wrapper').style.visibility = 'visible';
                 }, 1000);
+            },
+
+            // دالة الترتيب الأبجدي الذكي
+            sortAlphabetically(array) {
+                return array.sort((a, b) => {
+                    return a.name.localeCompare(b.name, 'ar', { sensitivity: 'accent' });
+                });
             },
 
             async fetchData(type) {
@@ -175,14 +180,17 @@
                             logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/50"
                         };
                     }).filter(i => i.url && i.name);
-                    this.masterStore[type] = parsed;
-                    return parsed;
+                    
+                    // ترتيب البيانات فور تحميلها
+                    const sortedData = this.sortAlphabetically(parsed);
+                    this.masterStore[type] = sortedData;
+                    return sortedData;
                 } catch (e) { return []; }
             },
 
             async loadCategory(type) {
                 const listEl = document.getElementById('list');
-                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري تجميع القنوات...</div>';
+                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري ترتيب القنوات أبجدياً...</div>';
                 
                 if (type === 'all') {
                     let combined = [];
@@ -190,8 +198,9 @@
                         const data = await this.fetchData(key);
                         combined = [...combined, ...data];
                     }
-                    // إزالة التكرار وترتيب أبجدي
-                    this.allData = combined.sort((a, b) => a.name.localeCompare(b.name));
+                    // إزالة التكرار والترتيب النهائي
+                    const unique = Array.from(new Map(combined.map(item => [item.url, item])).values());
+                    this.allData = this.sortAlphabetically(unique);
                 } else {
                     this.allData = await this.fetchData(type);
                 }
@@ -213,7 +222,7 @@
                         <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
                             <img src="${item.logo}" class="w-11 h-11 object-contain rounded bg-white/5 p-1" onerror="this.src='https://via.placeholder.com/50'">
                             <div class="flex-1 font-bold text-[13px] leading-tight">${item.name}</div>
-                            <span class="vlc-secure-badge">VLC</span>
+                            <i class="fas fa-play-circle text-gray-600 text-xs"></i>
                         </div>
                     `).join('');
             },
