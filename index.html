@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NETGo TV Pro - Fixed Arch</title>
+    <title>NETGo TV Pro - Fixed</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -20,12 +20,6 @@
             --text-main: #ffffff;
         }
 
-        body.light-mode {
-            --surface: #f1f5f9;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-        }
-
         body {
             background-color: var(--surface);
             color: var(--text-main);
@@ -35,70 +29,73 @@
             height: 100vh;
         }
 
-        /* شاشة الدخول */
+        /* إصلاح شاشة الدخول لكي لا تعلق */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #0a0a0a; display: flex; justify-content: center; align-items: center;
-            z-index: 9999; transition: opacity 0.5s ease;
+            z-index: 9999; transition: opacity 0.8s ease;
         }
 
-        /* --- محرك القوس المتحرك --- */
+        /* المحرك القوسي الصغير */
         .arch-container {
             display: flex;
             align-items: center;
             overflow-x: auto;
-            padding: 50px 35vw; /* مساحة للسحب في الوسط */
-            gap: 20px;
+            padding: 30px 35vw; 
+            gap: 15px;
             perspective: 1000px;
             scroll-snap-type: x mandatory;
-            height: 350px;
+            height: 280px; /* حجم صغير مناسب للهاتف */
             scrollbar-width: none;
-            -webkit-overflow-scrolling: touch; /* سحب سلس للأندرويد */
+            -webkit-overflow-scrolling: touch;
         }
         .arch-container::-webkit-scrollbar { display: none; }
 
         .net-card {
-            min-width: 140px;
-            height: 200px;
+            min-width: 120px; /* عرض صغير */
+            height: 170px; /* طول متناسق */
             background: var(--card-bg);
-            border-radius: 15px;
+            border-radius: 12px;
             position: relative;
             scroll-snap-align: center;
-            transition: transform 0.2s ease-out; /* حركة سريعة ومستجيبة */
+            transition: transform 0.3s ease;
             border: 2px solid rgba(255, 255, 255, 0.05);
             flex-shrink: 0;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         }
 
         .net-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         
         .card-overlay {
-            position: absolute; bottom: 0; width: 100%; padding: 10px 5px;
+            position: absolute; bottom: 0; width: 100%; padding: 6px;
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
-            color: white; text-align: center; font-size: 11px; font-weight: bold;
+            color: white; text-align: center; font-size: 10px; font-weight: bold;
         }
 
-        .tab-item { cursor: pointer; padding: 8px 16px; font-weight: 700; color: #555; border-radius: 20px; font-size: 13px; flex-shrink: 0; }
+        #app-wrapper { opacity: 0; transition: opacity 1s ease; display: flex; flex-direction: column; height: 100vh; }
+        .tab-item { cursor: pointer; padding: 6px 14px; font-weight: 700; color: #555; border-radius: 20px; font-size: 12px; flex-shrink: 0; }
         .tab-item.active { color: #fff; background: var(--primary); }
 
-        .top-icon { width: 40px; height: 40px; background: white; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .top-icon { width: 38px; height: 38px; background: white; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
-        <div class="text-4xl font-black italic" style="font-family: 'Orbitron';"><span class="text-white">NET</span><span class="text-green-500">Go</span></div>
+        <div class="text-4xl font-black italic" style="font-family: 'Orbitron';">
+            <span class="text-white">NET</span><span class="text-green-500">Go</span>
+        </div>
     </div>
 
-    <div id="app-wrapper" class="flex flex-col h-screen">
-        <header class="p-5 flex justify-between items-center">
+    <div id="app-wrapper">
+        <header class="p-4 flex justify-between items-center">
             <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
-                <span style="color: var(--text-main)">NET</span><span class="text-green-500">Go</span>
+                <span class="text-white">NET</span><span class="text-green-500">Go</span>
             </div>
             <div class="flex gap-3">
                 <a href="https://t.me/zone1996" target="_blank" class="top-icon"><i class="fab fa-telegram-plane"></i></a>
-                <div id="theme-btn" class="top-icon"><i class="fas fa-moon" id="theme-icon"></i></div>
+                <div id="theme-btn" class="top-icon" style="background: #222; color: #fff;"><i class="fas fa-moon"></i></div>
             </div>
         </header>
 
@@ -108,16 +105,13 @@
             <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
             <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
             <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
-            <div class="tab-item" onclick="UIManager.switchTab('news', this)">أخبار</div>
             <div class="tab-item" onclick="UIManager.switchTab('media', this)">ميديا</div>
         </div>
 
         <div class="flex-1 flex flex-col justify-center">
             <div class="arch-container" id="list"></div>
-            <div id="active-name" class="text-center mt-4 font-black text-2xl text-green-500 min-h-[40px]"></div>
+            <div id="active-name" class="text-center mt-4 font-black text-xl text-green-500 min-h-[30px]"></div>
         </div>
-
-        <div class="text-center pb-8 opacity-30 text-xs font-bold">اسحب القنوات لليمين أو اليسار</div>
     </div>
 
     <script>
@@ -126,25 +120,19 @@
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
             series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
             docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
-            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
             media: 'https://docs.google.com/spreadsheets/d/1OMXrU6bIGvfhqlrT70sSFzhNx7aZdyMuGWf4bhA6-1Q/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
             async init() {
-                document.getElementById('theme-btn').onclick = () => {
-                    document.body.classList.toggle('light-mode');
-                    document.getElementById('theme-icon').className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
-                };
+                // إخفاء شاشة الدخول بعد 2.5 ثانية حتى لو لم تكتمل البيانات
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.opacity = '0';
+                    document.getElementById('app-wrapper').style.opacity = '1';
+                    setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 800);
+                }, 2500);
 
                 await this.loadCategory('all');
-
-                window.addEventListener('load', () => {
-                    setTimeout(() => {
-                        document.getElementById('splash-screen').style.opacity = '0';
-                        setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 500);
-                    }, 2000);
-                });
             },
 
             async fetchData(type) {
@@ -180,8 +168,6 @@
                         <div class="card-overlay">${item.name}</div>
                     </div>
                 `).join('');
-                
-                // إعادة تشغيل المحرك القوسي بعد الرندر
                 this.setupArchEffect();
             },
 
@@ -194,34 +180,20 @@
             setupArchEffect() {
                 const slider = document.getElementById('list');
                 const nameDisplay = document.getElementById('active-name');
-
                 const update = () => {
                     const cards = document.querySelectorAll('.net-card');
                     const center = slider.scrollLeft + (slider.offsetWidth / 2);
-
                     cards.forEach(card => {
                         const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
                         const distance = Math.abs(center - cardCenter);
-                        
-                        // معادلة القوس
-                        const scale = Math.max(0.75, 1.3 - (distance / 500));
+                        const scale = Math.max(0.7, 1.3 - (distance / 400));
                         const translateY = Math.abs(cardCenter - center) / 6;
-                        const rotateY = (cardCenter - center) / 15;
-
-                        card.style.transform = `scale(${scale}) translateY(${translateY}px) rotateY(${-rotateY}deg)`;
-                        card.style.opacity = Math.max(0.4, 1 - (distance / 400));
-
-                        if (distance < 70) {
-                            nameDisplay.innerText = card.querySelector('img').getAttribute('data-name');
-                            card.style.borderColor = "#22c55e";
-                        } else {
-                            card.style.borderColor = "transparent";
-                        }
+                        card.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+                        card.style.opacity = Math.max(0.4, 1 - (distance / 350));
+                        if (distance < 60) nameDisplay.innerText = card.querySelector('img').getAttribute('data-name');
                     });
                 };
-
                 slider.addEventListener('scroll', update);
-                // تفعيل الأنميشن فوراً عند التحميل
                 setTimeout(update, 100);
             }
         };
