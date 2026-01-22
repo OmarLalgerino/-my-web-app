@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ADATA TV Pro - Premium Glass</title>
+    <title>ADATA TV Pro - Green Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -13,8 +13,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
         
         :root {
-            /* تغيير اللون الأساسي إلى أزرق ملكي يتناسب مع شعارات Picsart والميديا */
-            --primary: #00a2ff; 
+            /* تعديل اللون الأساسي للأخضر ليناسب الشعار */
+            --primary: #22c55e; 
             --surface: #0a0a0c;
             --glass-bg: rgba(255, 255, 255, 0.03);
             --glass-border: rgba(255, 255, 255, 0.08);
@@ -35,11 +35,15 @@
             margin: 0;
             overflow: hidden;
             height: 100vh;
-            /* خلفية متدرجة تتماشى مع الثيم الجديد */
-            background-image: radial-gradient(circle at top right, rgba(0, 162, 255, 0.07) 0%, transparent 40%);
+            /* خلفية متدرجة بلمسة خضراء */
+            background-image: radial-gradient(circle at top right, rgba(34, 197, 94, 0.08) 0%, transparent 40%);
         }
 
-        #splash-screen { position: fixed; inset: 0; background: #050505; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        
+        /* تكبير الشعار في شاشة التحميل */
+        #splash-screen img { height: 120px; width: auto; }
+
         #app-wrapper { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
 
         .sidebar { width: 100%; background: transparent; display: flex; flex-direction: column; z-index: 50; }
@@ -59,15 +63,15 @@
             transition: all 0.3s ease;
         }
         
-        .channel-card:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.07); }
+        .channel-card:active { transform: scale(0.96); background: rgba(34, 197, 94, 0.05); }
 
         .img-wrapper {
             position: relative;
             padding: 2px;
             border-radius: 12px;
-            /* توهج أزرق ناعم */
-            background: linear-gradient(45deg, var(--primary), transparent, #7000ff);
-            box-shadow: 0 0 12px rgba(0, 162, 255, 0.2);
+            /* توهج أخضر وأبيض */
+            background: linear-gradient(45deg, var(--primary), #ffffff, var(--primary));
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
         }
 
         .channel-logo {
@@ -92,16 +96,6 @@
 
         .search-box input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; font-size: 14px; }
         
-        .tabs-container {
-            display: flex;
-            overflow-x: auto;
-            white-space: nowrap;
-            padding: 0 12px;
-            margin-bottom: 8px;
-            scrollbar-width: none;
-        }
-        .tabs-container::-webkit-scrollbar { display: none; }
-
         .tab-item { 
             cursor: pointer; 
             padding: 10px 20px; 
@@ -112,20 +106,20 @@
             border-radius: 20px;
             transition: 0.3s;
         }
-        /* تمييز التاب النشط بخلفية زجاجية بدل الخط السفلي لمظهر أحدث */
         .tab-item.active { 
             color: #fff; 
             background: var(--primary);
-            box-shadow: 0 4px 15px rgba(0, 162, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
         }
 
-        .brand-logo { height: 55px; width: auto; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
+        /* تكبير الشعار في الهيدر */
+        .brand-logo { height: 70px; width: auto; filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.15)); }
 
         .tg-mini-btn {
             width: 40px;
             height: 40px;
-            background: rgba(0, 136, 204, 0.15);
-            border: 1px solid rgba(0, 136, 204, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
             color: white;
             border-radius: 12px;
             display: flex;
@@ -138,28 +132,28 @@
 <body>
 
     <div id="splash-screen">
-        <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo animate-pulse">
+        <img src="Picsart_26-01-18_12-58-56-694.png" class="animate-pulse">
     </div>
 
     <div id="app-wrapper">
         <aside class="sidebar">
-            <div class="p-6 flex items-center justify-between">
+            <div class="p-4 flex items-center justify-between">
                 <img src="Picsart_26-01-18_12-58-56-694.png" class="brand-logo">
                 
                 <div class="flex items-center gap-3">
                     <a href="https://t.me/zone1996" target="_blank" class="tg-mini-btn">
                         <i class="fab fa-telegram-plane"></i>
                     </a>
-                    <div id="theme-btn" class="p-2 cursor-pointer text-blue-400 text-xl"><i class="fas fa-moon"></i></div>
+                    <div id="theme-btn" class="p-2 cursor-pointer text-green-500 text-xl"><i class="fas fa-moon"></i></div>
                 </div>
             </div>
 
             <div class="search-box">
                 <i class="fas fa-search text-gray-500"></i>
-                <input type="text" id="search-input" placeholder="ابحث عن قناتك المفضلة...">
+                <input type="text" id="search-input" placeholder="ابحث في القنوات...">
             </div>
 
-            <div class="tabs-container" id="tabs-nav">
+            <div class="tabs-container flex overflow-x-auto whitespace-nowrap px-3 mb-2" id="tabs-nav" style="scrollbar-width: none;">
                 <div class="tab-item active" onclick="UIManager.switchTab('all', this)">الكل</div>
                 <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
                 <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
@@ -174,7 +168,7 @@
     </div>
 
     <script>
-        // الأكواد البرمجية (JavaScript) ستبقى كما هي لضمان عمل التطبيق بنفس الكفاءة
+        // الأكواد البرمجية (JavaScript) كما هي لضمان عمل التطبيق
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
@@ -194,7 +188,7 @@
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.display = 'none';
                     document.getElementById('app-wrapper').style.visibility = 'visible';
-                }, 1000);
+                }, 1200);
             },
 
             sortAlphabetically(array) {
@@ -223,7 +217,7 @@
 
             async loadCategory(type) {
                 const listEl = document.getElementById('list');
-                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري جلب البيانات...</div>';
+                listEl.innerHTML = '<div class="p-10 text-center opacity-50 text-sm">جاري التحميل...</div>';
                 
                 if (type === 'all') {
                     let combined = [];
@@ -247,14 +241,14 @@
 
             render(data) {
                 const list = document.getElementById('list');
-                list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد قنوات هنا</div>' :
+                list.innerHTML = data.length === 0 ? '<div class="p-10 text-center opacity-30 text-sm">لا توجد قنوات</div>' :
                     data.map(item => `
                         <div class="channel-card" onclick="UIManager.playSecure('${item.url}')">
                             <div class="img-wrapper">
                                 <img src="${item.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/50'">
                             </div>
                             <div class="flex-1 font-bold text-[15px] tracking-wide">${item.name}</div>
-                            <div class="text-blue-400 opacity-60 text-[12px]"><i class="fas fa-play-circle"></i></div>
+                            <div class="text-green-500 opacity-60 text-[12px]"><i class="fas fa-play"></i></div>
                         </div>
                     `).join('');
             },
@@ -267,9 +261,6 @@
                 };
                 document.getElementById('theme-btn').onclick = () => {
                     document.body.classList.toggle('light-mode');
-                    const icon = document.querySelector('#theme-btn i');
-                    icon.classList.toggle('fa-moon');
-                    icon.classList.toggle('fa-sun');
                 };
             },
 
