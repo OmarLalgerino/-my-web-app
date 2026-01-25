@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NETGo TV Pro - Classic Edition</title>
+    <title>NETGo TV Pro - Smooth Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -11,7 +11,17 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Orbitron:wght@700;900&display=swap');
         
-        * { -webkit-user-select: none; user-select: none; box-sizing: border-box; touch-action: pan-x; }
+        * { 
+            -webkit-user-select: none; 
+            user-select: none; 
+            box-sizing: border-box; 
+            touch-action: pan-x;
+            /* سر الحركة السلسة في كل التطبيق */
+            transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                        color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                        border-color 0.5s ease, 
+                        transform 0.3s ease;
+        }
 
         :root {
             --surface: #0a0a0c;
@@ -22,9 +32,9 @@
         }
 
         body.light-mode {
-            --surface: #f1f5f9;
+            --surface: #f8fafc;
             --card-bg: rgba(0, 0, 0, 0.05);
-            --text-main: #1e293b;
+            --text-main: #0f172a;
             --glass-border: rgba(0, 0, 0, 0.1);
         }
 
@@ -35,21 +45,21 @@
             margin: 0;
             overflow: hidden;
             height: 100vh;
-            transition: background-color 0.3s ease;
         }
 
         .bg-blobs {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            filter: blur(80px); opacity: 0.3;
+            filter: blur(80px); opacity: 0.25;
         }
         .blob { position: absolute; border-radius: 50%; background: var(--primary); }
         .blob-1 { width: 300px; height: 300px; top: -100px; right: -50px; }
         .blob-2 { width: 250px; height: 250px; bottom: -50px; left: -50px; background: #3b82f6; }
 
+        /* شاشة البداية */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #0a0a0a; display: flex; justify-content: center; align-items: center;
-            z-index: 9999; transition: opacity 0.5s ease;
+            z-index: 9999; transition: opacity 0.8s ease;
         }
 
         .search-box {
@@ -65,7 +75,7 @@
         }
         .search-box input {
             background: transparent; border: none; color: var(--text-main);
-            width: 100%; outline: none; font-size: 14px; font-family: 'Cairo';
+            width: 100%; outline: none; font-size: 14px;
         }
 
         .arch-container {
@@ -77,32 +87,36 @@
         .arch-container::-webkit-scrollbar { display: none; }
 
         .net-card {
-            min-width: 100px; height: 145px;
+            min-width: 105px; height: 150px;
             background: var(--card-bg);
             backdrop-filter: blur(10px);
-            border-radius: 12px;
+            border-radius: 15px;
             position: relative; scroll-snap-align: center;
-            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 1px solid var(--glass-border);
             flex-shrink: 0; overflow: hidden;
-            cursor: pointer;
         }
-
-        .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); }
+        .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.2); }
         
         .card-overlay {
-            position: absolute; bottom: 0; width: 100%; padding: 5px;
-            background: rgba(0, 0, 0, 0.5); font-size: 9px; text-align: center; font-weight: bold; color: white;
+            position: absolute; bottom: 0; width: 100%; padding: 6px;
+            background: rgba(0, 0, 0, 0.6); font-size: 10px; text-align: center; font-weight: 700; color: #fff;
         }
 
-        .tabs { margin-bottom: 10px; padding: 0 10px; display: flex; overflow-x: auto; gap: 5px; scrollbar-width: none; }
-        .tab-item { cursor: pointer; padding: 5px 14px; font-weight: 700; color: #888; border-radius: 20px; font-size: 11px; flex-shrink: 0; transition: 0.3s; }
-        .tab-item.active { color: #fff; background: var(--primary); box-shadow: 0 0 12px var(--primary); }
+        .tabs { margin-bottom: 10px; padding: 0 10px; display: flex; overflow-x: auto; gap: 8px; scrollbar-width: none; }
+        .tab-item { cursor: pointer; padding: 6px 16px; font-weight: 700; color: #64748b; border-radius: 20px; font-size: 12px; flex-shrink: 0; background: var(--card-bg); }
+        .tab-item.active { color: #fff; background: var(--primary); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4); }
 
         #app-wrapper { opacity: 0; display: flex; flex-direction: column; height: 100vh; }
         
-        #theme-btn { cursor: pointer; transition: transform 0.3s ease; }
-        #theme-btn:active { transform: scale(0.8); }
+        /* حركة أيقونة الثيم السلسة */
+        #theme-btn {
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #theme-btn:hover { transform: scale(1.1); }
+        #theme-btn i { transition: transform 0.5s ease, color 0.5s ease; }
+        .light-mode #theme-btn i { transform: rotate(360deg); }
+
     </style>
 </head>
 <body>
@@ -110,29 +124,29 @@
     <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
 
     <div id="splash-screen">
-        <div class="text-4xl font-black italic" style="font-family: 'Orbitron';">
+        <div class="text-4xl font-black italic animate-pulse" style="font-family: 'Orbitron';">
             <span class="text-white">NET</span><span class="text-green-500">Go</span>
         </div>
     </div>
 
     <div id="app-wrapper">
-        <header class="p-5 flex justify-between items-center">
-            <div class="text-2xl font-black italic" style="font-family: 'Orbitron';">
+        <header class="p-6 flex justify-between items-center">
+            <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
                 <span style="color: var(--text-main)">NET</span><span class="text-green-500">Go</span>
             </div>
-            <div class="flex gap-3">
-                <div id="theme-btn" class="w-9 h-9 bg-black/20 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center">
-                    <i class="fas fa-moon text-yellow-400" id="theme-icon"></i>
+            <div class="flex gap-4">
+                <div id="theme-btn" class="w-10 h-10 bg-black/10 dark:bg-white/10 backdrop-blur-lg border border-white/10 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-moon text-yellow-400 text-lg" id="theme-icon"></i>
                 </div>
-                <a href="https://t.me/zone1996" target="_blank" class="w-9 h-9 bg-white text-black rounded-full flex items-center justify-center">
+                <a href="https://t.me/zone1996" target="_blank" class="w-10 h-10 bg-white shadow-lg text-black rounded-xl flex items-center justify-center">
                     <i class="fab fa-telegram-plane"></i>
                 </a>
             </div>
         </header>
 
-        <div class="search-box">
-            <i class="fas fa-search opacity-40"></i>
-            <input type="text" id="search-input" placeholder="ابحث عن قناة..." oninput="UIManager.search(this.value)">
+        <div class="search-box shadow-sm">
+            <i class="fas fa-search opacity-30"></i>
+            <input type="text" id="search-input" placeholder="ابحث عن قناتك المفضلة..." oninput="UIManager.search(this.value)">
         </div>
 
         <div class="tabs">
@@ -146,12 +160,11 @@
 
         <div class="flex-1 flex flex-col justify-center">
             <div class="arch-container" id="list"></div>
-            <div id="active-name" class="text-center mt-4 font-black text-xl text-green-500 drop-shadow-lg"></div>
+            <div id="active-name" class="text-center mt-6 font-black text-2xl text-green-500 drop-shadow-md min-h-[40px]"></div>
         </div>
     </div>
 
     <script>
-        // الروابط المحدثة
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
@@ -160,20 +173,19 @@
             series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv'
         };
 
-        const CUSTOM_UA = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36";
+        const CUSTOM_UA = "Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36";
 
         const UIManager = {
             allData: [],
             
             async init() {
-                // ميزة تبديل الثيم (ليل / شمس)
                 document.getElementById('theme-btn').onclick = () => {
                     document.body.classList.toggle('light-mode');
                     const icon = document.getElementById('theme-icon');
                     if(document.body.classList.contains('light-mode')) {
-                        icon.className = 'fas fa-sun text-orange-500';
+                        icon.className = 'fas fa-sun text-orange-500 text-lg';
                     } else {
-                        icon.className = 'fas fa-moon text-yellow-400';
+                        icon.className = 'fas fa-moon text-yellow-400 text-lg';
                     }
                 };
 
@@ -181,7 +193,7 @@
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.opacity = '0';
                     document.getElementById('app-wrapper').style.opacity = '1';
-                    setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 600);
+                    setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 800);
                 }, 2000);
             },
 
@@ -201,7 +213,7 @@
             },
 
             async loadCategory(type) {
-                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30">...</div>';
+                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30 animate-pulse">جاري جلب البيانات...</div>';
                 let data = [];
                 if (type === 'all') {
                     for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; }
@@ -217,7 +229,7 @@
                     const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};S.http-user-agent=${encodeURIComponent(CUSTOM_UA)};end`;
                     
                     return `
-                        <div class="net-card" onclick="window.location.href='${intentUrl}'">
+                        <div class="net-card shadow-lg" onclick="window.location.href='${intentUrl}'">
                             <img src="${item.logo}" data-name="${item.name}">
                             <div class="card-overlay">${item.name}</div>
                         </div>
@@ -247,8 +259,9 @@
                     cards.forEach(card => {
                         const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
                         const dist = Math.abs(center - cardCenter);
-                        const scale = Math.max(0.75, 1.35 - (dist / 350));
-                        card.style.transform = `scale(${scale})`;
+                        const scale = Math.max(0.75, 1.4 - (dist / 320));
+                        const rot = (cardCenter - center) / 10;
+                        card.style.transform = `scale(${scale}) rotateY(${-rot}deg)`;
                         if (dist < 50) nameDisplay.innerText = card.querySelector('img').dataset.name;
                     });
                 };
