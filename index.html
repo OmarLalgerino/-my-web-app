@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NETGo TV Pro - Smooth Edition</title>
+    <title>NETGo TV Pro - Flexible Layout</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,15 +12,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Orbitron:wght@700;900&display=swap');
         
         * { 
-            -webkit-user-select: none; 
-            user-select: none; 
-            box-sizing: border-box; 
-            touch-action: pan-x;
-            /* سر الحركة السلسة في كل التطبيق */
-            transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-                        color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-                        border-color 0.5s ease, 
-                        transform 0.3s ease;
+            -webkit-user-select: none; user-select: none; box-sizing: border-box; touch-action: pan-x;
+            transition: background-color 0.5s ease, color 0.5s ease, transform 0.3s ease, all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         :root {
@@ -38,22 +31,7 @@
             --glass-border: rgba(0, 0, 0, 0.1);
         }
 
-        body {
-            background-color: var(--surface);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .bg-blobs {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            filter: blur(80px); opacity: 0.25;
-        }
-        .blob { position: absolute; border-radius: 50%; background: var(--primary); }
-        .blob-1 { width: 300px; height: 300px; top: -100px; right: -50px; }
-        .blob-2 { width: 250px; height: 250px; bottom: -50px; left: -50px; background: #3b82f6; }
+        body { background-color: var(--surface); color: var(--text-main); font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
 
         /* شاشة البداية */
         #splash-screen {
@@ -62,91 +40,73 @@
             z-index: 9999; transition: opacity 0.8s ease;
         }
 
-        .search-box {
-            background: var(--card-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 25px;
-            padding: 8px 15px;
-            margin: 0 20px 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .search-box input {
-            background: transparent; border: none; color: var(--text-main);
-            width: 100%; outline: none; font-size: 14px;
-        }
-
-        .arch-container {
+        /* حاوية القنوات - وضع السلسلة (Arch) */
+        .channels-list.arch {
             display: flex; align-items: center; overflow-x: auto;
             padding: 40px 42vw; gap: 15px; perspective: 1200px;
-            scroll-snap-type: x mandatory; height: 250px; 
-            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory; height: 280px; scrollbar-width: none;
         }
-        .arch-container::-webkit-scrollbar { display: none; }
+
+        /* حاوية القنوات - وضع الشبكة (Grid) */
+        .channels-list.grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; padding: 20px; overflow-y: auto; height: calc(100vh - 250px);
+            scroll-snap-type: none; perspective: none;
+        }
+
+        .channels-list::-webkit-scrollbar { display: none; }
 
         .net-card {
-            min-width: 105px; height: 150px;
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            position: relative; scroll-snap-align: center;
-            border: 1px solid var(--glass-border);
-            flex-shrink: 0; overflow: hidden;
+            background: var(--card-bg); backdrop-filter: blur(10px);
+            border-radius: 15px; position: relative; border: 1px solid var(--glass-border);
+            overflow: hidden; cursor: pointer; flex-shrink: 0;
         }
+
+        /* أحجام البطاقات في كل وضع */
+        .arch .net-card { min-width: 105px; height: 150px; scroll-snap-align: center; }
+        .grid .net-card { width: 100%; height: 130px; transform: none !important; opacity: 1 !important; }
+
         .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.2); }
-        
-        .card-overlay {
-            position: absolute; bottom: 0; width: 100%; padding: 6px;
-            background: rgba(0, 0, 0, 0.6); font-size: 10px; text-align: center; font-weight: 700; color: #fff;
-        }
+        .card-overlay { position: absolute; bottom: 0; width: 100%; padding: 6px; background: rgba(0, 0, 0, 0.6); font-size: 10px; text-align: center; font-weight: 700; color: #fff; }
 
-        .tabs { margin-bottom: 10px; padding: 0 10px; display: flex; overflow-x: auto; gap: 8px; scrollbar-width: none; }
+        .tabs { margin: 10px 0; padding: 0 10px; display: flex; overflow-x: auto; gap: 8px; scrollbar-width: none; }
         .tab-item { cursor: pointer; padding: 6px 16px; font-weight: 700; color: #64748b; border-radius: 20px; font-size: 12px; flex-shrink: 0; background: var(--card-bg); }
-        .tab-item.active { color: #fff; background: var(--primary); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4); }
+        .tab-item.active { color: #fff; background: var(--primary); }
 
-        #app-wrapper { opacity: 0; display: flex; flex-direction: column; height: 100vh; }
-        
-        /* حركة أيقونة الثيم السلسة */
-        #theme-btn {
-            cursor: pointer;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #theme-btn:hover { transform: scale(1.1); }
-        #theme-btn i { transition: transform 0.5s ease, color 0.5s ease; }
-        .light-mode #theme-btn i { transform: rotate(360deg); }
+        .header-btn { width: 40px; height: 40px; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
+        #active-name { transition: opacity 0.3s ease; }
+        .grid-view-active #active-name { opacity: 0; height: 0; margin: 0; }
     </style>
 </head>
-<body>
-
-    <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+<body class="arch-view-active">
 
     <div id="splash-screen">
-        <div class="text-4xl font-black italic animate-pulse" style="font-family: 'Orbitron';">
+        <div class="text-4xl font-black italic animate-pulse" style="font-family: 'Orbitron'; text-shadow: 0 0 20px #22c55e;">
             <span class="text-white">NET</span><span class="text-green-500">Go</span>
         </div>
     </div>
 
-    <div id="app-wrapper">
-        <header class="p-6 flex justify-between items-center">
+    <div id="app-wrapper" class="opacity-0 flex flex-col h-screen">
+        <header class="p-5 flex justify-between items-center">
             <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
                 <span style="color: var(--text-main)">NET</span><span class="text-green-500">Go</span>
             </div>
-            <div class="flex gap-4">
-                <div id="theme-btn" class="w-10 h-10 bg-black/10 dark:bg-white/10 backdrop-blur-lg border border-white/10 rounded-xl flex items-center justify-center shadow-lg">
-                    <i class="fas fa-moon text-yellow-400 text-lg" id="theme-icon"></i>
+            <div class="flex gap-2">
+                <div id="layout-btn" class="header-btn" title="تغيير الشكل">
+                    <i class="fas fa-th-large text-green-500" id="layout-icon"></i>
                 </div>
-                <a href="https://t.me/zone1996" target="_blank" class="w-10 h-10 bg-white shadow-lg text-black rounded-xl flex items-center justify-center">
-                    <i class="fab fa-telegram-plane"></i>
-                </a>
+                <div id="theme-btn" class="header-btn">
+                    <i class="fas fa-moon text-yellow-400" id="theme-icon"></i>
+                </div>
             </div>
         </header>
 
-        <div class="search-box shadow-sm">
-            <i class="fas fa-search opacity-30"></i>
-            <input type="text" id="search-input" placeholder="ابحث عن قناتك المفضلة..." oninput="UIManager.search(this.value)">
+        <div class="px-5 mb-2">
+            <div class="flex items-center bg-[var(--card-bg)] border border-[var(--glass-border)] rounded-2xl px-4 py-2 gap-3">
+                <i class="fas fa-search opacity-30"></i>
+                <input type="text" id="search-input" placeholder="ابحث عن قناة..." oninput="UIManager.search(this.value)" class="bg-transparent border-none outline-none w-full text-sm">
+            </div>
         </div>
 
         <div class="tabs">
@@ -154,13 +114,11 @@
             <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
             <div class="tab-item" onclick="UIManager.switchTab('news', this)">أخبار</div>
             <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقية</div>
-            <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
-            <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
         </div>
 
-        <div class="flex-1 flex flex-col justify-center">
-            <div class="arch-container" id="list"></div>
-            <div id="active-name" class="text-center mt-6 font-black text-2xl text-green-500 drop-shadow-md min-h-[40px]"></div>
+        <div class="flex-1 flex flex-col justify-center overflow-hidden">
+            <div class="channels-list arch" id="list"></div>
+            <div id="active-name" class="text-center mt-4 font-black text-xl text-green-500 min-h-[30px]"></div>
         </div>
     </div>
 
@@ -168,24 +126,34 @@
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
-            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
-            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv'
+            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv'
         };
-
-        const CUSTOM_UA = "Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36";
 
         const UIManager = {
             allData: [],
+            isGrid: false,
             
             async init() {
+                // تبديل الثيم
                 document.getElementById('theme-btn').onclick = () => {
                     document.body.classList.toggle('light-mode');
-                    const icon = document.getElementById('theme-icon');
-                    if(document.body.classList.contains('light-mode')) {
-                        icon.className = 'fas fa-sun text-orange-500 text-lg';
+                    document.getElementById('theme-icon').className = document.body.classList.contains('light-mode') ? 'fas fa-sun text-orange-500' : 'fas fa-moon text-yellow-400';
+                };
+
+                // تبديل التشكيل (Grid/Arch)
+                document.getElementById('layout-btn').onclick = () => {
+                    this.isGrid = !this.isGrid;
+                    const list = document.getElementById('list');
+                    const icon = document.getElementById('layout-icon');
+                    if(this.isGrid) {
+                        list.className = "channels-list grid";
+                        icon.className = "fas fa-list-ul text-blue-500";
+                        document.body.classList.add('grid-view-active');
                     } else {
-                        icon.className = 'fas fa-moon text-yellow-400 text-lg';
+                        list.className = "channels-list arch";
+                        icon.className = "fas fa-th-large text-green-500";
+                        document.body.classList.remove('grid-view-active');
+                        this.setupArch();
                     }
                 };
 
@@ -197,23 +165,7 @@
                 }, 2000);
             },
 
-            async fetchData(type) {
-                try {
-                    const res = await fetch(API_LINKS[type]);
-                    const text = await res.text();
-                    return text.split('\n').slice(1).map(row => {
-                        const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        return {
-                            name: p[0]?.replace(/"/g, '').trim(),
-                            url: p[1]?.replace(/"/g, '').trim(),
-                            logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/100"
-                        };
-                    }).filter(i => i.url && i.name);
-                } catch (e) { return []; }
-            },
-
             async loadCategory(type) {
-                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30 animate-pulse">جاري جلب البيانات...</div>';
                 let data = [];
                 if (type === 'all') {
                     for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; }
@@ -222,21 +174,46 @@
                 this.render(data);
             },
 
+            async fetchData(t) {
+                try {
+                    const res = await fetch(API_LINKS[t]);
+                    const text = await res.text();
+                    return text.split('\n').slice(1).map(row => {
+                        const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                        return { name: p[0]?.replace(/"/g, ''), url: p[1]?.replace(/"/g, ''), logo: p[2]?.replace(/"/g, '') };
+                    }).filter(i => i.url);
+                } catch(e) { return []; }
+            },
+
             render(data) {
                 const list = document.getElementById('list');
                 list.innerHTML = data.map(item => {
-                    const cleanUrl = item.url.replace(/^https?:\/\//, "");
-                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};S.http-user-agent=${encodeURIComponent(CUSTOM_UA)};end`;
-                    
-                    return `
-                        <div class="net-card shadow-lg" onclick="window.location.href='${intentUrl}'">
-                            <img src="${item.logo}" data-name="${item.name}">
-                            <div class="card-overlay">${item.name}</div>
-                        </div>
-                    `;
+                    const intent = `intent://${item.url.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};end`;
+                    return `<div class="net-card" onclick="window.location.href='${intent}'">
+                        <img src="${item.logo}" data-name="${item.name}">
+                        <div class="card-overlay">${item.name}</div>
+                    </div>`;
                 }).join('');
-                this.setupArch();
-                list.scrollLeft = 0;
+                if(!this.isGrid) this.setupArch();
+            },
+
+            setupArch() {
+                const slider = document.getElementById('list');
+                const nameDisplay = document.getElementById('active-name');
+                const update = () => {
+                    if(this.isGrid) return;
+                    const cards = document.querySelectorAll('.net-card');
+                    const center = slider.scrollLeft + (slider.offsetWidth / 2);
+                    cards.forEach(card => {
+                        const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
+                        const dist = Math.abs(center - cardCenter);
+                        const scale = Math.max(0.7, 1.3 - (dist / 350));
+                        card.style.transform = `scale(${scale})`;
+                        if (dist < 50) nameDisplay.innerText = card.querySelector('img').dataset.name;
+                    });
+                };
+                slider.onscroll = update;
+                setTimeout(update, 100);
             },
 
             switchTab(type, el) {
@@ -248,25 +225,6 @@
             search(q) {
                 const filtered = this.allData.filter(i => i.name.toLowerCase().includes(q.toLowerCase()));
                 this.render(filtered);
-            },
-
-            setupArch() {
-                const slider = document.getElementById('list');
-                const nameDisplay = document.getElementById('active-name');
-                const update = () => {
-                    const cards = document.querySelectorAll('.net-card');
-                    const center = slider.scrollLeft + (slider.offsetWidth / 2);
-                    cards.forEach(card => {
-                        const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
-                        const dist = Math.abs(center - cardCenter);
-                        const scale = Math.max(0.75, 1.4 - (dist / 320));
-                        const rot = (cardCenter - center) / 10;
-                        card.style.transform = `scale(${scale}) rotateY(${-rot}deg)`;
-                        if (dist < 50) nameDisplay.innerText = card.querySelector('img').dataset.name;
-                    });
-                };
-                slider.onscroll = update;
-                setTimeout(update, 100);
             }
         };
 
