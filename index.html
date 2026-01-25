@@ -13,34 +13,31 @@
         
         * { -webkit-user-select: none; user-select: none; box-sizing: border-box; touch-action: pan-x; }
 
-        /* المتغيرات الأساسية للوضع الليلي والنهاري */
+        /* متغيرات الألوان للوضعين */
         :root {
             --surface: #0a0a0c;
             --card-bg: rgba(255, 255, 255, 0.05);
             --text-main: #ffffff;
             --primary: #22c55e;
             --glass-border: rgba(255, 255, 255, 0.1);
-            --bg-gradient: radial-gradient(circle, #1a1a1a 0%, #0a0a0c 100%);
         }
 
         .light-mode {
-            --surface: #f3f4f6;
+            --surface: #f8fafc;
             --card-bg: rgba(0, 0, 0, 0.05);
-            --text-main: #1f2937;
+            --text-main: #0f172a;
             --primary: #16a34a;
             --glass-border: rgba(0, 0, 0, 0.1);
-            --bg-gradient: radial-gradient(circle, #ffffff 0%, #e5e7eb 100%);
         }
 
         body {
-            background: var(--bg-gradient);
             background-color: var(--surface);
             color: var(--text-main);
             font-family: 'Cairo', sans-serif;
             margin: 0;
             overflow: hidden;
             height: 100vh;
-            transition: background 0.3s ease, color 0.3s ease;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .bg-blobs {
@@ -93,11 +90,11 @@
             cursor: pointer;
         }
 
-        .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.1); }
+        .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); }
         
         .card-overlay {
             position: absolute; bottom: 0; width: 100%; padding: 5px;
-            background: rgba(0, 0, 0, 0.6); font-size: 9px; text-align: center; font-weight: bold; color: white !important;
+            background: rgba(0, 0, 0, 0.6); font-size: 9px; text-align: center; font-weight: bold; color: #fff;
         }
 
         .tabs { margin-bottom: 10px; padding: 0 10px; overflow-x: auto; display: flex; gap: 5px; scrollbar-width: none;}
@@ -106,18 +103,19 @@
 
         #app-wrapper { opacity: 0; display: flex; flex-direction: column; height: 100vh; }
 
-        /* زر التبديل */
-        .theme-toggle {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
+        /* زر التبديل المثالي */
+        .theme-btn {
+            width: 38px; height: 38px;
             display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: var(--card-bg);
+            border: 1px solid var(--glass-border);
             cursor: pointer; transition: 0.3s;
         }
     </style>
 </head>
-<body class="dark-theme"> <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+<body>
+
+    <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
 
     <div id="splash-screen">
         <div class="text-4xl font-black italic" style="font-family: 'Orbitron';"><span class="text-white">NET</span><span class="text-green-500">Go</span></div>
@@ -128,11 +126,11 @@
             <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
                 <span style="color: var(--text-main)">NET</span><span class="text-green-500">Go</span>
             </div>
-            <div class="flex gap-3">
-                <button onclick="toggleTheme()" class="theme-toggle" id="theme-btn">
+            <div class="flex gap-2">
+                <div class="theme-btn" onclick="toggleTheme()" id="theme-icon">
                     <i class="fas fa-moon text-yellow-400"></i>
-                </button>
-                <a href="https://t.me/zone1996" target="_blank" class="w-9 h-9 bg-[#0088cc] text-white rounded-full flex items-center justify-center shadow-lg"><i class="fab fa-telegram-plane"></i></a>
+                </div>
+                <a href="https://t.me/zone1996" target="_blank" class="w-9 h-9 bg-white text-black rounded-full flex items-center justify-center"><i class="fab fa-telegram-plane"></i></a>
             </div>
         </header>
 
@@ -157,24 +155,20 @@
     </div>
 
     <script>
-        // دالة تغيير الثيم
+        // نظام التبديل بين الليل والنهار
         function toggleTheme() {
             const body = document.body;
-            const btn = document.getElementById('theme-btn');
+            const icon = document.getElementById('theme-icon');
             body.classList.toggle('light-mode');
-            
             const isLight = body.classList.contains('light-mode');
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
-            
-            btn.innerHTML = isLight 
-                ? '<i class="fas fa-sun text-orange-500"></i>' 
-                : '<i class="fas fa-moon text-yellow-400"></i>';
+            icon.innerHTML = isLight ? '<i class="fas fa-sun text-orange-500"></i>' : '<i class="fas fa-moon text-yellow-400"></i>';
         }
 
-        // استعادة الثيم المفضل عند التحميل
-        if (localStorage.getItem('theme') === 'light') {
+        // تطبيق الثيم المحفوظ
+        if(localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light-mode');
-            document.getElementById('theme-btn').innerHTML = '<i class="fas fa-sun text-orange-500"></i>';
+            document.getElementById('theme-icon').innerHTML = '<i class="fas fa-sun text-orange-500"></i>';
         }
 
         const API_LINKS = {
@@ -185,7 +179,8 @@
             media: 'https://docs.google.com/spreadsheets/d/1OMXrU6bIGvfhqlrT70sSFzhNx7aZdyMuGWf4bhA6-1Q/gviz/tq?tqx=out:csv'
         };
 
-        const CUSTOM_UA = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36";
+        // تم تحديث الـ User-Agent ليكون متوافقاً مع سيرفرات البث القوية
+        const CUSTOM_UA = "VLC/3.0.18 LibVLC/3.0.18";
 
         const UIManager = {
             allData: [],
@@ -234,7 +229,13 @@
                 const list = document.getElementById('list');
                 list.innerHTML = data.map(item => {
                     const cleanUrl = item.url.replace(/^https?:\/\//, "");
-                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};S.http-user-agent=${encodeURIComponent(CUSTOM_UA)};end`;
+                    
+                    /* تحسين الـ Intent لمشغل Just Player:
+                       1. استخدام User-Agent الخاص بـ VLC لضمان استجابة السيرفر.
+                       2. إضافة B.is_live لزيادة الـ Buffer تلقائياً.
+                       3. تحديد S.mime_type لتسريع التعرف على القناة.
+                    */
+                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};S.http-user-agent=${encodeURIComponent(CUSTOM_UA)};B.is_live=true;S.mime_type=application/x-mpegURL;end`;
                     
                     return `
                         <div class="net-card" onclick="window.location.href='${intentUrl}'">
