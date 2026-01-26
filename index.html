@@ -21,14 +21,6 @@
             --glass-border: rgba(255, 255, 255, 0.1);
         }
 
-        .light-mode {
-            --surface: #f8fafc;
-            --card-bg: rgba(0, 0, 0, 0.05);
-            --text-main: #0f172a;
-            --primary: #16a34a;
-            --glass-border: rgba(0, 0, 0, 0.1);
-        }
-
         body {
             background-color: var(--surface);
             color: var(--text-main);
@@ -36,7 +28,6 @@
             margin: 0;
             overflow: hidden;
             height: 100vh;
-            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .bg-blobs {
@@ -45,7 +36,6 @@
         }
         .blob { position: absolute; border-radius: 50%; background: var(--primary); }
         .blob-1 { width: 300px; height: 300px; top: -100px; right: -50px; }
-        .blob-2 { width: 250px; height: 250px; bottom: -50px; left: -50px; background: #3b82f6; }
 
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -66,16 +56,15 @@
         }
         .search-box input {
             background: transparent; border: none; color: var(--text-main);
-            width: 100%; outline: none; font-size: 14px; font-family: 'Cairo';
+            width: 100%; outline: none; font-size: 14px;
         }
 
         .arch-container {
             display: flex; align-items: center; overflow-x: auto;
             padding: 40px 42vw; gap: 15px; perspective: 1200px;
             scroll-snap-type: x mandatory; height: 250px; 
-            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
         }
-        .arch-container::-webkit-scrollbar { display: none; }
 
         .net-card {
             min-width: 100px; height: 145px;
@@ -86,7 +75,6 @@
             transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 1px solid var(--glass-border);
             flex-shrink: 0; overflow: hidden;
-            cursor: pointer;
         }
 
         .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); }
@@ -97,52 +85,33 @@
         }
 
         .tabs { margin-bottom: 10px; padding: 0 10px; overflow-x: auto; display: flex; gap: 5px; scrollbar-width: none;}
-        .tab-item { cursor: pointer; padding: 5px 14px; font-weight: 700; color: #888; border-radius: 20px; font-size: 11px; flex-shrink: 0; transition: 0.3s; }
-        .tab-item.active { color: #fff; background: var(--primary); box-shadow: 0 0 12px var(--primary); }
+        .tab-item { cursor: pointer; padding: 5px 14px; font-weight: 700; color: #888; border-radius: 20px; font-size: 11px; flex-shrink: 0; }
+        .tab-item.active { color: #fff; background: var(--primary); }
 
         #app-wrapper { opacity: 0; display: flex; flex-direction: column; height: 100vh; }
-
-        .theme-btn {
-            width: 38px; height: 38px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            cursor: pointer; transition: 0.3s;
-        }
     </style>
 </head>
 <body>
 
-    <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+    <div class="bg-blobs"><div class="blob blob-1"></div></div>
 
     <div id="splash-screen">
-        <div class="text-4xl font-black italic" style="font-family: 'Orbitron';"><span class="text-white">NET</span><span class="text-green-500">Go</span></div>
+        <div class="text-4xl font-black italic" style="font-family: 'Orbitron';">NET<span class="text-green-500">Go</span></div>
     </div>
 
     <div id="app-wrapper">
         <header class="p-5 flex justify-between items-center">
-            <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
-                <span style="color: var(--text-main)">NET</span><span class="text-green-500">Go</span>
-            </div>
-            <div class="flex gap-2">
-                <div class="theme-btn" onclick="toggleTheme()" id="theme-icon">
-                    <i class="fas fa-moon text-yellow-400"></i>
-                </div>
-                <a href="https://t.me/zone1996" target="_blank" class="w-9 h-9 bg-white text-black rounded-full flex items-center justify-center"><i class="fab fa-telegram-plane"></i></a>
-            </div>
+            <div class="text-2xl font-black italic" style="font-family: 'Orbitron';">NET<span class="text-green-500">Go</span></div>
+            <a href="https://t.me/zone1996" target="_blank" class="w-9 h-9 bg-white text-black rounded-full flex items-center justify-center"><i class="fab fa-telegram-plane"></i></a>
         </header>
 
         <div class="search-box">
             <i class="fas fa-search opacity-40"></i>
-            <input type="text" id="search-input" placeholder="ابحث عن أنمي أو قناة..." oninput="UIManager.search(this.value)">
+            <input type="text" id="search-input" placeholder="ابحث عن أنمي..." oninput="UIManager.search(this.value)">
         </div>
 
         <div class="tabs" id="tabs-list">
-            <div class="tab-item active" onclick="UIManager.switchTab('all', this)">الكل</div>
-            <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
-            <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
-            <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
-            <div class="tab-item" onclick="UIManager.switchTab('media', this)">ميديا</div>
+            <div class="tab-item active" onclick="UIManager.switchTab('media', this)">ميديا الأنمي</div>
         </div>
 
         <div class="flex-1 flex flex-col justify-center">
@@ -152,21 +121,8 @@
     </div>
 
     <script>
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById('theme-icon');
-            body.classList.toggle('light-mode');
-            const isLight = body.classList.contains('light-mode');
-            localStorage.setItem('theme', isLight ? 'light' : 'dark');
-            icon.innerHTML = isLight ? '<i class="fas fa-sun text-orange-500"></i>' : '<i class="fas fa-moon text-yellow-400"></i>';
-        }
-
         const API_LINKS = {
-            sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
-            // تم وضع رابط السكربت الخاص بك هنا للربط المباشر
-            media: 'https://script.google.com/macros/s/AKfycbwAgyrPmBpslvZCGj_IMdkxYhKAUbLf7tgDFnSC1HQ-0r1uvrWMnoR45ZdjARYFX725/exec'
+            media: 'https://script.google.com/macros/s/AKfycbzf0ppmqMDPHMD5t0ZcVqOpfQwXTdzLRJ97orhThaNTu1FSQg_-pTLOuokA3ysvuLKr/exec'
         };
 
         const CUSTOM_UA = "VLC/3.0.18 LibVLC/3.0.18";
@@ -175,40 +131,34 @@
             allData: [],
             
             async init() {
-                await this.loadCategory('all');
+                await this.loadCategory('media');
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.opacity = '0';
                     document.getElementById('app-wrapper').style.opacity = '1';
                     setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 600);
-                }, 1500);
+                }, 1000);
             },
 
             async fetchData(type) {
                 try {
                     const res = await fetch(API_LINKS[type]);
-                    if (type === 'media') {
-                        // جلب البيانات من السكربت الخاص بك بصيغة JSON
-                        return await res.json();
-                    }
-                    const text = await res.text();
-                    return text.split('\n').slice(1).map(row => {
-                        const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        return {
-                            name: p[0]?.replace(/"/g, '').trim(),
-                            url: p[1]?.replace(/"/g, '').trim(),
-                            logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/100x145?text=NETGo"
-                        };
-                    }).filter(i => i.url && i.name);
-                } catch (e) { return []; }
+                    const json = await res.json();
+                    
+                    // تحويل البيانات المعربة من السكربت إلى مفاتيح يفهمها التطبيق
+                    return json.map(item => ({
+                        name: item.الاسم,
+                        url: item.الرابط,
+                        logo: item.الشعار || "https://via.placeholder.com/100x145?text=Anime"
+                    }));
+                } catch (e) { 
+                    console.error("Error fetching:", e);
+                    return []; 
+                }
             },
 
             async loadCategory(type) {
-                document.getElementById('active-name').innerText = "";
-                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30 italic">جاري تحميل المحتوى...</div>';
-                let data = [];
-                if (type === 'all') {
-                    for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; }
-                } else { data = await this.fetchData(type); }
+                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30">جاري تحميل ميديا...</div>';
+                let data = await this.fetchData(type);
                 this.allData = data;
                 this.render(data);
             },
@@ -220,8 +170,8 @@
 
             render(data) {
                 const list = document.getElementById('list');
-                if (data.length === 0) {
-                    list.innerHTML = '<div class="w-full text-center opacity-30">لا توجد نتائج حالياً</div>';
+                if(data.length === 0) {
+                    list.innerHTML = '<div class="w-full text-center opacity-30 italic">الجدول فارغ أو هناك خطأ في الرابط</div>';
                     return;
                 }
                 list.innerHTML = data.map(item => {
