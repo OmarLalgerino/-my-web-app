@@ -30,11 +30,6 @@
 
         body { background-color: var(--surface); color: var(--text-main); font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
 
-        .bg-blobs { position: fixed; inset: 0; z-index: -1; filter: blur(80px); opacity: 0.2; }
-        .blob { position: absolute; border-radius: 50%; background: var(--primary); }
-        .blob-1 { width: 300px; height: 300px; top: -100px; right: -50px; }
-        .blob-2 { width: 250px; height: 250px; bottom: -50px; left: -50px; background: #3b82f6; }
-
         #splash-screen {
             position: fixed; inset: 0; background: #0a0a0a; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease;
         }
@@ -79,8 +74,6 @@
 </head>
 <body>
 
-    <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
-
     <div id="splash-screen">
         <div class="text-4xl font-black italic" style="font-family: 'Orbitron';"><span class="text-white">NET</span><span class="text-green-500">Go</span></div>
     </div>
@@ -107,7 +100,7 @@
         <div class="px-5 mb-4">
             <div class="bg-white/5 border border-white/10 rounded-2xl flex items-center px-4 py-2.5 gap-3">
                 <i class="fas fa-search opacity-30 text-sm"></i>
-                <input type="text" id="search-input" class="bg-transparent border-none w-full text-sm outline-none" placeholder="ابحث عن قناة..." oninput="UIManager.search(this.value)">
+                <input type="text" id="search-input" class="bg-transparent border-none w-full text-sm outline-none" placeholder="ابحث..." oninput="UIManager.search(this.value)">
             </div>
         </div>
 
@@ -134,11 +127,11 @@
 
     <script>
         const API_LINKS = {
+            sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
             series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
-            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
-            sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv'
+            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
+            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
@@ -171,15 +164,14 @@
 
             async loadCategory(type) {
                 document.getElementById('active-name').innerText = ""; 
-                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-20">جاري التحميل...</div>';
+                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-20">Loading...</div>';
                 
                 let data = [];
-                // إذا كان الاختيار "ميديا"، يدمج الأفلام والمسلسلات والوثائقي معاً
                 if (type === 'media') {
-                    const m = await this.fetchData('movies');
-                    const s = await this.fetchData('series');
-                    const d = await this.fetchData('docs');
-                    data = [...m, ...s, ...d];
+                    // تحميل جميع القنوات من كل الروابط عند الضغط على ميديا
+                    for (const key in API_LINKS) {
+                        data = [...data, ...await this.fetchData(key)];
+                    }
                 } else {
                     data = await this.fetchData(type);
                 }
