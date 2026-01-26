@@ -58,6 +58,7 @@
         }
         .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); border-radius: 11px; }
         
+        /* علامة الحفظ Bookmark */
         .is-saved::after {
             content: "\f02e"; font-family: "Font Awesome 6 Free"; font-weight: 900;
             position: absolute; top: 5px; right: 8px; color: #eab308; font-size: 14px;
@@ -117,6 +118,7 @@
             <div class="tab-item" onclick="UIManager.switchTab('news', this)">أخبار</div>
             <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
             <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
+            <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
         </div>
 
         <div class="flex-1 flex flex-col justify-center">
@@ -137,7 +139,8 @@
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv'
+            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
+            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
@@ -149,7 +152,6 @@
                     document.body.classList.toggle('light-mode');
                     document.getElementById('theme-icon').className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
                 };
-                // بدء التحميل من قسم ميديا مباشرة
                 await this.loadCategory('media');
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.opacity = '0';
