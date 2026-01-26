@@ -30,7 +30,6 @@
 
         body { background-color: var(--surface); color: var(--text-main); font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
 
-        /* الخلفية */
         .bg-blobs { position: fixed; inset: 0; z-index: -1; filter: blur(80px); opacity: 0.2; }
         .blob { position: absolute; border-radius: 50%; background: var(--primary); }
         .blob-1 { width: 300px; height: 300px; top: -100px; right: -50px; }
@@ -40,12 +39,10 @@
             position: fixed; inset: 0; background: #0a0a0a; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease;
         }
 
-        /* التصنيفات */
         .tabs { display: flex; overflow-x: auto; gap: 8px; padding: 0 20px; scrollbar-width: none; margin-bottom: 15px; }
         .tab-item { cursor: pointer; padding: 6px 18px; font-weight: 700; color: #888; border-radius: 20px; font-size: 11px; flex-shrink: 0; transition: 0.3s; background: var(--card-bg); border: 1px solid var(--glass-border); }
         .tab-item.active { color: #fff; background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); }
 
-        /* حاوية القنوات */
         .arch-container {
             display: flex; align-items: center; overflow-x: auto;
             padding: 40px 42vw; gap: 15px; perspective: 1200px;
@@ -61,7 +58,7 @@
         }
         .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); border-radius: 11px; }
         
-        /* علامة الحفظ Bookmark على الصورة */
+        /* علامة Bookmark الذهبية */
         .is-saved::after {
             content: "\f02e"; font-family: "Font Awesome 6 Free"; font-weight: 900;
             position: absolute; top: 5px; right: 8px; color: #eab308; font-size: 14px;
@@ -70,14 +67,13 @@
 
         .card-active { border-color: var(--primary) !important; box-shadow: 0 0 20px rgba(34, 197, 94, 0.4) !important; }
 
-        /* لوحة المكتبة */
         #fav-panel {
             position: fixed; bottom: -100%; left: 0; width: 100%; height: 60vh;
             background: rgba(10, 10, 12, 0.98); backdrop-filter: blur(20px); border-top: 2px solid var(--primary);
             z-index: 1000; transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.05); padding: 20px; border-radius: 25px 25px 0 0;
         }
         #fav-panel.show { bottom: 0; }
-        .fav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; overflow-y: auto; height: 85%; padding-bottom: 20px; }
+        .fav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; overflow-y: auto; height: 85%; }
 
         #app-wrapper { opacity: 0; display: flex; flex-direction: column; height: 100vh; }
     </style>
@@ -93,10 +89,7 @@
     <div id="fav-panel">
         <div class="flex justify-between items-center mb-6">
             <h3 class="font-black text-lg text-white">مكتبة الحفظ</h3>
-            <div class="flex gap-4 items-center">
-                <span onclick="UIManager.clearFavs()" class="text-xs text-red-500">مسح الكل</span>
-                <i class="fas fa-times text-xl" onclick="UIManager.toggleFavs()"></i>
-            </div>
+            <i class="fas fa-times text-xl" onclick="UIManager.toggleFavs()"></i>
         </div>
         <div class="fav-grid" id="fav-grid"></div>
     </div>
@@ -130,7 +123,7 @@
 
         <div class="flex-1 flex flex-col justify-center">
             <div class="arch-container" id="list"></div>
-            <div id="active-name" class="text-center mt-4 font-black text-2xl text-green-500 min-h-[35px] drop-shadow-md"></div>
+            <div id="active-name" class="text-center mt-4 font-black text-2xl text-green-500 min-h-[35px]"></div>
         </div>
 
         <div class="p-6 flex justify-center">
@@ -178,7 +171,10 @@
             },
 
             async loadCategory(type) {
+                // تفريغ النص فوراً عند البدء بتحميل قسم جديد
+                document.getElementById('active-name').innerText = ""; 
                 document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-20">Loading...</div>';
+                
                 let data = [];
                 if (type === 'all') { for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; } }
                 else { data = await this.fetchData(type); }
@@ -209,13 +205,12 @@
                 const index = this.favs.findIndex(f => f.url === url);
                 if(index === -1) {
                     this.favs.push({name, url, logo});
-                    // اهتزاز بسيط للتأكيد (اختياري)
                     if(window.navigator.vibrate) window.navigator.vibrate(50);
                 } else {
                     this.favs.splice(index, 1);
                 }
                 localStorage.setItem('net_favs', JSON.stringify(this.favs));
-                this.render(this.allData); // تحديث العلامات على الصور فوراً
+                this.render(this.allData);
             },
 
             toggleFavs() {
@@ -231,8 +226,8 @@
                 }
             },
 
-            clearFavs() { if(confirm('مسح الكل؟')) { this.favs = []; localStorage.setItem('net_favs', '[]'); this.render(this.allData); this.toggleFavs(); } },
             search(q) { this.render(this.allData.filter(i => i.name.toLowerCase().includes(q.toLowerCase()))); },
+            
             switchTab(type, el) {
                 document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                 el.classList.add('active');
@@ -244,18 +239,24 @@
                 const nameDisplay = document.getElementById('active-name');
                 const update = () => {
                     const cards = document.querySelectorAll('.net-card');
+                    if(cards.length === 0) return;
+                    
                     const center = slider.scrollLeft + (slider.offsetWidth / 2);
+                    let closestName = "";
+
                     cards.forEach(card => {
                         const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
                         const distance = Math.abs(center - cardCenter);
                         const scale = Math.max(0.75, 1.35 - (distance / 350));
                         card.style.transform = `scale(${scale}) translateY(${distance / 12}px) rotateY(${(cardCenter - center) / 15}deg)`;
                         card.style.opacity = Math.max(0.4, 1 - (distance / 450));
+                        
                         if (distance < 50) {
-                            nameDisplay.innerText = card.querySelector('img').getAttribute('data-name');
+                            closestName = card.querySelector('img').getAttribute('data-name');
                             card.classList.add('card-active');
                         } else { card.classList.remove('card-active'); }
                     });
+                    nameDisplay.innerText = closestName;
                 };
                 slider.onscroll = update;
                 setTimeout(update, 100);
