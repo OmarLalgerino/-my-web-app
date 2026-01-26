@@ -13,7 +13,6 @@
         
         * { -webkit-user-select: none; user-select: none; box-sizing: border-box; touch-action: pan-x; }
 
-        /* متغيرات الألوان للوضعين */
         :root {
             --surface: #0a0a0c;
             --card-bg: rgba(255, 255, 255, 0.05);
@@ -103,7 +102,6 @@
 
         #app-wrapper { opacity: 0; display: flex; flex-direction: column; height: 100vh; }
 
-        /* زر التبديل المثالي */
         .theme-btn {
             width: 38px; height: 38px;
             display: flex; align-items: center; justify-content: center;
@@ -136,7 +134,7 @@
 
         <div class="search-box">
             <i class="fas fa-search opacity-40"></i>
-            <input type="text" id="search-input" placeholder="ابحث عن قناة..." oninput="UIManager.search(this.value)">
+            <input type="text" id="search-input" placeholder="ابحث عن قناة أو أنمي..." oninput="UIManager.search(this.value)">
         </div>
 
         <div class="tabs" id="tabs-list">
@@ -155,7 +153,6 @@
     </div>
 
     <script>
-        // نظام التبديل بين الليل والنهار
         function toggleTheme() {
             const body = document.body;
             const icon = document.getElementById('theme-icon');
@@ -165,7 +162,6 @@
             icon.innerHTML = isLight ? '<i class="fas fa-sun text-orange-500"></i>' : '<i class="fas fa-moon text-yellow-400"></i>';
         }
 
-        // تطبيق الثيم المحفوظ
         if(localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light-mode');
             document.getElementById('theme-icon').innerHTML = '<i class="fas fa-sun text-orange-500"></i>';
@@ -176,10 +172,10 @@
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
             series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
             docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
-            media: 'https://docs.google.com/spreadsheets/d/1OMXrU6bIGvfhqlrT70sSFzhNx7aZdyMuGWf4bhA6-1Q/gviz/tq?tqx=out:csv'
+            // رابط السكربت الخاص بك مربوط بجلب بيانات الورقة 2
+            media: 'https://script.google.com/macros/s/AKfycbzI5wLKr7fE06E2d5oOixJhE3Qz9hOSGymrqjxj1aSTJXHseT3V9kn4qJTQnOn9v85n/exec'
         };
 
-        // تم تحديث الـ User-Agent ليكون متوافقاً مع سيرفرات البث القوية
         const CUSTOM_UA = "VLC/3.0.18 LibVLC/3.0.18";
 
         const UIManager = {
@@ -197,6 +193,22 @@
             async fetchData(type) {
                 try {
                     const res = await fetch(API_LINKS[type]);
+                    
+                    // إذا كان القسم "ميديا"، نقوم بمعالجة الـ JSON الخاص بالسكربت
+                    if (type === 'media') {
+                        const rawData = await res.json();
+                        // السكربت حالياً مبرمج ليعيد سطر واحد، لكننا سنجهزه ليعرض القائمة كاملة من الورقة 2
+                        // ملاحظة: تأكد من أن الورقة 2 بها بيانات لتعمل هذه الوظيفة
+                        if (Array.isArray(rawData)) {
+                            return rawData.map(item => ({
+                                name: `${item.anime} - حلقة ${item.episode}`,
+                                url: item.mp4upload || item.doodstream,
+                                logo: "https://via.placeholder.com/100x145?text=Anime"
+                            }));
+                        }
+                    }
+
+                    // بقية الأقسام (CSV)
                     const text = await res.text();
                     return text.split('\n').slice(1).map(row => {
                         const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
@@ -227,14 +239,12 @@
 
             render(data) {
                 const list = document.getElementById('list');
+                if (data.length === 0) {
+                    list.innerHTML = '<div class="w-full text-center opacity-30">لا توجد بيانات متاحة</div>';
+                    return;
+                }
                 list.innerHTML = data.map(item => {
                     const cleanUrl = item.url.replace(/^https?:\/\//, "");
-                    
-                    /* تحسين الـ Intent لمشغل Just Player:
-                       1. استخدام User-Agent الخاص بـ VLC لضمان استجابة السيرفر.
-                       2. إضافة B.is_live لزيادة الـ Buffer تلقائياً.
-                       3. تحديد S.mime_type لتسريع التعرف على القناة.
-                    */
                     const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};S.http-user-agent=${encodeURIComponent(CUSTOM_UA)};B.is_live=true;S.mime_type=application/x-mpegURL;end`;
                     
                     return `
