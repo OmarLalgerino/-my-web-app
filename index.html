@@ -58,7 +58,6 @@
         }
         .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); border-radius: 11px; }
         
-        /* علامة الحفظ Bookmark */
         .is-saved::after {
             content: "\f02e"; font-family: "Font Awesome 6 Free"; font-weight: 900;
             position: absolute; top: 5px; right: 8px; color: #eab308; font-size: 14px;
@@ -135,12 +134,11 @@
 
     <script>
         const API_LINKS = {
-            media: 'https://docs.google.com/spreadsheets/d/1jH5qsnm3bCcA1B7rjCVEKBd6x9HZCxfjFXdPrMk7MVc/gviz/tq?tqx=out:csv',
-            sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
             series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
-            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv'
+            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
+            sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
+            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
@@ -173,9 +171,19 @@
 
             async loadCategory(type) {
                 document.getElementById('active-name').innerText = ""; 
-                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-20">Loading...</div>';
+                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-20">جاري التحميل...</div>';
                 
-                const data = await this.fetchData(type);
+                let data = [];
+                // إذا كان الاختيار "ميديا"، يدمج الأفلام والمسلسلات والوثائقي معاً
+                if (type === 'media') {
+                    const m = await this.fetchData('movies');
+                    const s = await this.fetchData('series');
+                    const d = await this.fetchData('docs');
+                    data = [...m, ...s, ...d];
+                } else {
+                    data = await this.fetchData(type);
+                }
+                
                 this.allData = data;
                 this.render(data);
             },
