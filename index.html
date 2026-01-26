@@ -21,13 +21,6 @@
             --glass-border: rgba(255, 255, 255, 0.1);
         }
 
-        body.light-mode {
-            --surface: #f1f5f9;
-            --card-bg: rgba(0, 0, 0, 0.05);
-            --text-main: #1e293b;
-            --glass-border: rgba(0, 0, 0, 0.1);
-        }
-
         body {
             background-color: var(--surface);
             color: var(--text-main);
@@ -51,70 +44,45 @@
             z-index: 9999; transition: opacity 0.5s ease;
         }
 
-        .search-box {
-            background: var(--card-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 25px;
-            padding: 8px 15px;
-            margin: 0 20px 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .search-box input {
-            background: transparent; border: none; color: var(--text-main);
-            width: 100%; outline: none; font-size: 14px; font-family: 'Cairo';
-        }
-
+        /* المحرك القوسي - تم تسريع الحركة */
         .arch-container {
             display: flex; align-items: center; overflow-x: auto;
             padding: 40px 42vw; gap: 15px; perspective: 1200px;
-            scroll-snap-type: x mandatory; height: 250px; 
+            scroll-snap-type: x mandatory; height: 300px; 
             scrollbar-width: none; -webkit-overflow-scrolling: touch;
-            transition: all 0.5s ease;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
         }
         .arch-container::-webkit-scrollbar { display: none; }
 
         .net-card {
-            min-width: 100px; height: 145px;
+            min-width: 110px; height: 160px;
             background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: 12px;
             position: relative; scroll-snap-align: center;
-            /* زيادة انسيابية الحركة */
-            transition: transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1), opacity 0.4s ease;
+            transition: transform 0.2s linear, opacity 0.2s linear;
             border: 1px solid var(--glass-border);
             flex-shrink: 0; overflow: hidden;
         }
 
         .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); }
         
-        /* الوهج الصغير حول إطار الصورة للقناة النشطة */
         .card-active {
             border-color: var(--primary) !important;
-            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5) !important;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+            transform: scale(1.35) !important;
         }
 
-        .card-overlay {
-            position: absolute; bottom: 0; width: 100%; padding: 5px;
-            background: rgba(0, 0, 0, 0.5); font-size: 9px; text-align: center; font-weight: bold;
+        /* نافذة المكتبة الداخلية */
+        #lib-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px); z-index: 200;
+            display: none; flex-direction: column; padding: 30px;
         }
 
-        .tabs { margin-bottom: 10px; padding: 0 10px; }
-        .tab-item { cursor: pointer; padding: 5px 14px; font-weight: 700; color: #888; border-radius: 20px; font-size: 11px; flex-shrink: 0; transition: 0.3s; }
-        .tab-item.active { color: #fff; background: var(--primary); box-shadow: 0 0 12px var(--primary); }
-
-        /* مكتبة حفظ صغيرة واحترافية */
-        .mini-library {
-            padding: 10px 20px;
-            background: rgba(0,0,0,0.2);
-            border-top: 1px solid var(--glass-border);
-            display: flex; gap: 10px; overflow-x: auto;
-            scrollbar-width: none; height: 65px; align-items: center;
-        }
-        .lib-item { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; border: 1px solid var(--glass-border); overflow: hidden; }
-        .lib-item img { width: 100%; height: 100%; object-fit: cover; }
+        .lib-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; overflow-y: auto; }
+        .lib-card { background: var(--card-bg); border-radius: 10px; padding: 5px; border: 1px solid var(--glass-border); text-align: center; }
+        .lib-card img { width: 100%; height: 80px; object-fit: contain; border-radius: 5px; }
 
         #app-wrapper { opacity: 0; display: flex; flex-direction: column; height: 100vh; }
     </style>
@@ -127,39 +95,44 @@
         <div class="text-4xl font-black italic" style="font-family: 'Orbitron';"><span class="text-white">NET</span><span class="text-green-500">Go</span></div>
     </div>
 
+    <div id="lib-modal">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">قنواتي المفضلة</h2>
+            <i class="fas fa-times text-2xl" onclick="UIManager.toggleLib()"></i>
+        </div>
+        <div class="lib-grid" id="lib-content"></div>
+        <button onclick="UIManager.clearFavs()" class="mt-auto bg-red-600/20 text-red-500 py-3 rounded-xl border border-red-600/30">مسح الكل</button>
+    </div>
+
     <div id="app-wrapper">
         <header class="p-5 flex justify-between items-center">
             <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
                 <span style="color: var(--text-main)">NET</span><span class="text-green-500">Go</span>
             </div>
             <div class="flex gap-3">
+                <div onclick="UIManager.toggleLib()" class="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center border border-white/10"><i class="fas fa-star text-yellow-500"></i></div>
                 <a href="https://t.me/zone1996" target="_blank" class="w-9 h-9 bg-white text-black rounded-full flex items-center justify-center"><i class="fab fa-telegram-plane"></i></a>
-                <div id="theme-btn" class="w-9 h-9 bg-black/20 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center cursor-pointer"><i class="fas fa-moon" id="theme-icon"></i></div>
             </div>
         </header>
 
         <div class="search-box">
             <i class="fas fa-search opacity-40"></i>
-            <input type="text" id="search-input" placeholder="ابحث عن قناة..." oninput="UIManager.search(this.value)">
+            <input type="text" id="search-input" placeholder="ابحث..." oninput="UIManager.search(this.value)">
         </div>
 
-        <div class="tabs flex overflow-x-auto gap-1" style="scrollbar-width: none;">
+        <div class="tabs flex overflow-x-auto gap-1 px-4" style="scrollbar-width: none;">
             <div class="tab-item active" onclick="UIManager.switchTab('all', this)">الكل</div>
             <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
             <div class="tab-item" onclick="UIManager.switchTab('news', this)">أخبار</div>
             <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
-            <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
-            <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
             <div class="tab-item" onclick="UIManager.switchTab('media', this)">ميديا</div>
+            <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
         </div>
 
-        <div class="flex-1 flex flex-col justify-center">
+        <div class="flex-1 flex flex-col justify-center overflow-hidden">
             <div class="arch-container" id="list"></div>
-            <div id="active-name" class="text-center mt-4 font-black text-xl text-green-500 min-h-[30px] drop-shadow-lg"></div>
-        </div>
-
-        <div class="mini-library" id="mini-lib">
-            <span class="text-[10px] opacity-40 ml-2">المحفوظات:</span>
+            <div id="active-name" class="text-center mt-6 font-black text-2xl text-green-500 min-h-[35px] drop-shadow-lg"></div>
+            <p class="text-center text-[10px] opacity-30 mt-2">اضغط مطولاً لحفظ القناة</p>
         </div>
     </div>
 
@@ -167,10 +140,9 @@
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
-            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
             media: 'https://docs.google.com/spreadsheets/d/1jH5qsnm3bCcA1B7rjCVEKBd6x9HZCxfjFXdPrMk7MVc/gviz/tq?tqx=out:csv',
-            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv'
+            news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
+            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
@@ -178,11 +150,6 @@
             favs: JSON.parse(localStorage.getItem('net_favs')) || [],
             
             async init() {
-                document.getElementById('theme-btn').onclick = () => {
-                    document.body.classList.toggle('light-mode');
-                    document.getElementById('theme-icon').className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
-                };
-                this.updateLib();
                 await this.loadCategory('all');
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.opacity = '0';
@@ -197,18 +164,13 @@
                     const text = await res.text();
                     return text.split('\n').slice(1).map(row => {
                         const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        return {
-                            name: p[0]?.replace(/"/g, '').trim(),
-                            url: p[1]?.replace(/"/g, '').trim(),
-                            logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/100x145"
-                        };
+                        return { name: p[0]?.replace(/"/g, '').trim(), url: p[1]?.replace(/"/g, '').trim(), logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/100x145" };
                     }).filter(i => i.url && i.name);
                 } catch (e) { return []; }
             },
 
             async loadCategory(type) {
-                document.getElementById('active-name').innerText = "";
-                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30">جاري التحميل...</div>';
+                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30">Loading...</div>';
                 let data = [];
                 if (type === 'all') {
                     for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; }
@@ -217,45 +179,51 @@
                 this.render(data);
             },
 
-            search(query) {
-                const filtered = this.allData.filter(i => i.name.toLowerCase().includes(query.toLowerCase()));
-                this.render(filtered);
-            },
-
             render(data) {
                 const list = document.getElementById('list');
                 list.innerHTML = data.map(item => `
-                    <div class="net-card" 
-                         onclick="UIManager.play('${item.url}', '${item.name}')" 
-                         oncontextmenu="UIManager.addFav('${item.name}','${item.url}','${item.logo}'); return false;">
+                    <div class="net-card" onclick="UIManager.play('${item.url}', '${item.name}')" oncontextmenu="UIManager.addFav('${item.name}','${item.url}','${item.logo}'); return false;">
                         <img src="${item.logo}" data-name="${item.name}">
-                        <div class="card-overlay text-white">${item.name}</div>
+                        <div class="card-overlay text-[8px]">${item.name}</div>
                     </div>
                 `).join('');
                 this.setupArchEffect();
-                list.scrollLeft = 0;
             },
 
             play(url, name) {
                 window.location.href = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=com.brouken.player;type=video/*;B.set_mag_player=true;S.title=${encodeURIComponent(name)};end`;
             },
 
+            toggleLib() {
+                const modal = document.getElementById('lib-modal');
+                const content = document.getElementById('lib-content');
+                modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+                if(modal.style.display === 'flex') {
+                    content.innerHTML = this.favs.map(f => `
+                        <div class="lib-card" onclick="UIManager.play('${f.url}','${f.name}')">
+                            <img src="${f.logo}">
+                            <div class="text-[9px] mt-1 truncate">${f.name}</div>
+                        </div>
+                    `).join('');
+                }
+            },
+
             addFav(name, url, logo) {
                 if(!this.favs.find(f => f.url === url)) {
                     this.favs.push({name, url, logo});
                     localStorage.setItem('net_favs', JSON.stringify(this.favs));
-                    this.updateLib();
+                    alert('تم الحفظ في مكتبتك');
                 }
             },
 
-            updateLib() {
-                const lib = document.getElementById('mini-lib');
-                const content = this.favs.map(f => `<div class="lib-item" onclick="UIManager.play('${f.url}','${f.name}')"><img src="${f.logo}"></div>`).join('');
-                lib.innerHTML = `<span class="text-[10px] opacity-40 ml-2">المحفوظات:</span>` + content;
+            clearFavs() { if(confirm('مسح الكل؟')) { this.favs = []; localStorage.setItem('net_favs', '[]'); this.toggleLib(); } },
+
+            search(query) {
+                const filtered = this.allData.filter(i => i.name.toLowerCase().includes(query.toLowerCase()));
+                this.render(filtered);
             },
 
             switchTab(type, el) {
-                document.getElementById('search-input').value = "";
                 document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                 el.classList.add('active');
                 this.loadCategory(type);
@@ -267,24 +235,16 @@
                 const update = () => {
                     const cards = document.querySelectorAll('.net-card');
                     const center = slider.scrollLeft + (slider.offsetWidth / 2);
-                    
                     cards.forEach(card => {
                         const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
                         const distance = Math.abs(center - cardCenter);
-                        
-                        const scale = Math.max(0.75, 1.35 - (distance / 350));
-                        const translateY = Math.abs(cardCenter - center) / 7;
-                        const rotateY = (cardCenter - center) / 12;
-
-                        card.style.transform = `scale(${scale}) translateY(${translateY}px) rotateY(${-rotateY}deg)`;
-                        card.style.opacity = Math.max(0.4, 1 - (distance / 350));
-                        
+                        const scale = Math.max(0.8, 1.4 - (distance / 350));
+                        card.style.transform = `scale(${scale}) translateY(${Math.abs(cardCenter - center) / 10}px) rotateY(${(cardCenter - center) / 15}deg)`;
+                        card.style.opacity = Math.max(0.5, 1 - (distance / 400));
                         if (distance < 50) {
                             nameDisplay.innerText = card.querySelector('img').getAttribute('data-name');
-                            card.classList.add('card-active'); // إضافة الوهج
-                        } else {
-                            card.classList.remove('card-active');
-                        }
+                            card.classList.add('card-active');
+                        } else { card.classList.remove('card-active'); }
                     });
                 };
                 slider.onscroll = update;
