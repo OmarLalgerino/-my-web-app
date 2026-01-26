@@ -134,7 +134,7 @@
 
         <div class="search-box">
             <i class="fas fa-search opacity-40"></i>
-            <input type="text" id="search-input" placeholder="ابحث عن قناة أو أنمي..." oninput="UIManager.search(this.value)">
+            <input type="text" id="search-input" placeholder="ابحث عن أنمي أو قناة..." oninput="UIManager.search(this.value)">
         </div>
 
         <div class="tabs" id="tabs-list">
@@ -142,7 +142,6 @@
             <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
             <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
             <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
-            <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
             <div class="tab-item" onclick="UIManager.switchTab('media', this)">ميديا</div>
         </div>
 
@@ -162,18 +161,12 @@
             icon.innerHTML = isLight ? '<i class="fas fa-sun text-orange-500"></i>' : '<i class="fas fa-moon text-yellow-400"></i>';
         }
 
-        if(localStorage.getItem('theme') === 'light') {
-            document.body.classList.add('light-mode');
-            document.getElementById('theme-icon').innerHTML = '<i class="fas fa-sun text-orange-500"></i>';
-        }
-
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
             series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
-            docs: 'https://docs.google.com/spreadsheets/d/1tugkYcVuDf0bIo6bAOZzo5JJoA0YnE8OUxXK_50gbmQ/gviz/tq?tqx=out:csv',
-            // رابط السكربت الخاص بك مربوط بجلب بيانات الورقة 2
-            media: 'https://script.google.com/macros/s/AKfycbzI5wLKr7fE06E2d5oOixJhE3Qz9hOSGymrqjxj1aSTJXHseT3V9kn4qJTQnOn9v85n/exec'
+            // تم وضع رابط السكربت الخاص بك هنا للربط المباشر
+            media: 'https://script.google.com/macros/s/AKfycbwAgyrPmBpslvZCGj_IMdkxYhKAUbLf7tgDFnSC1HQ-0r1uvrWMnoR45ZdjARYFX725/exec'
         };
 
         const CUSTOM_UA = "VLC/3.0.18 LibVLC/3.0.18";
@@ -187,35 +180,23 @@
                     document.getElementById('splash-screen').style.opacity = '0';
                     document.getElementById('app-wrapper').style.opacity = '1';
                     setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 600);
-                }, 2000);
+                }, 1500);
             },
 
             async fetchData(type) {
                 try {
                     const res = await fetch(API_LINKS[type]);
-                    
-                    // إذا كان القسم "ميديا"، نقوم بمعالجة الـ JSON الخاص بالسكربت
                     if (type === 'media') {
-                        const rawData = await res.json();
-                        // السكربت حالياً مبرمج ليعيد سطر واحد، لكننا سنجهزه ليعرض القائمة كاملة من الورقة 2
-                        // ملاحظة: تأكد من أن الورقة 2 بها بيانات لتعمل هذه الوظيفة
-                        if (Array.isArray(rawData)) {
-                            return rawData.map(item => ({
-                                name: `${item.anime} - حلقة ${item.episode}`,
-                                url: item.mp4upload || item.doodstream,
-                                logo: "https://via.placeholder.com/100x145?text=Anime"
-                            }));
-                        }
+                        // جلب البيانات من السكربت الخاص بك بصيغة JSON
+                        return await res.json();
                     }
-
-                    // بقية الأقسام (CSV)
                     const text = await res.text();
                     return text.split('\n').slice(1).map(row => {
                         const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         return {
                             name: p[0]?.replace(/"/g, '').trim(),
                             url: p[1]?.replace(/"/g, '').trim(),
-                            logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/100x145"
+                            logo: p[2]?.replace(/"/g, '').trim() || "https://via.placeholder.com/100x145?text=NETGo"
                         };
                     }).filter(i => i.url && i.name);
                 } catch (e) { return []; }
@@ -223,7 +204,7 @@
 
             async loadCategory(type) {
                 document.getElementById('active-name').innerText = "";
-                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30">جاري التحميل...</div>';
+                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-30 italic">جاري تحميل المحتوى...</div>';
                 let data = [];
                 if (type === 'all') {
                     for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; }
@@ -240,12 +221,12 @@
             render(data) {
                 const list = document.getElementById('list');
                 if (data.length === 0) {
-                    list.innerHTML = '<div class="w-full text-center opacity-30">لا توجد بيانات متاحة</div>';
+                    list.innerHTML = '<div class="w-full text-center opacity-30">لا توجد نتائج حالياً</div>';
                     return;
                 }
                 list.innerHTML = data.map(item => {
                     const cleanUrl = item.url.replace(/^https?:\/\//, "");
-                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};S.http-user-agent=${encodeURIComponent(CUSTOM_UA)};B.is_live=true;S.mime_type=application/x-mpegURL;end`;
+                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};S.http-user-agent=${encodeURIComponent(CUSTOM_UA)};B.is_live=true;end`;
                     
                     return `
                         <div class="net-card" onclick="window.location.href='${intentUrl}'">
@@ -259,7 +240,6 @@
             },
 
             switchTab(type, el) {
-                document.getElementById('search-input').value = "";
                 document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                 el.classList.add('active');
                 this.loadCategory(type);
