@@ -58,7 +58,6 @@
         }
         .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); border-radius: 11px; }
         
-        /* علامة Bookmark الذهبية */
         .is-saved::after {
             content: "\f02e"; font-family: "Font Awesome 6 Free"; font-weight: 900;
             position: absolute; top: 5px; right: 8px; color: #eab308; font-size: 14px;
@@ -113,12 +112,11 @@
         </div>
 
         <div class="tabs">
-            <div class="tab-item active" onclick="UIManager.switchTab('all', this)">الكل</div>
+            <div class="tab-item active" onclick="UIManager.switchTab('media', this)">ميديا</div>
             <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
             <div class="tab-item" onclick="UIManager.switchTab('news', this)">أخبار</div>
             <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
             <div class="tab-item" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
-            <div class="tab-item" onclick="UIManager.switchTab('media', this)">ميديا</div>
         </div>
 
         <div class="flex-1 flex flex-col justify-center">
@@ -135,11 +133,11 @@
 
     <script>
         const API_LINKS = {
+            media: 'https://docs.google.com/spreadsheets/d/1jH5qsnm3bCcA1B7rjCVEKBd6x9HZCxfjFXdPrMk7MVc/gviz/tq?tqx=out:csv',
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
-            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
             news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv',
-            media: 'https://docs.google.com/spreadsheets/d/1jH5qsnm3bCcA1B7rjCVEKBd6x9HZCxfjFXdPrMk7MVc/gviz/tq?tqx=out:csv'
+            movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
+            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
@@ -151,7 +149,8 @@
                     document.body.classList.toggle('light-mode');
                     document.getElementById('theme-icon').className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
                 };
-                await this.loadCategory('all');
+                // بدء التحميل من قسم ميديا مباشرة
+                await this.loadCategory('media');
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.opacity = '0';
                     document.getElementById('app-wrapper').style.opacity = '1';
@@ -171,13 +170,10 @@
             },
 
             async loadCategory(type) {
-                // تفريغ النص فوراً عند البدء بتحميل قسم جديد
                 document.getElementById('active-name').innerText = ""; 
                 document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-20">Loading...</div>';
                 
-                let data = [];
-                if (type === 'all') { for (const key in API_LINKS) { data = [...data, ...await this.fetchData(key)]; } }
-                else { data = await this.fetchData(type); }
+                const data = await this.fetchData(type);
                 this.allData = data;
                 this.render(data);
             },
@@ -205,7 +201,6 @@
                 const index = this.favs.findIndex(f => f.url === url);
                 if(index === -1) {
                     this.favs.push({name, url, logo});
-                    if(window.navigator.vibrate) window.navigator.vibrate(50);
                 } else {
                     this.favs.splice(index, 1);
                 }
@@ -240,17 +235,14 @@
                 const update = () => {
                     const cards = document.querySelectorAll('.net-card');
                     if(cards.length === 0) return;
-                    
                     const center = slider.scrollLeft + (slider.offsetWidth / 2);
                     let closestName = "";
-
                     cards.forEach(card => {
                         const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
                         const distance = Math.abs(center - cardCenter);
                         const scale = Math.max(0.75, 1.35 - (distance / 350));
                         card.style.transform = `scale(${scale}) translateY(${distance / 12}px) rotateY(${(cardCenter - center) / 15}deg)`;
                         card.style.opacity = Math.max(0.4, 1 - (distance / 450));
-                        
                         if (distance < 50) {
                             closestName = card.querySelector('img').getAttribute('data-name');
                             card.classList.add('card-active');
