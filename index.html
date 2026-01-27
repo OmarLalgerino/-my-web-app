@@ -33,12 +33,11 @@
             color: var(--text-main);
             font-family: 'Cairo', sans-serif;
             margin: 0;
-            overflow-x: hidden;
-            overflow-y: hidden; /* تم التعديل لاحقاً في الـ Media Query */
+            overflow: hidden;
             height: 100vh;
         }
 
-        /* --- تحسينات وضع تدوير الشاشة (Landscape) --- */
+        /* --- إصلاحات التدوير Landscape لضمان ظهور الشريط العلوي --- */
         @media screen and (orientation: landscape) and (max-height: 500px) {
             body { overflow-y: auto; height: auto; }
             #app-wrapper { height: auto; min-height: 100vh; }
@@ -47,6 +46,7 @@
             .arch-container { height: 180px !important; padding: 10px 42vw !important; }
             .net-card { min-width: 85px !important; height: 120px !important; }
             .tabs { margin-bottom: 5px !important; }
+            #active-name { margin-top: 5px !important; font-size: 16px !important; }
         }
 
         .bg-blobs {
@@ -153,7 +153,6 @@
     </div>
 
     <script>
-        // الكود المكتوب هنا لا يحتاج لتغيير، الإصلاح تم في قسم الـ CSS بالأعلى
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
@@ -214,7 +213,8 @@
                 const list = document.getElementById('list');
                 list.innerHTML = data.map(item => {
                     const cleanUrl = item.url.replace(/^https?:\/\//, "");
-                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;end`;
+                    // تم تعديل الـ Intent لإضافة User-Agent وتقليل التقطيع
+                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;S.title=${encodeURIComponent(item.name)};S.headers=User-Agent:Mozilla/5.0%20(Linux;%20Android%2010)%20AppleWebKit/537.36;end`;
                     
                     return `
                         <div class="net-card" onclick="window.location.href='${intentUrl}'">
@@ -239,6 +239,7 @@
                 const nameDisplay = document.getElementById('active-name');
                 const update = () => {
                     const cards = document.querySelectorAll('.net-card');
+                    if(cards.length === 0) return;
                     const center = slider.scrollLeft + (slider.offsetWidth / 2);
                     
                     cards.forEach(card => {
@@ -263,7 +264,7 @@
                     });
                 };
                 slider.onscroll = update;
-                setTimeout(update, 100);
+                setTimeout(update, 300);
             }
         };
 
