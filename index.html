@@ -14,82 +14,99 @@
         * { -webkit-user-select: none; user-select: none; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
         :root {
-            --bg: #0d0d0f;
-            --glass: rgba(255, 255, 255, 0.03);
+            --bg: #08080a;
+            --glass: rgba(255, 255, 255, 0.04);
             --primary: #22c55e;
-            --text: #e2e8f0;
-            --glow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --text: #ffffff;
+            --glow: 0 0 12px rgba(34, 197, 94, 0.4);
+            --card-blur: blur(20px);
         }
 
         .light-mode {
-            --bg: #f8fafc;
-            --glass: rgba(255, 255, 255, 0.9);
-            --text: #1e293b;
-            --glow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --bg: #f0f2f5;
+            --glass: rgba(255, 255, 255, 0.7);
+            --text: #1a1a1a;
+            --glow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
-        body { background-color: var(--bg); color: var(--text); font-family: 'Cairo', sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: 0.3s; }
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Cairo', sans-serif; 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            transition: background 0.4s ease;
+        }
 
-        header { padding: 15px 12px; display: flex; justify-content: space-between; align-items: center; }
-        
-        .brand { font-family: 'Orbitron'; font-weight: 900; font-size: 22px; letter-spacing: 1px; }
+        /* الخلفية الزجاجية الضبابية العامة */
+        body::before {
+            content: "";
+            position: fixed;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.05) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        header { padding: 15px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-family: 'Orbitron'; font-weight: 900; font-size: 24px; }
 
         .glass-card { 
             background: var(--glass); 
-            backdrop-filter: blur(15px); 
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: var(--card-blur); 
+            -webkit-backdrop-filter: var(--card-blur);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: var(--glow);
         }
 
-        .search-area { padding: 5px 12px; }
-        .search-wrapper { border-radius: 15px; display: flex; align-items: center; padding: 0 15px; height: 45px; }
+        .search-area { padding: 10px 15px; }
+        .search-wrapper { border-radius: 14px; display: flex; align-items: center; padding: 0 15px; height: 48px; }
         .search-wrapper input { background: transparent; border: none; width: 100%; color: inherit; outline: none; font-size: 14px; }
-        .search-wrapper i { font-size: 14px; opacity: 0.4; }
 
-        .tabs { display: flex; overflow-x: auto; gap: 8px; padding: 15px 12px; scrollbar-width: none; }
-        .tab { padding: 6px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; transition: 0.3s; color: #64748b; cursor: pointer; }
-        .tab.active { background: var(--primary); color: #000; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+        .tabs { display: flex; overflow-x: auto; gap: 8px; padding: 10px 15px; scrollbar-width: none; }
+        .tab { padding: 8px 18px; border-radius: 12px; font-size: 13px; font-weight: 600; white-space: nowrap; transition: 0.3s; color: #71717a; cursor: pointer; }
+        .tab.active { background: var(--primary); color: #000; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
 
-        #channel-list { flex: 1; overflow-y: auto; padding: 5px 10px; display: flex; flex-direction: column; gap: 8px; }
+        #channel-list { flex: 1; overflow-y: auto; padding: 10px 15px; display: flex; flex-direction: column; gap: 10px; }
 
-        /* تصميم القناة الواسع والمريح */
         .channel-card {
-            display: flex; align-items: center; padding: 10px 14px;
-            border-radius: 18px; transition: 0.2s;
-            width: 100%;
+            display: flex; align-items: center; padding: 12px 16px;
+            border-radius: 18px; transition: 0.2s ease-out;
+            cursor: pointer;
         }
-        .channel-card:active { transform: scale(0.98); background: rgba(255,255,255,0.05); }
+        /* حركة ضغط بسيطة بدلاً من الاهتزاز */
+        .channel-card:active { transform: translateY(2px); background: rgba(255,255,255,0.08); }
 
-        /* إطار الصورة دائري بالكامل */
+        /* إطار الصورة دائري متوهج */
         .img-box { 
-            width: 42px; height: 42px; 
+            width: 45px; height: 45px; 
             border-radius: 50%; 
-            background: #1a1a1c; 
+            background: #000; 
             overflow: hidden; 
             flex-shrink: 0; 
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 8px var(--primary); /* التوهج */
             display: flex; align-items: center; justify-content: center;
         }
         .img-box img { width: 100%; height: 100%; object-fit: cover; }
 
-        .ch-name { margin-right: 12px; flex: 1; font-weight: 600; font-size: 14px; opacity: 0.9; }
+        .ch-name { margin-right: 15px; flex: 1; font-weight: 600; font-size: 15px; }
 
-        /* أيقونات صغيرة جداً وأنيقة */
         .btn-play { 
-            width: 28px; height: 28px; 
+            width: 30px; height: 30px; 
             border-radius: 50%; 
-            background: rgba(34, 197, 94, 0.15); 
-            color: var(--primary); 
+            background: var(--primary); 
+            color: #000; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 10px; 
-            transition: 0.3s;
+            font-size: 11px; 
         }
         
-        .fav-btn { font-size: 14px; opacity: 0.3; transition: 0.2s; padding: 5px; }
-        .fav-btn.active { opacity: 1; color: #fbbf24; }
+        .fav-btn { font-size: 16px; opacity: 0.4; padding: 5px; transition: 0.3s; }
+        .fav-btn.active { opacity: 1; color: #fbbf24; text-shadow: 0 0 8px rgba(251, 191, 36, 0.5); }
 
-        .theme-btn { font-size: 18px; cursor: pointer; opacity: 0.7; }
+        .theme-btn { font-size: 22px; cursor: pointer; transition: 0.3s; }
 
         #splash { 
             position: fixed; inset: 0; background: #000; z-index: 9999; 
@@ -101,34 +118,34 @@
 <body>
 
     <div id="splash">
-        <div class="brand text-white text-4xl">NET<span class="text-green-500">Go</span></div>
+        <div class="brand text-white text-5xl">NET<span class="text-green-500">Go</span></div>
     </div>
 
     <header>
         <div class="brand">
             <span>NET</span><span class="text-green-500">Go</span>
         </div>
-        <div class="flex items-center gap-5">
-            <i class="fas fa-circle-half-stroke theme-btn" onclick="UIManager.toggleTheme()"></i>
-            <a href="https://t.me/zone1996" target="_blank" class="opacity-60"><i class="fab fa-telegram-plane text-xl"></i></a>
-            <i class="fas fa-heart text-xl opacity-40" id="fav-trigger" onclick="UIManager.toggleFavs()"></i>
+        <div class="flex items-center gap-6">
+            <i class="fas fa-moon theme-btn" id="mode-icon" onclick="UIManager.toggleTheme()"></i>
+            <a href="https://t.me/zone1996" target="_blank"><i class="fab fa-telegram-plane text-2xl opacity-70"></i></a>
+            <i class="fas fa-heart text-2xl opacity-40" id="fav-trigger" onclick="UIManager.toggleFavs()"></i>
         </div>
     </header>
 
     <div class="search-area">
         <div class="search-wrapper glass-card">
-            <i class="fas fa-search ml-3"></i>
-            <input type="text" id="search-box" placeholder="البحث عن قناة..." oninput="UIManager.search(this.value)">
+            <i class="fas fa-search ml-3 opacity-30"></i>
+            <input type="text" id="search-box" placeholder="ابحث عن قناتك..." oninput="UIManager.search(this.value)">
         </div>
     </div>
 
     <div class="tabs">
         <div class="tab active" onclick="UIManager.switchTab('media', this)">الكل</div>
-        <div class="tab glass-card" onclick="UIManager.switchTab('sports', this)">الرياضة</div>
-        <div class="tab glass-card" onclick="UIManager.switchTab('news', this)">الأخبار</div>
-        <div class="tab glass-card" onclick="UIManager.switchTab('movies', this)">الأفلام</div>
-        <div class="tab glass-card" onclick="UIManager.switchTab('series', this)">المسلسلات</div>
-        <div class="tab glass-card" onclick="UIManager.switchTab('docs', this)">وثائقية</div>
+        <div class="tab glass-card" onclick="UIManager.switchTab('sports', this)">رياضة</div>
+        <div class="tab glass-card" onclick="UIManager.switchTab('news', this)">أخبار</div>
+        <div class="tab glass-card" onclick="UIManager.switchTab('movies', this)">أفلام</div>
+        <div class="tab glass-card" onclick="UIManager.switchTab('series', this)">مسلسلات</div>
+        <div class="tab glass-card" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
     </div>
 
     <div id="channel-list"></div>
@@ -152,7 +169,7 @@
                 setTimeout(() => {
                     document.getElementById('splash').style.opacity = '0';
                     setTimeout(() => document.getElementById('splash').style.display = 'none', 800);
-                }, 1200);
+                }, 1000);
             },
 
             async fetchData(type) {
@@ -172,6 +189,7 @@
 
             async loadCategory(type) {
                 this.isFavMode = false;
+                document.getElementById('fav-trigger').classList.remove('text-red-500');
                 let data = [];
                 if (type === 'media') {
                     const results = await Promise.all(Object.keys(API_LINKS).map(k => this.fetchData(k)));
@@ -193,7 +211,7 @@
                                 <img src="${item.logo}" loading="lazy" onerror="this.src='https://cdn-icons-png.flaticon.com/512/716/716429.png'">
                             </div>
                             <div class="ch-name">${item.name}</div>
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-4">
                                 <i class="${isFav ? 'fas active' : 'far'} fa-star fav-btn" 
                                    onclick="event.stopPropagation(); UIManager.toggleSave('${item.name}','${item.url}','${item.logo}')"></i>
                                 <div class="btn-play">
@@ -206,7 +224,9 @@
             },
 
             toggleTheme() {
-                document.body.classList.toggle('light-mode');
+                const isLight = document.body.classList.toggle('light-mode');
+                const icon = document.getElementById('mode-icon');
+                icon.className = isLight ? 'fas fa-sun theme-btn' : 'fas fa-moon theme-btn';
             },
 
             search(q) {
@@ -227,8 +247,9 @@
 
             toggleFavs() {
                 this.isFavMode = !this.isFavMode;
-                document.getElementById('fav-trigger').classList.toggle('opacity-40', !this.isFavMode);
-                document.getElementById('fav-trigger').classList.toggle('text-red-500', this.isFavMode);
+                const favBtn = document.getElementById('fav-trigger');
+                favBtn.classList.toggle('opacity-40', !this.isFavMode);
+                favBtn.classList.toggle('text-red-500', this.isFavMode);
                 this.render(this.isFavMode ? this.favs : this.allData);
             },
 
