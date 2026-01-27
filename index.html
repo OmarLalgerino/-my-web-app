@@ -3,139 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NETGo TV Pro - Elite List</title>
+    <title>NETGo TV Pro - Ultra Slim</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
         
-        * { -webkit-user-select: none; user-select: none; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        * { -webkit-user-select: none; user-select: none; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         :root {
-            --surface: #0f1014;
-            --item-bg: rgba(255, 255, 255, 0.03);
+            --surface: #08080a;
+            --item-bg: #121216;
             --primary: #22c55e;
-            --border: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.05);
             --text: #ffffff;
         }
 
-        body.light-mode {
-            --surface: #f8fafc;
-            --item-bg: #ffffff;
-            --primary: #16a34a;
-            --border: #e2e8f0;
-            --text: #0f172a;
+        body { 
+            background-color: var(--surface); 
+            color: var(--text); 
+            font-family: 'Cairo', sans-serif; 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        body { background-color: var(--surface); color: var(--text); font-family: 'Cairo', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* شريط التبويبات */
-        .tabs-container { padding: 10px 15px; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; display: flex; gap: 10px; scrollbar-width: none; flex-shrink: 0; }
-        .tabs-container::-webkit-scrollbar { display: none; }
-        .tab { padding: 8px 20px; border-radius: 12px; background: var(--item-bg); border: 1px solid var(--border); font-size: 13px; font-weight: 700; white-space: nowrap; color: #888; transition: 0.3s; cursor: pointer; }
-        .tab.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2); }
+        /* رأس الصفحة ثابت */
+        header { flex-shrink: 0; background: var(--surface); z-index: 50; }
 
         /* قائمة القنوات الرأسية */
-        .channel-list { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        
-        .channel-item {
-            display: flex; align-items: center; padding: 12px;
-            background: var(--item-bg); border-radius: 16px; border: 1px solid var(--border);
-            transition: all 0.2s ease; cursor: pointer; position: relative;
+        #channel-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 10px 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px;
+            scroll-behavior: smooth; /* حركة انسيابية للأعلى */
         }
-        .channel-item:active { transform: scale(0.98); background: rgba(34, 197, 94, 0.1); border-color: var(--primary); }
 
-        .logo-box { width: 55px; height: 55px; background: rgba(0,0,0,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--border); flex-shrink: 0; }
-        .logo-box img { width: 85%; height: 85%; object-fit: contain; }
+        /* تصميم القناة (صغير ومضغوط) */
+        .channel-item {
+            display: flex; 
+            align-items: center; 
+            padding: 8px 12px;
+            background: var(--item-bg); 
+            border-radius: 12px; 
+            border: 1px solid var(--border);
+            animation: slideUp 0.4s ease forwards; /* حركة القنوات للأعلى عند الظهور */
+        }
 
-        .channel-info { margin-right: 15px; flex: 1; }
-        .channel-name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
-        .channel-status { font-size: 11px; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* صورة القناة (صغيرة كما طلبت) */
+        .logo-small { 
+            width: 40px; 
+            height: 40px; 
+            background: #000; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .logo-small img { width: 100%; height: 100%; object-fit: contain; }
+
+        .info { margin-right: 12px; flex: 1; }
+        .name { font-weight: 700; font-size: 14px; color: #eee; }
         
-        .play-btn { width: 35px; height: 35px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; margin-right: 10px; }
+        /* أزرار التحكم */
+        .actions { display: flex; gap: 15px; align-items: center; }
+        .btn-play { color: var(--primary); font-size: 18px; }
+        .btn-fav { color: #333; font-size: 16px; }
+        .btn-fav.active { color: #eab308; }
 
-        .fav-star { font-size: 18px; color: #333; transition: 0.3s; padding: 5px; }
-        .fav-star.active { color: #eab308; }
+        /* شريط البحث */
+        .search-box {
+            position: sticky; top: 0; background: var(--surface); padding: 10px 15px; z-index: 40;
+        }
 
-        #splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
+        /* التبويبات */
+        .tabs { display: flex; overflow-x: auto; gap: 8px; padding: 5px 15px 15px; scrollbar-width: none; }
+        .tab { 
+            padding: 5px 15px; border-radius: 20px; background: #1a1a20; 
+            font-size: 12px; white-space: nowrap; border: 1px solid var(--border);
+        }
+        .tab.active { background: var(--primary); color: white; }
+
+        #splash { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
     </style>
 </head>
 <body>
 
     <div id="splash">
-        <div class="text-4xl font-black italic mb-4" style="font-family: 'Orbitron';"><span class="text-white">NET</span><span class="text-green-500">Go</span></div>
-        <div class="w-12 h-1 border-2 border-green-500 border-t-transparent animate-spin rounded-full"></div>
+        <div class="text-3xl font-black text-green-500">NETGo PRO</div>
     </div>
 
-    <header class="p-4 flex justify-between items-center bg-transparent shrink-0">
-        <div class="text-2xl font-black italic" style="font-family: 'Orbitron';">
-            <span style="color: var(--text)">NET</span><span class="text-green-500">Go</span>
-        </div>
-        <div class="flex gap-2">
-            <div id="theme-toggle" class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/5 cursor-pointer"><i class="fas fa-moon"></i></div>
-            <div onclick="UIManager.toggleFavs()" class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/5 cursor-pointer"><i class="fas fa-bookmark text-yellow-500"></i></div>
-        </div>
+    <header class="p-4 flex justify-between items-center">
+        <div class="text-xl font-black italic text-white">NET<span class="text-green-500">Go</span></div>
+        <i class="fas fa-bookmark text-yellow-500" onclick="UIManager.toggleFavs()"></i>
     </header>
 
-    <div class="px-4 mb-2 shrink-0">
-        <div class="bg-white/5 border border-white/5 rounded-2xl flex items-center px-4 py-3 gap-3">
-            <i class="fas fa-search opacity-30"></i>
-            <input type="text" id="search" class="bg-transparent border-none w-full text-sm outline-none" placeholder="ابحث عن قناتك المفضلة..." oninput="UIManager.search(this.value)">
+    <div class="search-box">
+        <div class="bg-white/5 rounded-xl flex items-center px-4 py-2 border border-white/5">
+            <i class="fas fa-search opacity-30 text-xs mr-2"></i>
+            <input type="text" id="search-input" class="bg-transparent border-none w-full text-sm outline-none" placeholder="ابحث..." oninput="UIManager.handleSearch(this.value)">
         </div>
     </div>
 
-    <div class="tabs-container" id="tabs">
-        <div class="tab active" onclick="UIManager.switchTab('media', this)">قنوات التلفزيون</div>
+    <div class="tabs">
+        <div class="tab active" onclick="UIManager.switchTab('media', this)">الكل</div>
         <div class="tab" onclick="UIManager.switchTab('sports', this)">الرياضة</div>
         <div class="tab" onclick="UIManager.switchTab('news', this)">الأخبار</div>
         <div class="tab" onclick="UIManager.switchTab('movies', this)">الأفلام</div>
-        <div class="tab" onclick="UIManager.switchTab('series', this)">المسلسلات</div>
     </div>
 
-    <div class="channel-list" id="channel-list"></div>
+    <div id="channel-list"></div>
 
     <script>
         const API_LINKS = {
             sports: 'https://docs.google.com/spreadsheets/d/14Z-3UCmBxB9fkk0N29JiLYB7XeBPBvKHy8Ai_oL3dOM/gviz/tq?tqx=out:csv',
             movies: 'https://docs.google.com/spreadsheets/d/1tSIcjUZuRphgmcS0YNUvT83980OWLH7KoNpmUQ8UfWA/gviz/tq?tqx=out:csv',
-            series: 'https://docs.google.com/spreadsheets/d/1UmwKt7FLLHY5KbpkxRw50n0HY8vbAnkmUZCLceGU2-s/gviz/tq?tqx=out:csv',
             news: 'https://docs.google.com/spreadsheets/d/1LNdY3vajY5vMM7zGl4ipEcz-96gPs7QI-QgaS4LwP94/gviz/tq?tqx=out:csv'
         };
 
         const UIManager = {
-            data: [],
+            allData: [],
             favs: JSON.parse(localStorage.getItem('net_favs')) || [],
-            isFavView: false,
+            isFavMode: false,
 
             async init() {
-                document.getElementById('theme-toggle').onclick = () => {
-                    document.body.classList.toggle('light-mode');
-                    const icon = document.querySelector('#theme-toggle i');
-                    icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
-                };
                 await this.loadCategory('media');
-                setTimeout(() => document.getElementById('splash').style.opacity = '0', 1000);
-                setTimeout(() => document.getElementById('splash').style.display = 'none', 1500);
+                setTimeout(() => document.getElementById('splash').style.display = 'none', 1000);
             },
 
             async loadCategory(type) {
-                this.isFavView = false;
-                const container = document.getElementById('channel-list');
-                container.innerHTML = '<div class="text-center opacity-30 py-20">جاري تحميل القنوات...</div>';
-                
-                let list = [];
+                this.isFavMode = false;
+                let data = [];
                 if(type === 'media') {
-                    for (const k in API_LINKS) list = [...list, ...await this.fetch(k)];
+                    for (const k in API_LINKS) { data = [...data, ...await this.fetchData(k)]; }
                 } else {
-                    list = await this.fetch(type);
+                    data = await this.fetchData(type);
                 }
-                this.data = list;
-                this.render(list);
+                this.allData = data;
+                this.render(data);
             },
 
-            async fetch(type) {
+            async fetchData(type) {
                 try {
                     const r = await fetch(API_LINKS[type]);
                     const t = await r.text();
@@ -146,28 +168,34 @@
                 } catch { return []; }
             },
 
-            render(arr) {
-                const container = document.getElementById('channel-list');
-                container.innerHTML = arr.map(item => {
+            render(data) {
+                const list = document.getElementById('channel-list');
+                list.innerHTML = data.map((item, index) => {
                     const isFav = this.favs.some(f => f.url === item.url);
                     return `
-                        <div class="channel-item">
-                            <div class="logo-box" onclick="UIManager.play('${item.url}','${item.name}')">
-                                <img src="${item.logo}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/716/716429.png'">
+                        <div class="channel-item" style="animation-delay: ${index * 0.03}s">
+                            <div class="logo-small" onclick="UIManager.play('${item.url}','${item.name}')">
+                                <img src="${item.logo}" onerror="this.src='https://via.placeholder.com/50'">
                             </div>
-                            <div class="channel-info" onclick="UIManager.play('${item.url}','${item.name}')">
-                                <div class="channel-name">${item.name}</div>
-                                <div class="channel-status"><i class="fas fa-circle text-[6px]"></i> مباشر بجودة عالية</div>
+                            <div class="info" onclick="UIManager.play('${item.url}','${item.name}')">
+                                <div class="name">${item.name}</div>
                             </div>
-                            <div class="fav-star ${isFav ? 'active' : ''}" onclick="UIManager.toggleSave('${item.name}','${item.url}','${item.logo}')">
-                                <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
-                            </div>
-                            <div class="play-btn" onclick="UIManager.play('${item.url}','${item.name}')">
-                                <i class="fas fa-play"></i>
+                            <div class="actions">
+                                <i class="fa-star ${isFav ? 'fas btn-fav active' : 'far btn-fav'}" onclick="UIManager.toggleSave('${item.name}','${item.url}','${item.logo}')"></i>
+                                <i class="fas fa-play-circle btn-play" onclick="UIManager.play('${item.url}','${item.name}')"></i>
                             </div>
                         </div>
                     `;
                 }).join('');
+            },
+
+            handleSearch(q) {
+                // عند البحث.. اصعد فوراً للأعلى
+                const list = document.getElementById('channel-list');
+                list.scrollTop = 0; 
+
+                const filtered = this.allData.filter(i => i.name.toLowerCase().includes(q.toLowerCase()));
+                this.render(filtered);
             },
 
             play(u, n) {
@@ -179,28 +207,19 @@
                 if(idx === -1) this.favs.push({name:n, url:u, logo:l});
                 else this.favs.splice(idx, 1);
                 localStorage.setItem('net_favs', JSON.stringify(this.favs));
-                this.isFavView ? this.render(this.favs) : this.render(this.data);
+                this.isFavMode ? this.render(this.favs) : this.render(this.allData);
             },
 
             toggleFavs() {
-                this.isFavView = !this.isFavView;
-                if(this.isFavView) {
-                    this.render(this.favs);
-                    if(this.favs.length === 0) document.getElementById('channel-list').innerHTML = '<div class="text-center opacity-30 py-20">قائمة الحفظ فارغة</div>';
-                } else {
-                    this.render(this.data);
-                }
-            },
-
-            search(q) {
-                const source = this.isFavView ? this.favs : this.data;
-                this.render(source.filter(i => i.name.toLowerCase().includes(q.toLowerCase())));
+                this.isFavMode = !this.isFavMode;
+                this.render(this.isFavMode ? this.favs : this.allData);
             },
 
             switchTab(type, el) {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 el.classList.add('active');
                 this.loadCategory(type);
+                document.getElementById('channel-list').scrollTop = 0;
             }
         };
 
