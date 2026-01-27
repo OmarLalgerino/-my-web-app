@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NETGo TV Pro - Just Player Version</title>
+    <title>NETGo TV Pro - Just Player Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -151,7 +151,6 @@
 
         const UIManager = {
             allData: [],
-            currentData: [],
             
             async init() {
                 document.getElementById('theme-btn').onclick = () => {
@@ -200,12 +199,18 @@
 
             render(data) {
                 const list = document.getElementById('list');
-                list.innerHTML = data.map(item => `
-                    <div class="net-card" onclick="window.location.href='intent://${item.url.replace(/^https?:\/\//, "")}#Intent;scheme=http;package=com.brouken.player;type=video/*;end'">
-                        <img src="${item.logo}" data-name="${item.name}">
-                        <div class="card-overlay text-white">${item.name}</div>
-                    </div>
-                `).join('');
+                list.innerHTML = data.map(item => {
+                    // تحويل الرابط لصيغة Intent الخاصة بـ Just Player
+                    const cleanUrl = item.url.replace(/^https?:\/\//, "");
+                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=http;package=com.brouken.player;type=video/*;end`;
+                    
+                    return `
+                        <div class="net-card" onclick="window.location.href='${intentUrl}'">
+                            <img src="${item.logo}" data-name="${item.name}">
+                            <div class="card-overlay text-white">${item.name}</div>
+                        </div>
+                    `;
+                }).join('');
                 this.setupArchEffect();
                 list.scrollLeft = 0;
             },
