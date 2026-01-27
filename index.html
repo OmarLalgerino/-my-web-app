@@ -11,7 +11,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Orbitron:wght@700;900&display=swap');
         
-        * { -webkit-user-select: none; user-select: none; box-sizing: border-box; touch-action: pan-x; outline: none; }
+        * { -webkit-user-select: none; user-select: none; box-sizing: border-box; touch-action: pan-y; outline: none; }
 
         :root {
             --surface: #0a0a0c;
@@ -28,43 +28,64 @@
             --glass-border: rgba(0, 0, 0, 0.1);
         }
 
-        body { background-color: var(--surface); color: var(--text-main); font-family: 'Cairo', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        body { background-color: var(--surface); color: var(--text-main); font-family: 'Cairo', sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; }
 
         #splash-screen {
             position: fixed; inset: 0; background: #0a0a0a; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease;
         }
 
-        .tabs { display: flex; overflow-x: auto; gap: 8px; padding: 0 20px; scrollbar-width: none; margin-bottom: 15px; }
+        /* تعديل التبويبات لتكون ثابتة في الأعلى */
+        .tabs { display: flex; overflow-x: auto; gap: 8px; padding: 10px 20px; scrollbar-width: none; flex-shrink: 0; }
         .tab-item { cursor: pointer; padding: 6px 18px; font-weight: 700; color: #888; border-radius: 20px; font-size: 11px; flex-shrink: 0; transition: 0.3s; background: var(--card-bg); border: 1px solid var(--glass-border); }
         .tab-item.active { color: #fff; background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); }
 
-        .arch-container {
-            display: flex; align-items: center; overflow-x: auto;
-            padding: 40px 42vw; gap: 15px; perspective: 1200px;
-            scroll-snap-type: x mandatory; height: 260px; 
-            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+        /* تعديل الحاوية لتصبح شبكة راسية وأفقية */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            overflow-y: auto; /* تمكين التمرير الرأسي */
+            flex-grow: 1;
+            scrollbar-width: thin;
         }
 
         .net-card {
-            min-width: 100px; height: 145px;
-            background: var(--card-bg); border-radius: 12px; position: relative; scroll-snap-align: center;
-            transition: transform 0.25s cubic-bezier(0.1, 0.7, 0.1, 1), opacity 0.25s ease;
-            border: 1px solid var(--glass-border); flex-shrink: 0;
+            aspect-ratio: 3/4;
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-        .net-card img { width: 100%; height: 100%; object-fit: contain; background: rgba(0,0,0,0.3); border-radius: 11px; }
         
+        .net-card:active { transform: scale(0.95); }
+        
+        .net-card img { width: 100%; height: 80%; object-fit: contain; background: rgba(0,0,0,0.3); padding: 5px; }
+        
+        .card-info {
+            height: 20%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 5px;
+            background: rgba(0,0,0,0.2);
+        }
+        .card-info span { font-size: 10px; font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+
         .is-saved::after {
             content: "\f02e"; font-family: "Font Awesome 6 Free"; font-weight: 900;
             position: absolute; top: 5px; right: 8px; color: #eab308; font-size: 14px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;
+            z-index: 10;
         }
 
-        .card-active { border-color: var(--primary) !important; box-shadow: 0 0 20px rgba(34, 197, 94, 0.4) !important; }
-
         #fav-panel {
-            position: fixed; bottom: -100%; left: 0; width: 100%; height: 60vh;
+            position: fixed; bottom: -100%; left: 0; width: 100%; height: 70vh;
             background: rgba(10, 10, 12, 0.98); backdrop-filter: blur(20px); border-top: 2px solid var(--primary);
-            z-index: 1000; transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.05); padding: 20px; border-radius: 25px 25px 0 0;
+            z-index: 1000; transition: 0.4s ease; padding: 20px; border-radius: 25px 25px 0 0;
         }
         #fav-panel.show { bottom: 0; }
         .fav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; overflow-y: auto; height: 85%; }
@@ -81,13 +102,13 @@
     <div id="fav-panel">
         <div class="flex justify-between items-center mb-6">
             <h3 class="font-black text-lg text-white">مكتبة الحفظ</h3>
-            <i class="fas fa-times text-xl" onclick="UIManager.toggleFavs()"></i>
+            <i class="fas fa-times text-xl cursor-pointer" onclick="UIManager.toggleFavs()"></i>
         </div>
         <div class="fav-grid" id="fav-grid"></div>
     </div>
 
     <div id="app-wrapper">
-        <header class="p-5 flex justify-between items-center">
+        <header class="p-5 flex justify-between items-center shrink-0">
             <div class="text-2xl font-black italic tracking-tighter" style="font-family: 'Orbitron';">
                 <span style="color: var(--text-main)">NET</span><span class="text-green-500">Go</span>
             </div>
@@ -97,15 +118,15 @@
             </div>
         </header>
 
-        <div class="px-5 mb-4">
+        <div class="px-5 mb-4 shrink-0">
             <div class="bg-white/5 border border-white/10 rounded-2xl flex items-center px-4 py-2.5 gap-3">
                 <i class="fas fa-search opacity-30 text-sm"></i>
-                <input type="text" id="search-input" class="bg-transparent border-none w-full text-sm outline-none" placeholder="ابحث..." oninput="UIManager.search(this.value)">
+                <input type="text" id="search-input" class="bg-transparent border-none w-full text-sm outline-none" placeholder="ابحث عن قناة..." oninput="UIManager.search(this.value)">
             </div>
         </div>
 
         <div class="tabs">
-            <div class="tab-item active" onclick="UIManager.switchTab('media', this)">ميديا</div>
+            <div class="tab-item active" onclick="UIManager.switchTab('media', this)">الكل</div>
             <div class="tab-item" onclick="UIManager.switchTab('sports', this)">رياضة</div>
             <div class="tab-item" onclick="UIManager.switchTab('news', this)">أخبار</div>
             <div class="tab-item" onclick="UIManager.switchTab('movies', this)">أفلام</div>
@@ -113,12 +134,9 @@
             <div class="tab-item" onclick="UIManager.switchTab('docs', this)">وثائقي</div>
         </div>
 
-        <div class="flex-1 flex flex-col justify-center">
-            <div class="arch-container" id="list"></div>
-            <div id="active-name" class="text-center mt-4 font-black text-2xl text-green-500 min-h-[35px]"></div>
-        </div>
+        <div class="grid-container" id="list"></div>
 
-        <div class="p-6 flex justify-center">
+        <div class="p-4 shrink-0 flex justify-center">
             <button onclick="UIManager.toggleFavs()" class="bg-white/5 border border-white/10 px-8 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 backdrop-blur-md active:scale-95 transition">
                 <i class="fas fa-bookmark text-yellow-500"></i> مكتبة الحفظ
             </button>
@@ -148,7 +166,7 @@
                     document.getElementById('splash-screen').style.opacity = '0';
                     document.getElementById('app-wrapper').style.opacity = '1';
                     setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 600);
-                }, 2000);
+                }, 1500);
             },
 
             async fetchData(type) {
@@ -157,20 +175,24 @@
                     const text = await res.text();
                     return text.split('\n').slice(1).map(row => {
                         const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                        return { name: p[0]?.replace(/"/g, '').trim(), url: p[1]?.replace(/"/g, '').trim(), logo: p[2]?.replace(/"/g, '').trim() };
+                        return { 
+                            name: p[0]?.replace(/"/g, '').trim(), 
+                            url: p[1]?.replace(/"/g, '').trim(), 
+                            logo: p[2]?.replace(/"/g, '').trim() 
+                        };
                     }).filter(i => i.url && i.name);
                 } catch (e) { return []; }
             },
 
             async loadCategory(type) {
-                document.getElementById('active-name').innerText = ""; 
-                document.getElementById('list').innerHTML = '<div class="w-full text-center opacity-20">Loading...</div>';
+                const list = document.getElementById('list');
+                list.innerHTML = '<div class="col-span-full text-center py-10 opacity-50">جاري التحميل...</div>';
                 
                 let data = [];
                 if (type === 'media') {
-                    // تحميل جميع القنوات من كل الروابط عند الضغط على ميديا
                     for (const key in API_LINKS) {
-                        data = [...data, ...await this.fetchData(key)];
+                        const catData = await this.fetchData(key);
+                        data = [...data, ...catData];
                     }
                 } else {
                     data = await this.fetchData(type);
@@ -182,17 +204,23 @@
 
             render(data) {
                 const list = document.getElementById('list');
+                if(data.length === 0) {
+                    list.innerHTML = '<div class="col-span-full text-center py-10 opacity-50">لا توجد نتائج</div>';
+                    return;
+                }
                 list.innerHTML = data.map(item => {
                     const isSaved = this.favs.some(f => f.url === item.url);
                     return `
                         <div class="net-card ${isSaved ? 'is-saved' : ''}" 
                              onclick="UIManager.play('${item.url}','${item.name}')" 
                              oncontextmenu="UIManager.toggleSave('${item.name}','${item.url}','${item.logo}'); return false;">
-                            <img src="${item.logo}" data-name="${item.name}">
+                            <img src="${item.logo}" onerror="this.src='https://via.placeholder.com/150?text=TV'">
+                            <div class="card-info">
+                                <span>${item.name}</span>
+                            </div>
                         </div>
                     `;
                 }).join('');
-                this.setupArch();
             },
 
             play(url, name) {
@@ -214,46 +242,25 @@
                 const panel = document.getElementById('fav-panel');
                 panel.classList.toggle('show');
                 if(panel.classList.contains('show')) {
-                    document.getElementById('fav-grid').innerHTML = this.favs.map(f => `
-                        <div class="fav-item" onclick="UIManager.play('${f.url}','${f.name}')">
-                            <img src="${f.logo}" class="w-full h-14 object-contain">
-                            <div class="text-[9px] mt-1 truncate text-center font-bold">${f.name}</div>
+                    const grid = document.getElementById('fav-grid');
+                    grid.innerHTML = this.favs.length ? this.favs.map(f => `
+                        <div class="bg-white/5 p-2 rounded-xl text-center" onclick="UIManager.play('${f.url}','${f.name}')">
+                            <img src="${f.logo}" class="w-full h-12 object-contain mb-1">
+                            <div class="text-[9px] truncate font-bold">${f.name}</div>
                         </div>
-                    `).join('');
+                    `).join('') : '<div class="col-span-full text-center opacity-30 mt-10">المكتبة فارغة</div>';
                 }
             },
 
-            search(q) { this.render(this.allData.filter(i => i.name.toLowerCase().includes(q.toLowerCase()))); },
+            search(q) { 
+                const filtered = this.allData.filter(i => i.name.toLowerCase().includes(q.toLowerCase()));
+                this.render(filtered);
+            },
             
             switchTab(type, el) {
                 document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                 el.classList.add('active');
                 this.loadCategory(type);
-            },
-
-            setupArch() {
-                const slider = document.getElementById('list');
-                const nameDisplay = document.getElementById('active-name');
-                const update = () => {
-                    const cards = document.querySelectorAll('.net-card');
-                    if(cards.length === 0) return;
-                    const center = slider.scrollLeft + (slider.offsetWidth / 2);
-                    let closestName = "";
-                    cards.forEach(card => {
-                        const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
-                        const distance = Math.abs(center - cardCenter);
-                        const scale = Math.max(0.75, 1.35 - (distance / 350));
-                        card.style.transform = `scale(${scale}) translateY(${distance / 12}px) rotateY(${(cardCenter - center) / 15}deg)`;
-                        card.style.opacity = Math.max(0.4, 1 - (distance / 450));
-                        if (distance < 50) {
-                            closestName = card.querySelector('img').getAttribute('data-name');
-                            card.classList.add('card-active');
-                        } else { card.classList.remove('card-active'); }
-                    });
-                    nameDisplay.innerText = closestName;
-                };
-                slider.onscroll = update;
-                setTimeout(update, 100);
             }
         };
 
